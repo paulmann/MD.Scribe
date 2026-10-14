@@ -31,6 +31,15 @@ $excludeFiles = [
     $root . '/config/manifest.json',
 ];
 
+/**
+ * Separator-independent comparison form. The iterator yields native paths
+ * ("\\" on Windows, "/" elsewhere) while the prefixes above are written with
+ * "/", so comparing them directly made every exclusion fail on Windows and a
+ * locally built manifest listed content/, storage/ and tests/ as shipped files.
+ * Normalise both sides before comparing.
+ */
+$slashed = static fn (string $path): string => str_replace('\\', '/', $path);
+
 $iterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
 );
@@ -40,20 +49,22 @@ $lock = json_decode((string) @file_get_contents($root . '/composer.lock'), true)
 $runtimePackages = [];
 foreach ((array) ($lock['packages'] ?? []) as $package) {
     if (isset($package['name'])) {
-        $runtimePackages[$root . '/vendor/' . $package['name']] = true;
+        $runtimePackages[$slashed($root) . '/vendor/' . $package['name']] = true;
     }
 }
 
-$isDevVendorPath = static function (string $path) use ($root, $runtimePackages): bool {
-    if (!str_starts_with($path, $root . '/vendor/')) {
+$isDevVendorPath = static function (string $path) use ($root, $runtimePackages, $slashed): bool {
+    $path = $slashed($path);
+    $vendorRoot = $slashed($root) . '/vendor/';
+    if (!str_starts_with($path, $vendorRoot)) {
         return false;
     }
-    if (str_starts_with($path, $root . '/vendor/autoload.php')
-        || str_starts_with($path, $root . '/vendor/composer/')) {
+    if (str_starts_with($path, $vendorRoot . 'autoload.php')
+        || str_starts_with($path, $vendorRoot . 'composer/')) {
         return false;
     }
     foreach (array_keys($runtimePackages) as $packageDir) {
-        if (str_starts_with($path, $packageDir . DIRECTORY_SEPARATOR)) {
+        if (str_starts_with($path, $slashed($packageDir) . '/')) {
             return false;
         }
     }
@@ -69,11 +80,11 @@ foreach ($iterator as $item) {
     }
     $path = $item->getPathname();
     foreach ($excludeDirs as $dir) {
-        if (str_starts_with($path, $dir . DIRECTORY_SEPARATOR)) {
+        if (str_starts_with($slashed($path), $slashed($dir) . '/')) {
             continue 2;
         }
     }
-    if (in_array($path, $excludeFiles, true) || $isDevVendorPath($path)) {
+    if (in_array($slashed($path), array_map($slashed, $excludeFiles), true) || $isDevVendorPath($path)) {
         continue;
     }
     $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($root) + 1));

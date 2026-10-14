@@ -1,6 +1,6 @@
 <!--
  * MD.Viewer — Documentation
- * Version: 3.0.0
+ * Version: 3.0.1
 -->
 
 # MD.Viewer 3

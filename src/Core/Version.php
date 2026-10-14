@@ -10,7 +10,7 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.0.0';
+    public const string VERSION = '3.0.1';
     public const string CODENAME = 'Aurora';
     public const string PHP_MIN = '8.3.0';
     public const string REPO = 'https://github.com/paulmann/MD.Viewer';

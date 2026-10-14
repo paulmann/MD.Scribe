@@ -3,6 +3,38 @@
 All notable changes to MD.Viewer. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.0.1 — “Aurora” (2026-10-14)
+
+Bug-fix release. Two defects of the same class — a path comparison that assumed
+`/` as the directory separator — both found by serving the application rather
+than by reading it.
+
+### Fixed
+
+- **`public/router.php` — `/admin.php` was served by the viewer.** The router
+  compared `realpath()` results against strings joined with `/`
+  (`$real === $publicDir . '/admin.php'`). Where the separator is `\`, that
+  comparison can never hold, so every `/admin.php` request fell through to
+  `index.php`: the admin panel was unreachable under the built-in dev server,
+  and the request still looked healthy — HTTP 200 with the viewer page. The two
+  front controllers are now addressed by `realpath()` on both sides, with
+  `DIRECTORY_SEPARATOR` used for the prefixes.
+- **`tools/build-manifest.php` — exclusions silently did not apply** when the
+  manifest was built on Windows. Directory and file prefixes are written with
+  `/`, the iterator yields native paths, and the two were compared directly, so
+  `content/`, `storage/` and `tests/` were listed as shipped files: a locally
+  built manifest disagreed with the archive the updater verifies against
+  (940 entries against the correct 921). Both sides are normalised before
+  comparing, and `config/manifest.json` was rebuilt.
+
+### Notes
+
+- Behaviour on Linux and macOS is unchanged by both fixes — there the separator
+  is `/`, so the old comparisons already held. Confirmed by serving the same
+  tree on Debian (PHP 8.5) and on Windows.
+- `REPAIR_VERSION` in `MermaidNormalizer` stays at `3.0.0`: it versions the
+  mermaid repair rules, which this release does not touch.
+
 ## 3.0.0 — “Aurora” (2026-10-10)
 
 A complete professional refactor of MD.Viewer v2 (the 4,700-line `md.php`
