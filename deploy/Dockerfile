@@ -1,12 +1,12 @@
-# MD.Viewer 3 — production container (Apache + PHP 8.3, docroot at public/)
+# MD.Scribe 3 — production container (Apache + PHP 8.3, docroot at public/)
 #
-#   docker build -f deploy/Dockerfile -t mdviewer .
+#   docker build -f deploy/Dockerfile -t mdscribe .
 #   docker run -d -p 8080:80 -v "$PWD/content:/app/content" \
-#              -v mdviewer-storage:/app/storage --name docs mdviewer
+#              -v mdscribe-storage:/app/storage --name docs mdscribe
 
 FROM php:8.3-apache
 
-# Extensions MD.Viewer needs/recommends: mbstring (required), zip (backup
+# Extensions MD.Scribe needs/recommends: mbstring (required), zip (backup
 # archives), opcache (performance). dom/libxml/json are compiled in.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libzip-dev libonig-dev zlib1g-dev unzip \
@@ -19,7 +19,7 @@ RUN apt-get update \
 COPY --chown=www-data:www-data . /app
 
 # PHP configuration (production posture)
-COPY deploy/php.ini /usr/local/etc/php/conf.d/mdviewer.ini
+COPY deploy/php.ini /usr/local/etc/php/conf.d/mdscribe.ini
 
 # Apache: docroot → public/, allow .htaccess overrides
 ENV APACHE_DOCUMENT_ROOT=/app/public

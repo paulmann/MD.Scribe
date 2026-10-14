@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — release manifest builder.
+ * MD.Scribe 3.0 — release manifest builder.
  *
  * Generates config/manifest.json: every shipped file with its sha256, used by
  * the updater to verify releases and by updater.php?api_key=…&action=status.
@@ -103,7 +103,7 @@ foreach ($iterator as $item) {
 usort($files, static fn (array $a, array $b): int => strcmp($a['path'], $b['path']));
 
 $manifest = [
-    'app' => 'MD.Viewer',
+    'app' => 'MD.Scribe',
     'version' => Version::VERSION,
     'generated' => date('c'),
     'php_min' => Version::PHP_MIN,

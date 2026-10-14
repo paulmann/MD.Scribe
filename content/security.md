@@ -5,7 +5,7 @@ tags: [security]
 
 # Security model: defense in depth
 
-MD.Viewer treats every document as *untrusted input* and every request as
+MD.Scribe treats every document as *untrusted input* and every request as
 potentially hostile. Layers, from the outside in:
 
 ## 1. Path validation (14 layers)

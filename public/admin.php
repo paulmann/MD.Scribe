@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — admin panel entry point.
+ * MD.Scribe 3.0 — admin panel entry point.
  *
  * Serves the admin UI (session login) and its JSON action API. Kept as a
  * separate script so hosts can firewall /admin.php independently.

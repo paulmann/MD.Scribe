@@ -3,8 +3,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    image: mdviewer:3
-    container_name: mdviewer
+    image: mdscribe:3
+    container_name: mdscribe
     restart: unless-stopped
     ports:
       - "8080:80"
@@ -12,10 +12,10 @@ services:
       # Your documents — survives container rebuilds
       - ../content:/app/content
       # Cache, logs, backups, search index, custom themes
-      - mdviewer-storage:/app/storage
+      - mdscribe-storage:/app/storage
     environment:
       # Convenience only — configuration lives in .md.ini
       TZ: UTC
 
 volumes:
-  mdviewer-storage:
+  mdscribe-storage:

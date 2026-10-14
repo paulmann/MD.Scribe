@@ -1,7 +1,7 @@
 # Markdown feature matrix
 
-MD.Viewer 3 renders with `league/commonmark` (CommonMark 0.31 + GFM) plus
-MD.Viewer extensions. Everything below works in the viewer, the clipboard
+MD.Scribe 3 renders with `league/commonmark` (CommonMark 0.31 + GFM) plus
+MD.Scribe extensions. Everything below works in the viewer, the clipboard
 preview and the admin editor preview — one engine, one behaviour.
 
 ## CommonMark core
@@ -32,7 +32,7 @@ preview and the admin editor preview — one engine, one behaviour.
 | `- [ ] / - [x]` | themed checkboxes | `FEATURE_TASK_LISTS` |
 | bare URLs | autolinked | always |
 
-## MD.Viewer extensions
+## MD.Scribe extensions
 
 ### Frontmatter (YAML-lite)
 

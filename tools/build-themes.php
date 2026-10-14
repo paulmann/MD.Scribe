@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — compile the theme catalog into public/assets/css/themes.css.
+ * MD.Scribe 3.0 — compile the theme catalog into public/assets/css/themes.css.
  * Run: php tools/build-themes.php   (also executed by tools/frontend/build.mjs)
  */
 declare(strict_types=1);

@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — admin layout: fixed sidebar + topbar, same design tokens
+ * MD.Scribe 3.0 — admin layout: fixed sidebar + topbar, same design tokens
  * as the public app.
  *
  * @var MdViewer\Core\App $app
@@ -42,7 +42,7 @@ $pageTitle = $pageTitle ?? 'Admin';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title><?= e($pageTitle) ?> · MD.Viewer Admin</title>
+<title><?= e($pageTitle) ?> · MD.Scribe Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="<?= e($req->assetUrl('assets/img/favicon.svg')) ?>" type="image/svg+xml">
@@ -80,7 +80,7 @@ $pageTitle = $pageTitle ?? 'Admin';
   <aside class="md-admin-sidebar" id="md-admin-sidebar">
     <div class="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
       <span class="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground"><?= Icons::svg('shield', 'h-4 w-4') ?></span>
-      <span class="text-sm font-semibold tracking-tight">MD.Viewer <span class="text-muted-foreground font-normal">Admin</span></span>
+      <span class="text-sm font-semibold tracking-tight">MD.Scribe <span class="text-muted-foreground font-normal">Admin</span></span>
       <button type="button" class="md-icon-btn ml-auto lg:hidden" data-admin-sidebar-close aria-label="Close menu"><?= Icons::svg('x', 'h-4 w-4') ?></button>
     </div>
     <nav class="flex-1 overflow-y-auto p-3" aria-label="Admin">

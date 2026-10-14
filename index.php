@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — project-root entry (for docroot-at-project-root installs).
+ * MD.Scribe 3.0 — project-root entry (for docroot-at-project-root installs).
  *
  * Booting this file is equivalent to public/index.php: it renders the home
  * document or the file browser. Asset URLs are computed for the /public

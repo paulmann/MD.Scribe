@@ -1,5 +1,5 @@
 /**
- * MD.Viewer 3.0 — asset build pipeline (dev-time only; outputs are committed,
+ * MD.Scribe 3.0 — asset build pipeline (dev-time only; outputs are committed,
  * so production needs no Node.js at all).
  *
  *   node build.mjs

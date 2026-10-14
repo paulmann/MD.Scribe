@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — Settings page (reading preferences + feature toggles).
+ * MD.Scribe 3.0 — Settings page (reading preferences + feature toggles).
  *
  * Two layers, exactly like v2 but as a first-class page:
  *  - reading preferences (text size / width / line height) → localStorage;
@@ -152,7 +152,7 @@ $bodyPage = 'settings';
           <p class="font-medium">First-party preference storage</p>
           <p class="text-muted-foreground">
             Store the feature toggles above in first-party cookies so they apply on the next page load.
-            No tracking, no third parties — MD.Viewer never sends data anywhere.
+            No tracking, no third parties — MD.Scribe never sends data anywhere.
             Reading preferences are always kept in localStorage.
           </p>
         </label>

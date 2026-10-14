@@ -1,5 +1,5 @@
 /**
- * MD.Viewer 3.0 — Mermaid loader.
+ * MD.Scribe 3.0 — Mermaid loader.
  *
  * Mermaid ships locally (assets/vendor/mermaid/mermaid.min.js — the full
  * IIFE build, no chunk imports, no CDN). Loaded only when the page actually
@@ -109,7 +109,7 @@ export async function initMermaid(root = document) {
       }
       // Keep the source visible for repair
       block.textContent = source;
-      console.info('[MD.Viewer] Mermaid parse error:', msg);
+      console.info('[MD.Scribe] Mermaid parse error:', msg);
     }
   }
   renderedOnce = true;

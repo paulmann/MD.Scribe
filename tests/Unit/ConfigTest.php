@@ -15,7 +15,7 @@ final class ConfigTest extends TestCase
         self::assertFileExists($this->tmpRoot . '/.md.ini');
         self::assertTrue($config->bool('DISABLE_UPLOAD'));
         self::assertFalse($config->bool('ALLOW_UPDATE'));
-        self::assertSame('MD.Viewer', $config->str('SITE_NAME'));
+        self::assertSame('MD.Scribe', $config->str('SITE_NAME'));
         self::assertSame(8, $config->int('MAX_UPLOAD_MB'));
     }
 

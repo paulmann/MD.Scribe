@@ -1,5 +1,5 @@
 /**
- * MD.Viewer 3.0 — front-end entry point.
+ * MD.Scribe 3.0 — front-end entry point.
  *
  * One small bundle for the whole public app. Heavy vendor libraries
  * (Mermaid, KaTeX) are injected lazily, only on pages that need them and
@@ -48,7 +48,7 @@ function boot() {
   });
 
   console.info(
-    `%c MD.Viewer %c v${window.MDV_CONFIG?.version || '3'} — self-hosted, zero-CDN `,
+    `%c MD.Scribe %c v${window.MDV_CONFIG?.version || '3'} — self-hosted, zero-CDN `,
     'background:#18181b;color:#fafafa;border-radius:4px 0 0 4px;padding:2px 6px;font-weight:600',
     'background:#e4e4e7;color:#18181b;border-radius:0 4px 4px 0;padding:2px 6px',
   );

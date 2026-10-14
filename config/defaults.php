@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — configuration schema.
+ * MD.Scribe 3.0 — configuration schema.
  *
  * Single source of truth for every `.md.ini` key: default value, type, section,
  * human-readable label and description. Used by:
@@ -19,7 +19,7 @@ declare(strict_types=1);
 return [
     // ── General ────────────────────────────────────────────────────────────
     'SITE_NAME' => [
-        'type' => 'string', 'default' => 'MD.Viewer', 'section' => 'general',
+        'type' => 'string', 'default' => 'MD.Scribe', 'section' => 'general',
         'label' => 'Site name',
         'description' => 'Shown in the header, <title> and feeds.',
     ],
@@ -214,7 +214,7 @@ return [
     'ADMIN_PASSWORD' => [
         'type' => 'string', 'default' => '', 'section' => 'security', 'secret' => true,
         'label' => 'Admin password (bootstrap)',
-        'description' => 'Set a plaintext password here once; MD.Viewer hashes it into ADMIN_PASSWORD_HASH on next load and clears this key.',
+        'description' => 'Set a plaintext password here once; MD.Scribe hashes it into ADMIN_PASSWORD_HASH on next load and clears this key.',
     ],
     'ADMIN_PASSWORD_HASH' => [
         'type' => 'string', 'default' => '', 'section' => 'security', 'secret' => true,

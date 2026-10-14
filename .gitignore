@@ -12,6 +12,10 @@ storage/themes/*
 !storage/**/.htaccess
 .md.ini
 
+# Dependencies — installed with `composer install --no-dev`, bundled only in
+# release archives, never committed (723 files)
+/vendor/
+
 # Dev tooling
 tools/frontend/node_modules/
 .phpunit.cache/

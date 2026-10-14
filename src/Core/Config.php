@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — configuration loader for `.md.ini`.
+ * MD.Scribe 3.0 — configuration loader for `.md.ini`.
  *
  * Behaviour preserved from MD.Viewer v2 (and hardened):
  *  - `.md.ini` is created automatically next to the project root on first load;
@@ -166,7 +166,7 @@ final class Config
             }
         }
 
-        error_log("[MD.Viewer] BROWSE_DIR '{$value}' does not resolve to a readable directory; using content/");
+        error_log("[MD.Scribe] BROWSE_DIR '{$value}' does not resolve to a readable directory; using content/");
 
         return Paths::content();
     }
@@ -209,14 +209,14 @@ final class Config
             }
             $real = realpath($ini);
             if ($real === false || $realRoot === false || !str_starts_with($real, $realRoot . DIRECTORY_SEPARATOR)) {
-                error_log("[MD.Viewer] refused directory ini outside browse root: {$ini}");
+                error_log("[MD.Scribe] refused directory ini outside browse root: {$ini}");
                 continue;
             }
             foreach (self::readIniFile($real) as $key => $value) {
                 if (in_array($key, self::PER_DIR_KEYS, true)) {
                     $flags[$key] = self::parseBool($value);
                 } elseif (isset(self::schema()[$key])) {
-                    error_log("[MD.Viewer] ignored installation-level key {$key} in directory ini {$ini}");
+                    error_log("[MD.Scribe] ignored installation-level key {$key} in directory ini {$ini}");
                 }
             }
         }
@@ -278,7 +278,7 @@ final class Config
     private function createFile(array $schema): void
     {
         $lines = [
-            '; MD.Viewer ' . Version::VERSION . ' — server-side configuration',
+            '; MD.Scribe ' . Version::VERSION . ' — server-side configuration',
             '; Created automatically on first load. Missing installation-level',
             '; keys are appended with safe defaults on every load.',
             ';',
@@ -330,7 +330,7 @@ final class Config
             $bySection[$meta['section']][$key] = $meta;
         }
 
-        $lines = ['', '; ── Keys added automatically by MD.Viewer ' . Version::VERSION . ' ──'];
+        $lines = ['', '; ── Keys added automatically by MD.Scribe ' . Version::VERSION . ' ──'];
         foreach ($bySection as $section => $keys) {
             $lines[] = '; ' . ucfirst((string) $section);
             foreach ($keys as $key => $meta) {
@@ -395,7 +395,7 @@ final class Config
         $tmp = $this->iniPath . '.' . bin2hex(random_bytes(4)) . '.tmp';
         if (@file_put_contents($tmp, $content, LOCK_EX) === false) {
             $this->writable = false;
-            error_log("[MD.Viewer] cannot write {$this->iniPath} — running with in-memory defaults");
+            error_log("[MD.Scribe] cannot write {$this->iniPath} — running with in-memory defaults");
 
             return;
         }
@@ -439,7 +439,7 @@ final class Config
                 $value = substr($value, 1, -1);
             }
             if (str_contains($value, "\0") || str_contains($value, "\n") || strlen($value) > self::MAX_VALUE_BYTES) {
-                error_log("[MD.Viewer] discarded unusable value for {$key} in {$path}");
+                error_log("[MD.Scribe] discarded unusable value for {$key} in {$path}");
                 continue;
             }
             $out[$key] = $value;

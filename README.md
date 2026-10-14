@@ -1,9 +1,9 @@
 <!--
- * MD.Viewer — Documentation
- * Version: 3.0.1
+ * MD.Scribe — Documentation
+ * Version: 3.1.0
 -->
 
-# MD.Viewer 3
+# MD.Scribe 3
 
 > A secure, self-hosted **PHP 8.3 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
@@ -15,7 +15,7 @@
 
 ---
 
-## What is MD.Viewer?
+## What is MD.Scribe?
 
 Point it at a folder of `.md` files and you have a documentation site:
 
@@ -40,7 +40,7 @@ are vendored — the app works fully **offline / air-gapped**.
 ## Quick start
 
 ```bash
-git clone https://github.com/paulmann/MD.Viewer.git /var/www/docs
+git clone https://github.com/paulmann/MD.Scribe.git /var/www/docs
 cd /var/www/docs
 
 # PHP dependencies are vendored in release archives; from a bare clone:
@@ -123,7 +123,7 @@ live in `config/defaults.php`, and visitors may toggle them per-browser
 
 ```ini
 ; General
-SITE_NAME = MD.Viewer
+SITE_NAME = MD.Scribe
 HOME_DOC  = index.md
 BROWSE_DIR =                     ; empty = bundled content/
 
@@ -223,7 +223,7 @@ Architecture, module map, release checklist: **[docs/development.md](docs/develo
 ### Project layout
 
 ```text
-MD.Viewer/
+MD.Scribe/
 ├── public/              ← recommended docroot
 │   ├── index.php        front controller (viewer, library, pages, JSON API)
 │   ├── admin.php        admin panel + admin JSON API

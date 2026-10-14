@@ -1,7 +1,53 @@
 # Changelog
 
-All notable changes to MD.Viewer. Format inspired by Keep a Changelog;
+All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
+
+## 3.1.0 — “Aurora” (2026-10-14)
+
+A rename release. The project is published as **MD.Scribe** — same code, same
+contracts, new name and new home. Nothing in the application behaviour changes.
+
+### Changed
+
+- **Product name: MD.Viewer → MD.Scribe**, repository
+  `paulmann/MD.Scribe`. The old name described only the reading half of what v3
+  became: v3 is an editor, an admin panel, a publisher and a search index as
+  well as a viewer. "Scribe" covers the whole.
+- `Version::REPO`, `Version::RAW_BASE` and `Version::API_BASE` now point at
+  `paulmann/MD.Scribe`; `Version::userAgent()` reports `MD.Scribe/<version>`.
+- User-facing strings follow: window titles, the admin panel header and login
+  page, the `<meta name="generator">` tag, the footer, the `X-Powered-By`
+  header, the default `SITE_NAME`, the `console.info` banner and the messages
+  the bootstrap prints on a fatal misconfiguration.
+- Documentation, `composer.json` (now `mdscribe/md-scribe`), `LICENSE`,
+  deployment samples (`deploy/Dockerfile`, `docker-compose.yml`, `nginx.conf`,
+  `Caddyfile`, `php.ini`) and the `content/` pages.
+- `composer.lock` `content-hash` recomputed for the renamed package; verified
+  with `composer validate --check-lock` → *"composer.json is valid"*.
+- `config/manifest.json` rebuilt (921 shipped files).
+
+### Fixed
+
+- **The self-updater no longer pins a product name when unpacking a release
+  archive.** It located the extracted root with `glob('.../MD.Viewer-*')`, so a
+  renamed repository — which GitHub names after the repository, e.g.
+  `MD.Scribe-main/` — would have been rejected with *"does not look like a
+  release"*. It now accepts any `<name>-<ref>` directory that contains
+  `config/manifest.json`, with a fallback for a flat archive.
+
+### Notes
+
+- The PHP namespace `MdViewer\` is unchanged. It is an internal identifier
+  namespace, shared by every class in `src/`, and renaming it would touch every
+  file for no user-visible gain. Third-party code that type-hints these classes
+  keeps working.
+- Historical references to **v2** still read `MD.Viewer v2 …` where they
+  describe the previous product (upgrade guide, changelog, compatibility
+  notes). That is deliberate: v2 *was* MD.Viewer.
+- Upgrading an existing v3.0.x installation in place works: the tracked file
+  list and the machine-API envelope are unchanged, and `.md.ini` keys are the
+  same (`SITE_NAME` keeps whatever value the installation already has).
 
 ## 3.0.1 — “Aurora” (2026-10-14)
 
@@ -46,7 +92,7 @@ a 2026 design system and zero CDN dependencies.
 - **REWRITE**: monolith → PSR-4 application (`src/Core`, `Http`, `Markdown`,
   `Files`, `Admin`, `Theme`, `View`) with strict types everywhere.
 - **NEW**: Markdown engine on `league/commonmark` (CommonMark 0.31 + GFM)
-  with MD.Viewer extensions; server-side syntax highlighting via
+  with MD.Scribe extensions; server-side syntax highlighting via
   `scrivo/highlight.php` (~190 languages, no client JS).
 - **NEW**: DOM-allowlist HTML sanitizer applied to every rendered document.
 - **NEW**: render cache (source × feature fingerprint), ETag/Last-Modified

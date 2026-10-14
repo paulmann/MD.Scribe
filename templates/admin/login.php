@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — admin login page (standalone, no sidebar).
+ * MD.Scribe 3.0 — admin login page (standalone, no sidebar).
  *
  * @var MdViewer\Core\App $app
  */
@@ -16,7 +16,7 @@ $locked = 0;
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in · MD.Viewer Admin</title>
+<title>Sign in · MD.Scribe Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="<?= e($req->assetUrl('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/app.css')) ?>">
@@ -41,7 +41,7 @@ $locked = 0;
 <main class="w-full max-w-sm">
   <div class="mb-6 text-center">
     <span class="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg"><?= Icons::svg('shield', 'h-5 w-5') ?></span>
-    <h1 class="text-xl font-bold tracking-tight">MD.Viewer Admin</h1>
+    <h1 class="text-xl font-bold tracking-tight">MD.Scribe Admin</h1>
     <p class="mt-1 text-sm text-muted-foreground">Sign in to manage your documentation</p>
   </div>
 

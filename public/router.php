@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — router for the PHP built-in dev server:
+ * MD.Scribe 3.0 — router for the PHP built-in dev server:
  *
  *   php -S localhost:8080 -t public public/router.php
  *

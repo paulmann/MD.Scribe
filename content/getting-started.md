@@ -5,7 +5,7 @@ tags: [install, guide]
 
 # Getting started: install in two minutes
 
-MD.Viewer v3 is a folder, not a service. Drop it on any PHP 8.3 host and it
+MD.Scribe v3 is a folder, not a service. Drop it on any PHP 8.3 host and it
 runs — no database, no Node.js on the server, no build step.
 
 ## Requirements
@@ -20,7 +20,7 @@ runs — no database, no Node.js on the server, no build step.
 
 ```bash
 # 1. Get the code
-git clone https://github.com/paulmann/MD.Viewer.git /var/www/docs
+git clone https://github.com/paulmann/MD.Scribe.git /var/www/docs
 cd /var/www/docs
 
 # 2. Dependencies are vendored — if you cloned with --no-vendor, run:
@@ -69,8 +69,8 @@ Upload the whole folder. The bundled `.htaccess` denies `src/`, `config/`,
 ### Docker
 
 ```bash
-docker build -f deploy/Dockerfile -t mdviewer .
-docker run -p 8080:8080 -v ./content:/app/content mdviewer
+docker build -f deploy/Dockerfile -t mdscribe .
+docker run -p 8080:8080 -v ./content:/app/content mdscribe
 ```
 
 ## First steps after install

@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — main layout (viewer + pages).
+ * MD.Scribe 3.0 — main layout (viewer + pages).
  *
  * Design system: shadcn/ui token model on Tailwind v4. The <html> element
  * carries data-neutral / data-accent / data-radius / data-font and the .dark
@@ -37,7 +37,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title><?= e($pageTitle ?? $siteName) ?></title>
 <meta name="description" content="<?= e($pageDescription ?? '') ?>">
-<meta name="generator" content="MD.Viewer <?= e(MdViewer\Core\Version::VERSION) ?>">
+<meta name="generator" content="MD.Scribe <?= e(MdViewer\Core\Version::VERSION) ?>">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="<?= e($pageTitle ?? $siteName) ?>">
 <meta property="og:description" content="<?= e($pageDescription ?? '') ?>">
@@ -53,7 +53,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <link rel="alternate" type="application/rss+xml" title="<?= e($siteName) ?> feed" href="<?= e($req->url(['page' => 'feed'])) ?>">
 <?php endif; ?>
 <script nonce="<?= e($nonce) ?>">
-/* MD.Viewer theme bootstrap — runs before first paint: stored theme → root
+/* MD.Scribe theme bootstrap — runs before first paint: stored theme → root
    attributes + .dark class; falls back to the server default, then to the
    OS preference. No CDN, no flash, no layout shift. */
 (function () {
@@ -170,7 +170,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <!-- ══ Footer ═══════════════════════════════════════════════════════════ -->
 <footer class="mt-16 border-t border-border/70 py-8">
   <div class="mx-auto flex w-full max-w-[1600px] flex-col items-center justify-between gap-3 px-4 text-xs text-muted-foreground sm:flex-row lg:px-6">
-    <p>Powered by <a class="md-link" href="https://github.com/paulmann/MD.Viewer" target="_blank" rel="noopener noreferrer">MD.Viewer</a> <?= e(MdViewer\Core\Version::VERSION) ?> · MIT License</p>
+    <p>Powered by <a class="md-link" href="https://github.com/paulmann/MD.Scribe" target="_blank" rel="noopener noreferrer">MD.Scribe</a> <?= e(MdViewer\Core\Version::VERSION) ?> · MIT License</p>
     <p class="flex items-center gap-3">
       <?php if ($searchEnabled): ?><a class="md-link" href="<?= e($req->url(['page' => 'search'])) ?>">Search</a><?php endif; ?>
       <?php if ($app->config->bool('SITEMAP_ENABLED')): ?><a class="md-link" href="<?= e($req->url(['page' => 'sitemap'])) ?>">Sitemap</a><?php endif; ?>

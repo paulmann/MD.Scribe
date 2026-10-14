@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — bootstrap: autoloading + global helpers.
+ * MD.Scribe 3.0 — bootstrap: autoloading + global helpers.
  *
  * Included by every entry point (public/index.php, public/admin.php, the
  * compatibility shims, CLI tools and the test suite).
@@ -14,7 +14,7 @@ namespace {
     if (PHP_VERSION_ID < 80300) {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');
-        exit('MD.Viewer 3.0 requires PHP >= 8.3.0; running ' . PHP_VERSION . ".\n");
+        exit('MD.Scribe 3.0 requires PHP >= 8.3.0; running ' . PHP_VERSION . ".\n");
     }
 
     // ── Required extensions ─────────────────────────────────────────────────
@@ -22,7 +22,7 @@ namespace {
         if (!extension_loaded($mdvExt)) {
             http_response_code(500);
             header('Content-Type: text/plain; charset=utf-8');
-            exit("MD.Viewer requires the PHP extension '{$mdvExt}', which is not loaded.\n");
+            exit("MD.Scribe requires the PHP extension '{$mdvExt}', which is not loaded.\n");
         }
     }
     unset($mdvExt);
@@ -35,7 +35,7 @@ namespace {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');
         exit(
-            "MD.Viewer: vendor/autoload.php is missing.\n"
+            "MD.Scribe: vendor/autoload.php is missing.\n"
             . "Run `composer install` in the project root (or deploy the release archive, which bundles vendor/).\n"
         );
     }

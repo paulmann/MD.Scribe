@@ -1,12 +1,12 @@
 <!--
- * MD.Viewer — License
+ * MD.Scribe — License
  * Version: 1.0.0
 -->
 
 MIT License
 
 Copyright (c) 2026 Mikhail Deynekin
-Repository: https://github.com/paulmann/MD.Viewer
+Repository: https://github.com/paulmann/MD.Scribe
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ furnished to do so, subject to the following conditions:
      kindly asked — and by accepting this license, you agree — to retain a
      visible reference to the original repository:
 
-         https://github.com/paulmann/MD.Viewer
+         https://github.com/paulmann/MD.Scribe
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,

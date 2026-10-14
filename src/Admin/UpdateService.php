@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — self-update service.
+ * MD.Scribe 3.0 — self-update service.
  *
  * Modernised v2 updater: instead of crawling dozens of raw files, it asks the
  * GitHub API for the latest release, compares versions, and (on apply)
@@ -189,10 +189,20 @@ final class UpdateService
             $phar = new \PharData($tarPath);
             $phar->decompress();
             $phar->extractTo($tmpDir, null, true);
-            $inner = glob($tmpDir . '/MD.Viewer-*', GLOB_ONLYDIR) ?: [];
+            // GitHub names the extracted root after the repository, and the
+            // repository may have been renamed: accept any '<name>-main' /
+            // '<name>-<ref>' directory rather than pinning one product name.
+            $inner = array_values(array_filter(
+                glob($tmpDir . '/*-*', GLOB_ONLYDIR) ?: [],
+                static fn (string $dir): bool => is_file($dir . '/config/manifest.json'),
+            ));
+            // Fall back to a tarball that extracted flat (no wrapper directory).
+            if ($inner === [] && is_file($tmpDir . '/config/manifest.json')) {
+                $inner = [$tmpDir];
+            }
             $sourceRoot = $inner[0] ?? null;
             if ($sourceRoot === null || !is_file($sourceRoot . '/config/manifest.json')) {
-                return ['ok' => false, 'error' => 'Archive does not look like an MD.Viewer release (manifest missing).'];
+                return ['ok' => false, 'error' => 'Archive does not look like a valid release (config/manifest.json missing).'];
             }
 
             // 3. Verify + diff against the remote manifest.

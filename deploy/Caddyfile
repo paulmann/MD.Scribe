@@ -1,4 +1,4 @@
-# MD.Viewer 3 — Caddyfile (Layout A: docroot at public/)
+# MD.Scribe 3 — Caddyfile (Layout A: docroot at public/)
 #
 # caddy run --config deploy/Caddyfile
 

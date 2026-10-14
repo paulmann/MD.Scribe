@@ -1,6 +1,6 @@
 <?php
 /**
- * MD.Viewer 3.0 — first-run setup (password not configured yet).
+ * MD.Scribe 3.0 — first-run setup (password not configured yet).
  *
  * Setup requires EITHER a request from localhost OR the one-time setup code
  * from storage/logs/setup.log (read it via SSH/FTP). This stops a stranger
@@ -21,7 +21,7 @@ $codeHint = $localhostAllowed ? '' : 'storage/logs/setup.log';
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Setup · MD.Viewer Admin</title>
+<title>Setup · MD.Scribe Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="<?= e($req->assetUrl('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/app.css')) ?>">

@@ -1,6 +1,6 @@
 # Theming
 
-MD.Viewer ships a shadcn/ui-style theming system: **design tokens as CSS
+MD.Scribe ships a shadcn/ui-style theming system: **design tokens as CSS
 custom properties**, composed from a neutral palette × an accent color, with
 light/dark/system modes. No CDN, no runtime framework — the theme stylesheet
 is generated at build time and selected by data attributes on `<html>`.

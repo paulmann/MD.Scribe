@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — single source of truth for the application version.
+ * MD.Scribe 3.0 — single source of truth for the application version.
  */
 
 declare(strict_types=1);
@@ -10,16 +10,16 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.0.1';
+    public const string VERSION = '3.1.0';
     public const string CODENAME = 'Aurora';
     public const string PHP_MIN = '8.3.0';
-    public const string REPO = 'https://github.com/paulmann/MD.Viewer';
-    public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Viewer/main';
-    public const string API_BASE = 'https://api.github.com/repos/paulmann/MD.Viewer';
+    public const string REPO = 'https://github.com/paulmann/MD.Scribe';
+    public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Scribe/main';
+    public const string API_BASE = 'https://api.github.com/repos/paulmann/MD.Scribe';
 
     public static function userAgent(): string
     {
-        return 'MD.Viewer/' . self::VERSION . ' (+https://github.com/paulmann/MD.Viewer) PHP/' . PHP_VERSION;
+        return 'MD.Scribe/' . self::VERSION . ' (+https://github.com/paulmann/MD.Scribe) PHP/' . PHP_VERSION;
     }
 
     /** "3.0.0" → [3, 0, 0] */

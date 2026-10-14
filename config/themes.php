@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — theme catalog data.
+ * MD.Scribe 3.0 — theme catalog data.
  *
  * A theme is a composition: one NEUTRAL palette (backgrounds, text, borders)
  * plus one ACCENT (primary/ring/charts), each with light + dark token sets in

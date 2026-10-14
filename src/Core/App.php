@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — application kernel.
+ * MD.Scribe 3.0 — application kernel.
  *
  * Boots configuration, logging, session, CSRF and the template engine,
  * installs the security headers (including the per-request CSP nonce) and the
@@ -147,7 +147,7 @@ final class App
             return;
         }
 
-        header('X-Powered-By: MD.Viewer ' . Version::VERSION);
+        header('X-Powered-By: MD.Scribe ' . Version::VERSION);
 
         if ($this->config->bool('SECURITY_HEADERS')) {
             header('X-Content-Type-Options: nosniff');
@@ -263,7 +263,7 @@ final class App
             $safeDetails = $details !== null ? '<pre>' . htmlspecialchars($details, ENT_QUOTES) . '</pre>' : '';
 
             return "<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-                . "<title>{$safeTitle} — MD.Viewer</title>"
+                . "<title>{$safeTitle} — MD.Scribe</title>"
                 . "<body style=\"font-family:system-ui;max-width:40rem;margin:15vh auto;padding:0 1rem\">"
                 . "<h1>{$safeTitle}</h1>{$safeDetails}</body>";
         }

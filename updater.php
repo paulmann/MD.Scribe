@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — updater compatibility shim (v2 → v3).
+ * MD.Scribe 3.0 — updater compatibility shim (v2 → v3).
  *
  * Keeps every v2 entry point working against the new engine:
  *
@@ -134,7 +134,7 @@ $layout = static function (string $title, string $body) use ($e): void {
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         . '<meta name="viewport" content="width=device-width,initial-scale=1">'
         . '<meta name="robots" content="noindex,nofollow">'
-        . "<title>{$e($title)} · MD.Viewer updater</title>"
+        . "<title>{$e($title)} · MD.Scribe updater</title>"
         . '<style>'
         . ':root{color-scheme:light dark;--bg:#fafafa;--fg:#18181b;--mut:#71717a;--bd:#e4e4e7;--acc:#2563eb}'
         . '@media(prefers-color-scheme:dark){:root{--bg:#18181b;--fg:#fafafa;--mut:#a1a1aa;--bd:#3f3f46;--acc:#60a5fa}}'
@@ -217,6 +217,6 @@ $allowUpdateNote = $config->bool('ALLOW_UPDATE')
     ? ''
     : '<div class="note">Updates are disabled: set <code>ALLOW_UPDATE = true</code> in <code>.md.ini</code>. The machine API below works with <code>API_KEY</code> regardless.</div>';
 
-$layout('MD.Viewer updater', '<h1>MD.Viewer updater</h1>' . $checkLine . $allowUpdateNote
+$layout('MD.Scribe updater', '<h1>MD.Scribe updater</h1>' . $checkLine . $allowUpdateNote
     . '<table><thead><tr><th>Tracked file</th><th>Status</th><th>Version</th></tr></thead><tbody>' . ($rows !== '' ? $rows : '<tr><td colspan="3">No manifest — run <code>php tools/build-manifest.php</code>.</td></tr>') . '</tbody></table>'
     . '<div class="note">Recommended: manage updates from the <a href="public/admin.php?page=updates">admin panel</a>. This page keeps the v2 URL contract (<code>?update=true</code>, <code>?restore=latest</code>, machine API with <code>api_key</code>).</div>');

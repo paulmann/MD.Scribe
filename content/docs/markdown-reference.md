@@ -45,7 +45,7 @@ Setext headings, thematic breaks (---), nested blockquotes:
 
 ### Autolinked URLs
 
-Bare URLs become links: https://github.com/paulmann/MD.Viewer
+Bare URLs become links: https://github.com/paulmann/MD.Scribe
 
 ### Tables with alignment
 

@@ -1,9 +1,9 @@
 {
-  "name": "mdviewer-frontend",
+  "name": "mdscribe-frontend",
   "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Local asset pipeline for MD.Viewer — Tailwind CSS v4 build, vendored Mermaid/KaTeX/fonts/icons. No CDN at runtime.",
+  "description": "Local asset pipeline for MD.Scribe — Tailwind CSS v4 build, vendored Mermaid/KaTeX/fonts/icons. No CDN at runtime.",
   "scripts": {
     "build": "node build.mjs",
     "css": "tailwindcss -i src/css/app.css -o ../../public/assets/css/app.css --minify",

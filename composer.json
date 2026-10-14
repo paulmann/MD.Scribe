@@ -1,6 +1,6 @@
 {
-    "name": "mdviewer/md-viewer",
-    "description": "MD.Viewer — secure, self-hosted Markdown documentation viewer and browser with a full admin panel. PHP 8.3, Tailwind CSS, shadcn/ui-style design system, zero CDN dependencies.",
+    "name": "mdscribe/md-scribe",
+    "description": "MD.Scribe — secure, self-hosted Markdown documentation viewer and browser with a full admin panel. PHP 8.3, Tailwind CSS, shadcn/ui-style design system, zero CDN dependencies.",
     "type": "project",
     "license": "MIT",
     "keywords": ["markdown", "viewer", "documentation", "php", "tailwind", "shadcn"],

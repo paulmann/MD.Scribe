@@ -1,6 +1,6 @@
 # Security model
 
-MD.Viewer treats every document as **untrusted input** and every request as
+MD.Scribe treats every document as **untrusted input** and every request as
 potentially hostile. This page is the reference; the checklist at the bottom
 is what to actually do.
 

@@ -17,7 +17,7 @@ changed from the browser.
 
 | Key | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `SITE_NAME` | string | `MD.Viewer` | Header, `<title>`, feeds |
+| `SITE_NAME` | string | `MD.Scribe` | Header, `<title>`, feeds |
 | `HOME_DOC` | string | `index.md` | Document rendered at the site root (relative to browse root). Missing → library page |
 | `BROWSE_DIR` | string | *(empty)* | Where documents live. Empty = bundled `content/`. Accepts absolute paths, `DOCUMENT_ROOT`-relative, or project-root-relative |
 

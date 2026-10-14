@@ -5,7 +5,7 @@ tags: [upgrade, migration]
 
 # Upgrading from MD.Viewer v2
 
-MD.Viewer v3 is a full rewrite — same philosophy (self-hosted, no database,
+MD.Scribe v3 is a full rewrite — same philosophy (self-hosted, no database,
 no build step on the server), modern architecture. This page maps every v2
 behaviour to its v3 counterpart.
 
@@ -29,7 +29,7 @@ behaviour to its v3 counterpart.
 | v2 | v3 |
 | --- | --- |
 | One 4,700-line `md.php` | Structured app: `src/` (PSR-4), `public/`, `templates/`, `config/` |
-| Hand-rolled Markdown parser | CommonMark + GFM (league/commonmark) + MD.Viewer extensions |
+| Hand-rolled Markdown parser | CommonMark + GFM (league/commonmark) + MD.Scribe extensions |
 | Tailwind **CDN**, Mermaid **CDN** | Everything local — zero CDN requests, works offline/air-gapped |
 | `updater.php` landing UI | Full **admin panel** (`public/admin.php`): dashboard, file manager, editor with live preview, backups + trash, updater, settings editor, logs, audit trail, health, link checker |
 | Row filter in the browser table | Real **full-text search** + **Ctrl+K command palette** |

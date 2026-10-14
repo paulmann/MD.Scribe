@@ -1,5 +1,5 @@
 /**
- * MD.Viewer 3.0 — regenerate src/View/Icons.php from lucide-static using the
+ * MD.Scribe 3.0 — regenerate src/View/Icons.php from lucide-static using the
  * curated list in tools/frontend/icons.json.
  *
  * Run: node tools/frontend/generate-icons.mjs

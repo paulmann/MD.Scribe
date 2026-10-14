@@ -1,6 +1,6 @@
 # Installation & deployment
 
-MD.Viewer is a folder of PHP files. There is no installer service, no database
+MD.Scribe is a folder of PHP files. There is no installer service, no database
 and no build step on the server — deployment means putting the folder where
 PHP runs and pointing a web server at it.
 
@@ -75,11 +75,11 @@ docs.example.com {
 ### Docker
 
 ```bash
-docker build -f deploy/Dockerfile -t mdviewer .
+docker build -f deploy/Dockerfile -t mdscribe .
 docker run -d -p 8080:80 \
   -v "$PWD/content:/app/content" \
-  -v mdviewer-storage:/app/storage \
-  --name docs mdviewer
+  -v mdscribe-storage:/app/storage \
+  --name docs mdscribe
 ```
 
 `deploy/docker-compose.yml` adds a persistent volume and sane PHP settings.

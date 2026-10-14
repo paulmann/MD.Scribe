@@ -1,10 +1,10 @@
 ---
-title: "MD.Viewer: Self-hosted docs, distilled"
+title: "MD.Scribe: Self-hosted docs, distilled"
 description: A welcome document that doubles as a feature tour — everything here renders with the built-in engine, zero CDN.
 tags: [welcome, tour, markdown]
 ---
 
-# MD.Viewer: Self-hosted docs, distilled
+# MD.Scribe: Self-hosted docs, distilled
 
 Welcome! This document is a **live feature tour** — every element below is
 rendered by the built-in Markdown engine and styled by the local design
@@ -15,7 +15,7 @@ JavaScript ship with the app.
 > Press **Ctrl+K** (⌘K on macOS) anywhere to open the command palette —
 > jump to documents, headings and actions without touching the mouse.
 
-## Why MD.Viewer
+## Why MD.Scribe
 
 - **Zero dependencies at runtime** — plain PHP 8.3, no database, no build step on the server.
 - **Full Markdown** — CommonMark + GitHub Flavored Markdown, footnotes, definition lists, math, diagrams, alerts and more.
@@ -28,7 +28,7 @@ JavaScript ship with the app.
 **Bold**, *italic*, ***both***, ~~strikethrough~~, ==highlight==, `inline code`,
 H~2~O and E=mc^2^, plus emoji: :rocket: :tada: :books: — 1,900+ shortcodes.
 
-Links: [internal document](getting-started.md), [external site](https://github.com/paulmann/MD.Viewer),
+Links: [internal document](getting-started.md), [external site](https://github.com/paulmann/MD.Scribe),
 [heading anchor](#tables), and missing links render with a ⚠ marker so dead
 links never hide: [a broken link](definitely-missing.md).
 
@@ -131,7 +131,7 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant B as Browser
-    participant S as MD.Viewer
+    participant S as MD.Scribe
     B->>S: GET /?file=docs/api.md
     S->>S: validate path (14 layers)
     S-->>B: 200 + ETag
@@ -166,8 +166,8 @@ dotted underlines and hover tooltips, with alias expansion:
 
 | Term | Definition |
 | ---- | ---------- |
-| CSP (Content Security Policy) | A header that tells the browser which resources a page may load. MD.Viewer ships a strict CSP with per-request nonces. |
-| ETag | An HTTP validator; MD.Viewer answers 304 when a document has not changed. |
+| CSP (Content Security Policy) | A header that tells the browser which resources a page may load. MD.Scribe ships a strict CSP with per-request nonces. |
+| ETag | An HTTP validator; MD.Scribe answers 304 when a document has not changed. |
 | GFM | GitHub Flavored Markdown — tables, strikethrough, task lists, autolinks. |
 
 Try hovering (or tapping) “CSP”, “ETag” or “GFM” in this paragraph. The

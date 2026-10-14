@@ -1,7 +1,7 @@
 <?php
 
 /**
- * MD.Viewer 3.0 — public front controller.
+ * MD.Scribe 3.0 — public front controller.
  *
  * Deployment options (see README):
  *  A) docroot = public/            → https://site/            (recommended)
