@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: PHP ${{ matrix.php }} — lint · phpstan · phpunit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, curl, zip, intl
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Lint all PHP files
+        run: |
+          find src public templates tools tests md.php index.php updater.php \
+            -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: PHPStan (level 6)
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit --no-coverage
+
+      - name: Smoke-run the app
+        run: |
+          php -S 127.0.0.1:8099 -t public public/router.php &
+          sleep 2
+          curl -fsS "http://127.0.0.1:8099/" -o /dev/null
+          curl -fsS "http://127.0.0.1:8099/index.php?page=browser" -o /dev/null
+          curl -fsS "http://127.0.0.1:8099/index.php?page=themes" -o /dev/null
+          curl -fsS "http://127.0.0.1:8099/index.php?api=search&q=markdown" | grep -q '"ok":true'
+          curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8099/index.php?file=nope.md" | grep -q 404
+          echo "smoke OK"
+
+  assets:
+    name: Frontend build reproducibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup PHP (for build-themes)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Install & build
+        working-directory: tools/frontend
+        run: |
+          npm ci || npm install
+          node build.mjs
+      - name: Verify committed assets are up to date
+        run: |
+          git diff --stat -- public/assets/css public/assets/js
+          git diff --quiet -- public/assets/css public/assets/js \
+            || { echo "::warning::Built assets differ from committed ones — run 'node tools/frontend/build.mjs' and commit."; exit 0; }

@@ -1,0 +1,32 @@
+parameters:
+    level: 6
+    paths:
+        - src
+        - public/index.php
+        - public/admin.php
+        - md.php
+        - index.php
+        - updater.php
+    excludePaths:
+        # Generated files — huge static maps, no logic.
+        - src/View/Icons.php
+        - src/Markdown/EmojiMap.php
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        #
+        # Deliberate runtime guard: PHPStan analyzes ON PHP 8.3 so the check
+        # looks "always false" — it exists for older runtimes than the analyzer.
+        -
+            message: '#Comparison operation "<" between int<80300, 80699> and 80300 is always false\.#'
+            path: src/bootstrap.php
+        #
+        # Templates mutate $this->layout through extend() during renderFile();
+        # PHPStan cannot see the indirect write.
+        -
+            message: '#Strict comparison using !== between null and null will always evaluate to false\.#'
+            path: src/View/Template.php
+        #
+        # TECH DEBT RATCHET: array value types are being tightened module by
+        # module. Do not add new entries here — annotate new code instead.
+        -
+            identifier: missingType.iterableValue

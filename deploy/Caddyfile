@@ -1,0 +1,30 @@
+# MD.Viewer 3 — Caddyfile (Layout A: docroot at public/)
+#
+# caddy run --config deploy/Caddyfile
+
+docs.example.com {
+    root * /var/www/docs/public
+    encode zstd gzip
+
+    # Static files first, everything else through the front controller
+    @static path *.css *.js *.woff2 *.svg *.png *.jpg *.jpeg *.gif *.webp *.avif *.ico
+    header @static Cache-Control "public, max-age=2592000"
+
+    handle {
+        try_files {path} /index.php?{query}
+    }
+
+    php_fastcgi unix//run/php/php8.3-fpm.sock {
+        env SCRIPT_FILENAME {file}
+    }
+
+    file_server
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    }
+
+    # Optional: network-restrict the admin panel
+    # @admin path /admin.php
+    # remote_ip @admin 203.0.113.0/24
+}

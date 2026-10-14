@@ -1,0 +1,149 @@
+# HTTP API reference
+
+Three API surfaces, all same-origin:
+
+1. **Public JSON API** — `index.php?api=…` (reader features)
+2. **Admin JSON API** — `admin.php?action=…` (session-authenticated)
+3. **Machine API** — `updater.php?api_key=…&action=…&format=json` (v2-compatible)
+
+Conventions: responses are `application/json; charset=utf-8`, `no-store`,
+`nosniff`; failures carry `{ok: false, error: "…"}` plus a meaningful HTTP
+status; all POSTs require the CSRF token (public: from
+`window.MDV_CONFIG.csrf`; admin: `window.MDV_ADMIN.csrf`).
+
+## Public JSON API
+
+### `GET ?api=search&q=…&limit=50`
+
+Full-text search (requires `FEATURE_SEARCH`).
+
+```json
+{
+  "ok": true, "query": "sanitizer", "took_ms": 3, "total": 2,
+  "results": [
+    {"path": "security.md", "title": "Security model",
+     "snippet": "…DOM-allowlist <mark>sanitizer</mark>…",
+     "score": 380, "modified": 1791590000}
+  ]
+}
+```
+
+Snippets contain escaped text with `<mark>` highlights only.
+
+### `GET ?api=suggest&q=…`
+
+Typeahead for the command palette — documents and headings:
+
+```json
+{"ok": true, "results": [
+  {"path": "docs/api.md", "title": "API", "heading": "Endpoints",
+   "anchor": "endpoints", "kind": "heading"}
+]}
+```
+
+### `GET ?api=toc&file=…` (file optional → home document)
+
+```json
+{"ok": true, "headings": [{"level": 2, "text": "Intro", "anchor": "intro"}]}
+```
+
+### `GET ?api=config`
+
+Runtime configuration mirror of `window.MDV_CONFIG` (features, flags, urls).
+
+### `POST ?api=render`
+
+Renders pasted Markdown with the full engine (clipboard preview). Gated by
+the per-directory `DISABLE_CLIPBOARD` flag.
+
+| Field | Meaning |
+| --- | --- |
+| `markdown` | source text (≤ 4 MB) |
+| `dir` | directory context (relative, validated) |
+
+→ `{ok, html, title, headings, tocHtml, hasMermaid, hasMath, readingMinutes}`
+
+### `POST ?api=save`
+
+Saves pasted Markdown as a file. Gated by `DISABLE_SAVE_CLIPBOARD_TO_FILE`
+(per-directory aware). Fields: `content`, `filename` (must end `.md`,
+whitelist charset), `dir`. → `{ok, path}` or `403/400/413`.
+
+### `POST ?api=upload` (multipart)
+
+Reader upload; gated by `DISABLE_UPLOAD`. Field `file` + `dir`.
+→ `{ok, path}`; collision-safe (`name-1.md`).
+
+## Admin JSON API
+
+All actions require an authenticated session; all POSTs require
+`X-CSRF-Token` (or `_token`). Statuses: `401` unauthorized, `403` CSRF/flag,
+`404`, `409` conflict, `413`, `400`.
+
+| Action | Method | Payload → Result |
+| --- | --- | --- |
+| `login` / `logout` / `setup` | POST | credentials → `{ok, redirect?}` |
+| `file.read` | GET | `path` → `{ok, content, hash, modified}` |
+| `file.write` | POST | `path, content, hash?` → `{ok, path, hash}` (409 on hash mismatch) |
+| `file.create` | POST | `path, content?` → `{ok, path}` (parents auto-created) |
+| `file.rename` | POST | `from, to` → `{ok, path}` |
+| `file.move` | POST | `from, to_dir` → `{ok, path}` |
+| `file.delete` | POST | `path` → soft-delete to trash |
+| `folder.create` / `folder.delete` | POST | `path` (delete requires empty) |
+| `upload.md` / `upload.image` | POST multipart | `file, dir` → `{ok, path|url_path}` |
+| `preview` | POST | `content` → `{ok, html, title}` |
+| `trash.list` / `trash.restore` | GET/POST | `name` |
+| `index.rebuild` / `index.stats` | POST/GET | → `{documents, terms, took_ms}` |
+| `backup.create` | POST | `note?` → `{ok, id, files, bytes}` |
+| `backup.list` / `backup.delete` | GET/POST | `id` |
+| `backup.restore` | POST | `id` (needs `ALLOW_RESTORE`) → `{ok, files, pre_restore}` |
+| `backup.download` | GET | `id` → zip stream |
+| `update.check` | GET | `force=1?` → `{ok, current, latest, newer, notes, url}` |
+| `update.status` | GET | manifest-vs-disk per tracked file |
+| `update.apply` | POST | needs `ALLOW_UPDATE` → `{ok, from, to, replaced, unchanged, backup}` |
+| `settings.set` | POST (JSON) | `{KEY: value, …}` → `{ok, applied[], errors[]}` |
+| `settings.regenerate-key` | POST | → `{ok, api_key}` |
+| `logs.tail` | GET | → `{logs[], audit[]}` |
+| `health.run` | GET | → `{ok, version, checks[]}` |
+| `links.check` | GET | → `{documents, broken_links[], broken_media[], orphans[], took_ms}` |
+| `cache.clear` | POST | → `{ok, removed}` |
+| `theme.save` / `theme.delete` | POST | custom accent CRUD |
+
+## Machine API (v2-compatible)
+
+Credential: `API_KEY` from `.md.ini`, passed as `?api_key=`. JSON only —
+never HTML; PHP notices never leak into the body. `ALLOW_UPDATE` is **not**
+required for the API (the key is the credential), matching v2 semantics.
+
+```
+GET  updater.php?api_key=<key>&action=status&format=json
+GET  updater.php?api_key=<key>&action=conflicts&format=json
+POST updater.php?api_key=<key>&action=install&format=json[&dry_run=1]
+```
+
+Envelope (unchanged from v2):
+
+```json
+{
+  "ok": true, "action": "install", "version": "3.0.0",
+  "steps":  [{"step": "install:release", "status": "ok", "detail": "3.0.0 → 3.1.0, 12 files"}],
+  "files":  [{"path": "src/Core/App.php", "status": "present", "version": "3.0.0"}],
+  "conflicts": [], "errors": []
+}
+```
+
+- `status` — local install state per tracked file (`present | modified |
+  missing`), no network I/O.
+- `conflicts` — files that differ from the shipped manifest (dry-run report;
+  never writes).
+- `install` — verified release apply (POST only; `dry_run=1` stops after the
+  report). HTTP codes: `200`, `400` unknown action, `403` unauthorized,
+  `405` install-without-POST.
+
+## Feeds
+
+- `index.php?page=sitemap` — sitemap 0.9 XML of all documents (`lastmod`).
+- `index.php?page=feed` — RSS 2.0, 30 most recently modified documents with
+  descriptions.
+
+Both honour `SITEMAP_ENABLED` / `RSS_ENABLED` and are cached (1 h / 15 min).

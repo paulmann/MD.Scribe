@@ -1,2 +1,22 @@
 # Локальный индекс RAGRAF — производные данные, не часть проекта
 .ragraf/
+.wiki/
+
+# Runtime state — never commit
+storage/cache/*
+storage/logs/*
+storage/index/*
+storage/state/*
+storage/backups/*
+storage/themes/*
+!storage/**/.htaccess
+.md.ini
+
+# Dev tooling
+tools/frontend/node_modules/
+.phpunit.cache/
+composer.phar
+
+# OS noise
+.DS_Store
+Thumbs.db

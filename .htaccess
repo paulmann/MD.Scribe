@@ -1,0 +1,45 @@
+# MD.Viewer 3.0 — project-root Apache configuration.
+#
+# If your document root is public/, this file is never read — the .htaccess
+# inside public/ applies instead. If your document root IS the project root,
+# these rules protect every internal directory and keep PHP files unexecuted.
+
+Options -Indexes
+
+# Never serve internal resources.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(src|config|storage|templates|tests|tools|vendor|docs|deploy|node_modules)(/|$) - [F,L]
+  RewriteRule (^|/)\. - [F,L]
+</IfModule>
+
+# Belt and braces for hosts without mod_rewrite: deny the sensitive dirs.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+# Deny configuration files everywhere below the root.
+<Files ".md.ini">
+  Require all denied
+</Files>
+
+# Sensible defaults for PHP (ignored when php is not a module).
+<IfModule mod_php.c>
+  php_flag display_errors off
+  php_value session.cookie_httponly 1
+  php_value session.use_only_cookies 1
+</IfModule>
+
+# Compression.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml application/json application/javascript image/svg+xml
+</IfModule>
+
+# Cache static assets aggressively (filenames carry ?v=mtime).
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 30 days"
+  ExpiresByType application/javascript "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>

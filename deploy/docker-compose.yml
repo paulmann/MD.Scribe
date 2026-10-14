@@ -1,0 +1,21 @@
+services:
+  docs:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: mdviewer:3
+    container_name: mdviewer
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Your documents — survives container rebuilds
+      - ../content:/app/content
+      # Cache, logs, backups, search index, custom themes
+      - mdviewer-storage:/app/storage
+    environment:
+      # Convenience only — configuration lives in .md.ini
+      TZ: UTC
+
+volumes:
+  mdviewer-storage:
