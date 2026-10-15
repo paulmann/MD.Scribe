@@ -2,7 +2,7 @@
     "name": "mdscribe/md-scribe",
     "description": "MD.Scribe — secure, self-hosted Markdown documentation viewer and browser with a full admin panel. PHP 8.3, Tailwind CSS, shadcn/ui-style design system, zero CDN dependencies.",
     "type": "project",
-    "license": "MIT",
+    "license": "PolyForm-Noncommercial-1.0.0",
     "keywords": ["markdown", "viewer", "documentation", "php", "tailwind", "shadcn"],
     "require": {
         "php": ">=8.3",
