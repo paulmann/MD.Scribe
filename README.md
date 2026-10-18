@@ -279,7 +279,7 @@ works. Step-by-step: **[docs/upgrade-from-v2.md](docs/upgrade-from-v2.md)**.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+PolyForm Noncommercial 1.0.0 — see [LICENSE](LICENSE).
 Markdown engine: [league/commonmark](https://commonmark.thephpleague.com/) (BSD-3).
 Highlighting: [scrivo/highlight.php](https://github.com/scrivo/highlight.php) (BSD-3, highlight.js port).
 Diagrams: [Mermaid](https://mermaid.js.org/) (MIT). Math: [KaTeX](https://katex.org/) (MIT).
