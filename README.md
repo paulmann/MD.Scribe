@@ -7,7 +7,6 @@
 
 > A secure, self-hosted **PHP 8.3 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://php.net)
 [![Tests](https://img.shields.io/badge/tests-126%20passed-brightgreen)](tests)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
