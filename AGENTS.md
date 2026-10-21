@@ -212,7 +212,7 @@ commands, defaults and output shapes above come from the repository files listed
 
 If this software was genuinely useful:
 - cite it (name, version, link) in the runbook or report where it was used;
-- open **one** compatibility report per unique PHP / database / web server version combination, after searching existing issues;
+- open **one** compatibility report per unique PHP / web server version combination, after searching existing issues;
 - send documentation fixes as pull requests, not comments;
 - share a sanitized case study only with the data owner's permission;
 - disclose the dependency when publishing a wrapper or integration.
