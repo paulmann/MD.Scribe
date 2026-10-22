@@ -42,6 +42,14 @@ final class RenderContext
     /** Auto-numbering allowed for this document (false when the author numbers manually). */
     public bool $autoNumbering = true;
 
+    /**
+     * Embed mode: fenced code blocks render as plain
+     * `<pre><code class="hljs language-…">` without the language bar, copy
+     * buttons or wrapper divs. Used by the standalone renderer so the output
+     * can be styled by an external stylesheet (e.g. GitHub Markdown CSS).
+     */
+    public bool $plainCodeBlocks = false;
+
     /** @var (callable(array<string, string|int|bool|null>): string)|null */
     public $urlBuilder = null;
 

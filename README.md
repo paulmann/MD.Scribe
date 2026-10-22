@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.1.0
+ * Version: 3.2.0
 -->
 
 # MD.Scribe 3
@@ -177,6 +177,33 @@ Per-directory `.md.ini` layering (the v2 `DISABLE_*` mechanism) is preserved:
 HTTP caching: documents and media answer with `ETag`/`Last-Modified` and
 support `304 Not Modified`; rendered HTML is additionally cached server-side
 keyed by source hash × feature fingerprint.
+
+---
+
+## Embedding and CLI rendering
+
+The Markdown pipeline is usable without the viewer: render a README, a release
+note or a CMS block from any PHP caller or shell script, with the same
+CommonMark/GFM support, extensions, highlighting and sanitiser.
+
+```php
+require '/path/to/MD.Scribe/src/bootstrap.php';
+
+$renderer = new \MdViewer\Standalone\Renderer();
+$result = $renderer->renderFile('/srv/repos/ragraf/README.md');
+echo $result->html;                 // embed mode: portable code blocks, no numbering
+```
+
+```bash
+bin/md-scribe-render README.md --html \
+  --base-url="https://ragraf.example.com/" \
+  --css="https://example.com/readme.css" > readme.html
+```
+
+Embed mode emits `<pre><code class="hljs language-…">` and plain headings so a
+GitHub-README stylesheet (`github-markdown-css` + a highlight.js theme) can
+style the page. Full option reference and integration recipes:
+**[docs/standalone-renderer.md](docs/standalone-renderer.md)**.
 
 ---
 

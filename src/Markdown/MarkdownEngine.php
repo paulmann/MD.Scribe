@@ -64,7 +64,7 @@ final class MarkdownEngine
     /**
      * Render a document.
      *
-     * @param array{docDir?: string, docPath?: string, urlBuilder?: callable, mediaUrlBuilder?: callable, fileExists?: callable} $options
+     * @param array{docDir?: string, docPath?: string, urlBuilder?: callable, mediaUrlBuilder?: callable, fileExists?: callable, plainCodeBlocks?: bool} $options
      */
     public function render(string $source, array $options = []): RenderResult
     {
@@ -104,6 +104,7 @@ final class MarkdownEngine
         $context->urlBuilder = $options['urlBuilder'] ?? null;
         $context->mediaUrlBuilder = $options['mediaUrlBuilder'] ?? null;
         $context->fileExists = $options['fileExists'] ?? null;
+        $context->plainCodeBlocks = (bool) ($options['plainCodeBlocks'] ?? false);
         $this->holder->current = $context;
 
         $renderStarted = hrtime(true);

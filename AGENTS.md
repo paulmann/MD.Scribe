@@ -1,9 +1,9 @@
-# AGENTS.md - MD.Scribe 3.1.0
+# AGENTS.md - MD.Scribe 3.2.0
 
 Agent-facing guide: how to install MD.Scribe, run it, and report problems responsibly.
 Human documentation: [README.md](README.md), [docs/](docs/).
 
-> Verified against repository state on 2026-10-22. Version covered: 3.1.0 "Aurora".
+> Verified against repository state on 2026-10-22. Version covered: 3.2.0 "Borealis".
 > Releases checked with `gh release list -R paulmann/MD.Scribe`: one release, tag `v3.1.0`,
 > asset `MD.Scribe-3.1.0.zip`; there is no installer binary, both paths install the tree.
 
@@ -188,15 +188,15 @@ missing `api_key`, `400` for an unknown action, `405` for install without POST. 
 
 ## 9. Sources of truth
 
-- `README.md` - version 3.1.0, requirements, project layout, `.md.ini` sample, URL contract,
-  zero-CDN policy.
+- `README.md` - version 3.2.0, requirements, project layout, `.md.ini` sample, URL contract,
+  zero-CDN policy, embedding/CLI rendering.
 - `docs/installation.md` - layouts A/B/C, first run, permissions, upgrade, verification checklist.
 - `docs/configuration.md` - every `.md.ini` key and default, per-directory layering, PHP settings.
 - `docs/admin-guide.md` - first-run setup, files and editor, backups and trash, updates, health.
 - `docs/http-api.md` - public, admin and machine API surfaces, `dry_run=1`, status codes, envelope.
 - `docs/troubleshooting.md` - the symptoms and fixes in section 7.
 - `docs/development.md` - `composer test`, `composer stan`, `composer check`, release checklist.
-- `src/Core/Version.php` - `VERSION = '3.1.0'`, `CODENAME = 'Aurora'`, `PHP_MIN = '8.3.0'`.
+- `src/Core/Version.php` - `VERSION = '3.2.0'`, `CODENAME = 'Borealis'`, `PHP_MIN = '8.3.0'`.
 - `src/bootstrap.php` - PHP and extension gate, `vendor/autoload.php` requirement, storage setup.
 - `src/Core/Paths.php`, `src/Core/Config.php`, `src/Admin/AdminAuth.php` - `.md.ini` location,
   storage directories, first-run setup rules, login rate limiting.

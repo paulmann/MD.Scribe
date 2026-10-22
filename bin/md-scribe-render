@@ -1,0 +1,162 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * MD.Scribe 3.x — standalone Markdown → HTML renderer (CLI).
+ *
+ * Renders one file (or stdin) through the same pipeline the viewer uses:
+ * CommonMark/GFM, MD.Scribe extensions, GitHub alerts, sanitisation.
+ *
+ * Usage:
+ *   bin/md-scribe-render README.md                  # HTML fragment (embed mode)
+ *   bin/md-scribe-render README.md --html           # complete HTML page
+ *   bin/md-scribe-render README.md --html --css=https://example.com/readme.css
+ *   bin/md-scribe-render README.md --base-url=https://repo.example.com/
+ *   bin/md-scribe-render README.md --json           # RenderResult as JSON
+ *   bin/md-scribe-render - --title="Notes" < notes.md
+ *
+ * Options:
+ *   --html                 full HTML document (otherwise a fragment)
+ *   --json                 RenderResult as JSON (html, headings, title, …)
+ *   --toc                  include the generated table of contents (with --html)
+ *   --title=TEXT           page title for --html (default: document title)
+ *   --base-url=URL         resolve relative links/media against this URL
+ *   --css=URL              stylesheet to link in --html (repeatable)
+ *   --lang=CODE            lang attribute for --html (default: en)
+ *   --viewer-mode          keep viewer chrome (toolbars, numbering)
+ *   -h, --help             show this help
+ *
+ * Exit codes: 0 success; 1 rendering/read error; 2 bad arguments.
+ *
+ * @see docs/standalone-renderer.md
+ */
+
+declare(strict_types=1);
+
+require dirname(__DIR__) . '/src/bootstrap.php';
+
+use MdViewer\Core\Paths;
+use MdViewer\Core\Version;
+use MdViewer\Standalone\Renderer;
+
+Paths::setRoot(dirname(__DIR__));
+
+$args = $argv;
+array_shift($args);
+
+$file = null;
+$html = false;
+$json = false;
+$withToc = false;
+$viewerMode = false;
+$title = null;
+$baseUrl = '';
+$lang = 'en';
+$css = [];
+
+foreach ($args as $arg) {
+    if ($arg === '-h' || $arg === '--help') {
+        $self = $argv[0] ?? 'md-scribe-render';
+        $doc = (string) file_get_contents(__FILE__);
+        if (preg_match('#/\*\*(.*?)\*/#s', $doc, $m) === 1) {
+            echo preg_replace('/^\s*\* ?/m', '', trim($m[1])) . "\n";
+        } else {
+            echo "Usage: {$self} FILE.md [--html] [--json] [--base-url=URL] [--css=URL]\n";
+        }
+        exit(0);
+    }
+    if ($arg === '--html') { $html = true; continue; }
+    if ($arg === '--json') { $json = true; continue; }
+    if ($arg === '--toc') { $withToc = true; continue; }
+    if ($arg === '--viewer-mode') { $viewerMode = true; continue; }
+    if (str_starts_with($arg, '--title=')) { $title = substr($arg, 8); continue; }
+    if (str_starts_with($arg, '--base-url=')) { $baseUrl = substr($arg, 11); continue; }
+    if (str_starts_with($arg, '--lang=')) { $lang = substr($arg, 7); continue; }
+    if (str_starts_with($arg, '--css=')) { $css[] = substr($arg, 6); continue; }
+    if (str_starts_with($arg, '-')) {
+        fwrite(STDERR, "Unknown option: {$arg}\n");
+        exit(2);
+    }
+    if ($file !== null) {
+        fwrite(STDERR, "Only one input file is supported.\n");
+        exit(2);
+    }
+    $file = $arg;
+}
+
+if ($file === null) {
+    fwrite(STDERR, "Usage: md-scribe-render FILE.md [--html] [--json] [--base-url=URL] [--css=URL]\n");
+    exit(2);
+}
+
+$renderer = new Renderer(null, $viewerMode ? [
+    'mdv_feat_AUTO_NUMBERING' => '1',
+    'mdv_feat_AUTO_TOC' => '1',
+    'mdv_feat_FEATURE_DOWNLOAD_BUTTON' => '1',
+    'mdv_feat_FEATURE_DOWNLOAD_ICON' => '1',
+    'mdv_feat_FEATURE_COPY_BUTTON' => '1',
+] : []);
+
+$options = $viewerMode ? ['plainCodeBlocks' => false] : ['plainCodeBlocks' => true];
+if ($baseUrl !== '') {
+    $result = $renderer->renderFileWithBase(
+        $file === '-' ? 'php://stdin' : $file,
+        $baseUrl,
+        $file === '-' ? null : dirname((string) realpath($file)),
+        $options,
+    );
+} else {
+    $result = $renderer->renderFile($file === '-' ? 'php://stdin' : $file, $options);
+}
+
+if ($json) {
+    echo json_encode(
+        $result->toArray() + [
+            'renderer' => 'MD.Scribe/' . Version::VERSION,
+            'standalone' => !$viewerMode,
+        ],
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT,
+    ) . "\n";
+    exit(0);
+}
+
+if (!$html) {
+    echo $result->html . "\n";
+    exit(0);
+}
+
+$pageTitle = $title ?? $result->title ?? basename((string) $file);
+$styles = '';
+foreach ($css as $href) {
+    $styles .= '    <link rel="stylesheet" href="' . htmlspecialchars($href, ENT_QUOTES) . '">' . "\n";
+}
+
+echo '<!DOCTYPE html>' . "\n"
+    . '<html lang="' . htmlspecialchars($lang, ENT_QUOTES) . '">' . "\n"
+    . '<head>' . "\n"
+    . '    <meta charset="utf-8">' . "\n"
+    . '    <meta name="viewport" content="width=device-width, initial-scale=1">' . "\n"
+    . '    <meta name="generator" content="MD.Scribe ' . htmlspecialchars(Version::VERSION, ENT_QUOTES) . ' (standalone)">' . "\n"
+    . '    <title>' . htmlspecialchars($pageTitle, ENT_QUOTES) . '</title>' . "\n"
+    . $styles
+    . '    <style>'
+    . 'body{margin:0;background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}'
+    . '.mdv-page{max-width:980px;margin:0 auto;padding:40px 24px 80px}'
+    . '.mdv-page .markdown-body{box-sizing:border-box}'
+    . '.mdv-back{display:inline-block;margin-bottom:20px;color:#58a6ff;text-decoration:none;font-size:14px}'
+    . '.mdv-back:hover{text-decoration:underline}'
+    . '</style>' . "\n"
+    . '</head>' . "\n"
+    . '<body>' . "\n"
+    . '<main class="mdv-page">' . "\n"
+    . ($file !== '-' && $file !== null
+        ? '    <a class="mdv-back" href="./">← Files / files</a>' . "\n"
+        : '')
+    . '    <article class="markdown-body">' . "\n"
+    . $result->html . "\n"
+    . '    </article>' . "\n"
+    . '</main>' . "\n"
+    . '</body>' . "\n"
+    . '</html>' . "\n";
+
+exit(0);

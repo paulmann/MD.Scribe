@@ -3,6 +3,33 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.2.0 — “Borealis” (2026-10-22)
+
+Embedding release: the rendering pipeline is now usable outside the viewer.
+
+### Added
+
+- **`MdViewer\Standalone\Renderer`** — framework-free renderer for any PHP
+  caller. No front controller, no session, no output buffering:
+  `(new Renderer())->renderFile($path)->html`. Defaults to **embed mode**:
+  portable code blocks without toolbars, no automatic heading numbering, no
+  auto-TOC — the markup a GitHub-README stylesheet expects.
+- **`bin/md-scribe-render` CLI** — renders one file (or stdin) to an HTML
+  fragment, a complete page (`--html`, `--title`, `--css`, `--lang`) or JSON
+  (`--json`); `--base-url` rewrites relative links/media; `--viewer-mode`
+  keeps the viewer chrome. Documented in
+  [docs/standalone-renderer.md](docs/standalone-renderer.md).
+- `MarkdownEngine::render()` option **`plainCodeBlocks`** and the matching
+  `RenderContext::$plainCodeBlocks` flag: fenced code blocks can be emitted as
+  plain `<pre><code class="hljs language-…">` for external stylesheets.
+- PHPUnit coverage for the standalone renderer (embed markup, base-URL link
+  rewriting, viewer-mode regression).
+
+### Changed
+
+- README: new "Embedding and CLI rendering" section.
+- `AGENTS.md` and `docs/` reference version 3.2.0.
+
 ## 3.1.0 — “Aurora” (2026-10-14)
 
 A rename release. The project is published as **MD.Scribe** — same code, same

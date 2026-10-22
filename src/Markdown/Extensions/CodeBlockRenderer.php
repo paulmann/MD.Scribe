@@ -97,6 +97,13 @@ final class CodeBlockRenderer implements NodeRendererInterface
             : htmlspecialchars(CodeHighlighter::label($lang), ENT_QUOTES);
         $langClass = $highlighted['language'] !== '' ? ' language-' . htmlspecialchars($highlighted['language'], ENT_QUOTES) : '';
 
+        // Embed / GitHub-style mode: emit portable markup only — no toolbar,
+        // no icons, no wrapper. An external stylesheet (github-markdown-css,
+        // highlight.js themes) styles it exactly like a README on GitHub.
+        if ($this->holder->current?->plainCodeBlocks === true) {
+            return '<pre><code class="hljs' . $langClass . '">' . $highlighted['html'] . '</code></pre>';
+        }
+
         return '<div class="md-code" data-lang="' . htmlspecialchars($lang, ENT_QUOTES) . '"'
             . ($title !== null ? ' data-code-title="' . htmlspecialchars($title, ENT_QUOTES) . '"' : '') . '>'
             . '<div class="md-code-bar">'

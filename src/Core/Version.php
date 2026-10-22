@@ -10,8 +10,8 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.1.0';
-    public const string CODENAME = 'Aurora';
+    public const string VERSION = '3.2.0';
+    public const string CODENAME = 'Borealis';
     public const string PHP_MIN = '8.3.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';
     public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Scribe/main';
