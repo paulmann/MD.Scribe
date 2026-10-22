@@ -24,6 +24,7 @@
  *   --css=URL              stylesheet to link in --html (repeatable)
  *   --lang=CODE            lang attribute for --html (default: en)
  *   --viewer-mode          keep viewer chrome (toolbars, numbering)
+ *   --strip-badges         drop a README badge plate (shields/CI badges) in memory
  *   -h, --help             show this help
  *
  * Exit codes: 0 success; 1 rendering/read error; 2 bad arguments.
@@ -49,6 +50,7 @@ $html = false;
 $json = false;
 $withToc = false;
 $viewerMode = false;
+$stripBadges = false;
 $title = null;
 $baseUrl = '';
 $lang = 'en';
@@ -69,6 +71,7 @@ foreach ($args as $arg) {
     if ($arg === '--json') { $json = true; continue; }
     if ($arg === '--toc') { $withToc = true; continue; }
     if ($arg === '--viewer-mode') { $viewerMode = true; continue; }
+    if ($arg === '--strip-badges') { $stripBadges = true; continue; }
     if (str_starts_with($arg, '--title=')) { $title = substr($arg, 8); continue; }
     if (str_starts_with($arg, '--base-url=')) { $baseUrl = substr($arg, 11); continue; }
     if (str_starts_with($arg, '--lang=')) { $lang = substr($arg, 7); continue; }
@@ -100,6 +103,7 @@ $renderer = new Renderer(null, $viewerMode ? [
 $options = $viewerMode
     ? ['plainCodeBlocks' => false, 'embedMode' => false]
     : ['plainCodeBlocks' => true, 'embedMode' => true];
+$options['stripBadges'] = $stripBadges;
 if ($baseUrl !== '') {
     $result = $renderer->renderFileWithBase(
         $file === '-' ? 'php://stdin' : $file,

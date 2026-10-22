@@ -38,4 +38,22 @@ final class RendererTest extends TestCase
         self::assertStringContainsString('md-code-bar', $result->html);
         self::assertStringContainsString('md-h-num', $result->html);
     }
+
+    public function testStripBadgesRemovesPlateInMemoryOnly(): void
+    {
+        $md = "# Title\n\n"
+            . "[![PHP](https://img.shields.io/badge/PHP-8.3-blue)](https://php.net)\n"
+            . "[![Tests](https://github.com/acme/repo/actions/workflows/ci.yml/badge.svg)](https://github.com/acme/repo)\n"
+            . "\nText after badges.\n";
+        $path = $this->writeContent('README.md', $md);
+
+        $result = (new Renderer())->renderFile($path, ['stripBadges' => true]);
+
+        self::assertStringNotContainsString('img.shields.io', $result->html);
+        self::assertStringNotContainsString('badge.svg', $result->html);
+        self::assertStringContainsString('Title', $result->html);
+        self::assertStringContainsString('Text after badges.', $result->html);
+        // The original file must remain untouched.
+        self::assertStringContainsString('img.shields.io', (string) file_get_contents($path));
+    }
 }

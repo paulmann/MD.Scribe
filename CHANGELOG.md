@@ -3,6 +3,20 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.2.1 — “Borealis” (2026-10-22)
+
+### Added
+
+- **`MdViewer\Standalone\BadgeStripper`** and the `stripBadges` renderer option:
+  remove a README badge plate (img.shields.io, badgen, codecov, CI badges…) in
+  memory before rendering. The source file on disk is never modified.
+- `bin/md-scribe-render --strip-badges` exposes the same behaviour for CLI
+  embedding (documented in `docs/standalone-renderer.md`).
+
+### Fixed
+
+- Standalone HTML pages now use the neutral `← Files` back label.
+
 ## 3.2.0 — “Borealis” (2026-10-22)
 
 Embedding release: the rendering pipeline is now usable outside the viewer.

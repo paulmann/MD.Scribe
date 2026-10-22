@@ -65,7 +65,9 @@ final class Renderer
      * Render one Markdown file from disk.
      *
      * Options are the MarkdownEngine options (`docDir`, `docPath`, `urlBuilder`,
-     * `mediaUrlBuilder`, `fileExists`) plus `plainCodeBlocks` (default true here).
+     * `mediaUrlBuilder`, `fileExists`) plus `plainCodeBlocks` (default true here),
+     * `embedMode` (default true) and `stripBadges` (remove a README badge plate
+     * in memory; the file on disk is never touched).
      *
      * @param array<string,mixed> $options
      */
@@ -80,6 +82,11 @@ final class Renderer
         $options['plainCodeBlocks'] ??= true;
         $options['embedMode'] ??= true;
 
+        if (($options['stripBadges'] ?? false) === true) {
+            $source = BadgeStripper::strip($source);
+        }
+        unset($options['stripBadges']);
+
         return $this->engine->render($source, $options);
     }
 
@@ -92,6 +99,11 @@ final class Renderer
     {
         $options['plainCodeBlocks'] ??= true;
         $options['embedMode'] ??= true;
+
+        if (($options['stripBadges'] ?? false) === true) {
+            $source = BadgeStripper::strip($source);
+        }
+        unset($options['stripBadges']);
 
         return $this->engine->render($source, $options);
     }

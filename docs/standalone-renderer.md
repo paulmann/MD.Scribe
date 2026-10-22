@@ -88,6 +88,7 @@ cat notes.md | bin/md-scribe-render - --title="Notes" --html
 | `--css=URL` | stylesheet to link in `--html`; repeatable |
 | `--lang=CODE` | `lang` attribute (default `en`) |
 | `--viewer-mode` | keep viewer code blocks (toolbar, copy buttons, numbering) |
+| `--strip-badges` | remove a README badge plate (shields/CI badges) in memory; the file is not modified |
 
 Exit codes: `0` success, `1` read/render error, `2` bad arguments.
 
@@ -97,6 +98,25 @@ The same as the application: PHP ≥ 8.3 with `mbstring`, `dom`, `libxml`,
 `json`, and `vendor/autoload.php` (`composer install --no-dev` or a release
 archive). The CLI needs no web server, no session and no writable `storage/`
 for rendering — only `.md.ini` readability; if it is missing, defaults apply.
+
+## Badge plates
+
+README files often start with a row of shields/CI badges. Those images are
+served by third-party badge hosts and are frequently useless — or blocked — in
+an embedded page. `stripBadges` (CLI: `--strip-badges`) removes badge-only
+lines before rendering:
+
+```php
+$result = $renderer->renderFile('/srv/repos/x/README.md', ['stripBadges' => true]);
+```
+
+```bash
+bin/md-scribe-render README.md --html --strip-badges
+```
+
+The cleanup happens in memory: the source file on disk is never rewritten. Only
+lines that contain nothing but badge markup/links are dropped; prose that
+happens to mention a badge URL is kept.
 
 ## Styling
 
