@@ -152,7 +152,7 @@ echo '<!DOCTYPE html>' . "\n"
     . '<body>' . "\n"
     . '<main class="mdv-page">' . "\n"
     . ($file !== '-' && $file !== null
-        ? '    <a class="mdv-back" href="./">← Files / files</a>' . "\n"
+        ? '    <a class="mdv-back" href="./">← Files</a>' . "\n"
         : '')
     . '    <article class="markdown-body">' . "\n"
     . $result->html . "\n"
