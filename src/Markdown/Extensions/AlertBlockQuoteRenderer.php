@@ -58,6 +58,11 @@ final class AlertBlockQuoteRenderer implements NodeRendererInterface
 
         $inner = $childRenderer->renderNodes($node->children());
 
+        if ($this->holder->current?->embedMode ?? false) {
+            // External page: no viewer-only copy control, just a quote.
+            return '<blockquote class="md-quote">' . $inner . '</blockquote>';
+        }
+
         return '<blockquote class="md-quote">'
             . '<button type="button" class="md-copy-btn md-quote-copy" data-copy-type="quote" aria-label="Copy quote" title="Copy quote">'
             . Icons::svg('text-quote', 'h-3.5 w-3.5') . '</button>'

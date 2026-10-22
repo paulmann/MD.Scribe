@@ -22,6 +22,9 @@ Embedding release: the rendering pipeline is now usable outside the viewer.
 - `MarkdownEngine::render()` option **`plainCodeBlocks`** and the matching
   `RenderContext::$plainCodeBlocks` flag: fenced code blocks can be emitted as
   plain `<pre><code class="hljs language-…">` for external stylesheets.
+- **`RenderContext::$embedMode`** (`embedMode` render option): suppresses
+  viewer-only chrome in embedded output — external-link icons, quote copy
+  buttons and glossary tooltips.
 - PHPUnit coverage for the standalone renderer (embed markup, base-URL link
   rewriting, viewer-mode regression).
 

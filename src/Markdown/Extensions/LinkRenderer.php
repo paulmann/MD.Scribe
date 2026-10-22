@@ -48,7 +48,7 @@ final class LinkRenderer implements NodeRendererInterface
             $external = $scheme === 'http' || $scheme === 'https';
             $class = 'md-link' . ($external ? ' md-link-ext' : '');
             $attrs = $external ? ' target="_blank" rel="noopener noreferrer"' : '';
-            if ($external) {
+            if ($external && !($this->holder->current?->embedMode ?? false)) {
                 $inner .= Icons::svg('external-link', 'h-3 w-3 ml-0.5 inline-block align-baseline md-ext-icon');
             }
 

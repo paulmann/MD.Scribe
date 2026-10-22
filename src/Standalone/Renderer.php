@@ -41,6 +41,7 @@ final class Renderer
     private const array EMBED_FEATURES = [
         'mdv_feat_AUTO_NUMBERING' => '0',
         'mdv_feat_AUTO_TOC' => '0',
+        'mdv_feat_GLOSSARY_TOOLTIPS' => '0',
         'mdv_feat_FEATURE_DOWNLOAD_BUTTON' => '0',
         'mdv_feat_FEATURE_DOWNLOAD_ICON' => '0',
         'mdv_feat_FEATURE_COPY_BUTTON' => '0',
@@ -77,6 +78,7 @@ final class Renderer
 
         $options['docPath'] ??= basename($path);
         $options['plainCodeBlocks'] ??= true;
+        $options['embedMode'] ??= true;
 
         return $this->engine->render($source, $options);
     }
@@ -89,6 +91,7 @@ final class Renderer
     public function renderString(string $source, array $options = []): RenderResult
     {
         $options['plainCodeBlocks'] ??= true;
+        $options['embedMode'] ??= true;
 
         return $this->engine->render($source, $options);
     }

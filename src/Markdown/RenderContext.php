@@ -50,6 +50,13 @@ final class RenderContext
      */
     public bool $plainCodeBlocks = false;
 
+    /**
+     * Embed mode: suppress viewer-only chrome that has no meaning in an
+     * external page — external-link icons, quote copy buttons, glossary
+     * tooltips. Set by MdViewer\Standalone\Renderer.
+     */
+    public bool $embedMode = false;
+
     /** @var (callable(array<string, string|int|bool|null>): string)|null */
     public $urlBuilder = null;
 

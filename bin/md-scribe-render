@@ -97,7 +97,9 @@ $renderer = new Renderer(null, $viewerMode ? [
     'mdv_feat_FEATURE_COPY_BUTTON' => '1',
 ] : []);
 
-$options = $viewerMode ? ['plainCodeBlocks' => false] : ['plainCodeBlocks' => true];
+$options = $viewerMode
+    ? ['plainCodeBlocks' => false, 'embedMode' => false]
+    : ['plainCodeBlocks' => true, 'embedMode' => true];
 if ($baseUrl !== '') {
     $result = $renderer->renderFileWithBase(
         $file === '-' ? 'php://stdin' : $file,
