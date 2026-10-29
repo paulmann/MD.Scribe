@@ -1,9 +1,9 @@
-# AGENTS.md - MD.Scribe 3.2.1
+# AGENTS.md - MD.Scribe 3.2.2
 
 Agent-facing guide: how to install MD.Scribe, run it, and report problems responsibly.
 Human documentation: [README.md](README.md), [docs/](docs/).
 
-> Verified against repository state on 2026-10-22. Version covered: 3.2.1 "Borealis".
+> Verified against repository state on 2026-10-29. Version covered: 3.2.2 "Borealis".
 > Releases checked with `gh release list -R paulmann/MD.Scribe`: one release, tag `v3.1.0`,
 > asset `MD.Scribe-3.1.0.zip`; there is no installer binary, both paths install the tree.
 
@@ -71,6 +71,10 @@ curl -fsS "http://127.0.0.1:8080/" -o /dev/null
 curl -fsS "http://127.0.0.1:8080/index.php?page=browser" -o /dev/null
 curl -fsS "http://127.0.0.1:8080/index.php?api=search&q=markdown" | grep -q '"ok":true'
 curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080/index.php?file=nope.md" | grep -q 404
+# machine render API (key from .md.ini, generated on the first request)
+curl -fsS -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
+  -d '{"content":"# t\n\n- a\n","format":"auto"}' \
+  "http://127.0.0.1:8080/index.php?api=render" | grep -q '"ok":true'
 ```
 
 Expected: the three requests return 200; the search body starts with `{"ok":true,...}`; a missing
@@ -127,13 +131,20 @@ chmod 640 .md.ini
 5. Read-only update state (machine API, no network I/O): `GET /updater.php?api_key=$API_KEY&action=status&format=json`
    (also `action=conflicts`), where `$API_KEY` is the `API_KEY` value from `.md.ini`. The plain
    `updater.php` landing page does perform a release check over the network.
-6. Backup before changing content: admin action `backup.create` (session and CSRF token; snapshot
+6. Machine render API (3.2.2, stateless): `POST /index.php?api=render` with `X-Api-Key: $API_KEY`
+   (or `?api_key=$API_KEY`) and JSON `{"content": "# …", "format": "auto|markdown|html|text"}` →
+   `{ok: true, data: {format, html, bytes, elapsed_ms, renderer}}`, where `html` is an HTML
+   **fragment** (Markdown → standalone renderer in embed mode; html → sanitizer; text → `<pre>`).
+   Statuses: `401 bad_key`, `422 empty_content`, `422 bad_format`, `413 too_large` (> 256 KiB).
+   A `POST ?api=render` **without** a key keeps the legacy session+CSRF clipboard contract.
+7. Backup before changing content: admin action `backup.create` (session and CSRF token; snapshot
    of the content root plus `.md.ini`), listed and downloadable in "Backups & trash". Restores
    need `ALLOW_RESTORE = true` and always write a `...-pre-restore` snapshot first.
 
 **Output / exit codes:** HTML pages use HTTP status only. The machine API always answers JSON with
 the envelope `{ok, action, version, steps, files, conflicts, errors}` and uses `403` for a bad or
-missing `api_key`, `400` for an unknown action, `405` for install without POST. Admin JSON statuses:
+missing `api_key`, `400` for an unknown action, `405` for install without POST. The machine render
+API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON statuses:
 `401` unauthorized, `403` CSRF token or flag, `404`, `409` conflict, `413` too large, `400` bad.
 
 ## 6. Safety and rollback
@@ -188,15 +199,16 @@ missing `api_key`, `400` for an unknown action, `405` for install without POST. 
 
 ## 9. Sources of truth
 
-- `README.md` - version 3.2.1, requirements, project layout, `.md.ini` sample, URL contract,
+- `README.md` - version 3.2.2, requirements, project layout, `.md.ini` sample, URL contract,
   zero-CDN policy, embedding/CLI rendering.
 - `docs/installation.md` - layouts A/B/C, first run, permissions, upgrade, verification checklist.
 - `docs/configuration.md` - every `.md.ini` key and default, per-directory layering, PHP settings.
 - `docs/admin-guide.md` - first-run setup, files and editor, backups and trash, updates, health.
-- `docs/http-api.md` - public, admin and machine API surfaces, `dry_run=1`, status codes, envelope.
+- `docs/http-api.md` - public, admin and machine API surfaces, the machine render API
+  (`POST ?api=render`), `dry_run=1`, status codes, envelope.
 - `docs/troubleshooting.md` - the symptoms and fixes in section 7.
 - `docs/development.md` - `composer test`, `composer stan`, `composer check`, release checklist.
-- `src/Core/Version.php` - `VERSION = '3.2.1'`, `CODENAME = 'Borealis'`, `PHP_MIN = '8.3.0'`.
+- `src/Core/Version.php` - `VERSION = '3.2.2'`, `CODENAME = 'Borealis'`, `PHP_MIN = '8.3.0'`.
 - `src/bootstrap.php` - PHP and extension gate, `vendor/autoload.php` requirement, storage setup.
 - `src/Core/Paths.php`, `src/Core/Config.php`, `src/Admin/AdminAuth.php` - `.md.ini` location,
   storage directories, first-run setup rules, login rate limiting.

@@ -3,6 +3,41 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.2.2 — “Borealis” (2026-10-29)
+
+Machine rendering over HTTP. The standalone renderer already worked from PHP
+and the shell; an application that stores Markdown answers needed it as a
+service — no session, no CSRF token, no browser.
+
+### Added
+
+- **Machine render endpoint** — `POST /index.php?api=render`, authenticated
+  with the `API_KEY` from `.md.ini` in the `X-Api-Key` header (or `?api_key=`).
+  JSON body `{"content": "…", "format": "auto"}`; answer
+  `{ok: true, data: {format, html, bytes, elapsed_ms, renderer}}`.
+  - `format=markdown` → `MdViewer\Standalone\Renderer` in embed mode: a bare
+    HTML fragment (no `<html>`/`<head>`/`<body>`, no viewer chrome).
+  - `format=html` → the DOM allowlist `HtmlSanitizer` — `<script>`, `on*`
+    handlers and `javascript:` URLs are removed.
+  - `format=text` → `<pre>` with `htmlspecialchars()`.
+  - `format=auto` (default) → HTML when the payload starts with a block-level
+    tag from the allowlist, Markdown when any explicit Markdown construct is
+    present (ties go to Markdown), plain text otherwise.
+  - Statuses: `401 bad_key`, `422 empty_content`, `422 bad_format`,
+    `413 too_large` (content above 256 KiB).
+  - Stateless: no session, no CSRF, nothing written to disk. The legacy
+    session+CSRF `POST ?api=render` (clipboard preview) is unchanged and still
+    handles every request that carries no key.
+- **`MdViewer\Api\{RenderService, RenderedFragment, RenderError, ApiKeyAuth}`**
+  — the validation and rendering half of the endpoint, usable without HTTP.
+- PHPUnit coverage for the three formats, sanitisation, auto-detection and the
+  status codes.
+
+### Changed
+
+- `docs/http-api.md` — new section documenting the machine render API.
+- `AGENTS.md`, `README`-adjacent docs reference version 3.2.2.
+
 ## 3.2.1 — “Borealis” (2026-10-22)
 
 ### Added

@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.2.1
+ * Version: 3.2.2
 -->
 
 # MD.Scribe 3
@@ -8,7 +8,7 @@
 > A secure, self-hosted **PHP 8.3 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-126%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-153%20passed-brightgreen)](tests)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
 [![CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
 
@@ -204,6 +204,18 @@ Embed mode emits `<pre><code class="hljs language-…">` and plain headings so a
 GitHub-README stylesheet (`github-markdown-css` + a highlight.js theme) can
 style the page. Full option reference and integration recipes:
 **[docs/standalone-renderer.md](docs/standalone-renderer.md)**.
+
+Since 3.2.2 the same pipeline is also a stateless HTTP endpoint for other
+applications — Markdown in, HTML fragment out, key-authenticated, no session:
+
+```bash
+curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
+  -d '{"content": "# Title\n\n- one\n- two", "format": "auto"}' \
+  https://docs.example.com/index.php?api=render
+```
+
+`format` accepts `auto` (default), `markdown`, `html` (sanitised) and `text`
+(`<pre>`). Contract, limits and statuses: **[docs/http-api.md](docs/http-api.md)**.
 
 ---
 

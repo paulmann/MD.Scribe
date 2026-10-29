@@ -10,7 +10,7 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.2.1';
+    public const string VERSION = '3.2.2';
     public const string CODENAME = 'Borealis';
     public const string PHP_MIN = '8.3.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';

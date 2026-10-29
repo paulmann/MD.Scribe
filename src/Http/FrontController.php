@@ -13,6 +13,7 @@
  *   ?page=browser|themes|settings|search|sitemap|feed
  *   ?api=search|suggest         JSON endpoints (GET)
  *   ?api=render|save|upload     JSON endpoints (POST, CSRF-protected)
+ *   ?api=render                 machine render API (POST, `X-Api-Key`/`api_key`)
  *   (no params)                 home document, else file browser
  */
 
@@ -21,12 +22,14 @@ declare(strict_types=1);
 namespace MdViewer\Http;
 
 use MdViewer\Core\App;
+use MdViewer\Core\Request;
 use MdViewer\Core\Response;
 use MdViewer\Http\Controllers\ApiController;
 use MdViewer\Http\Controllers\BrowserController;
 use MdViewer\Http\Controllers\FeedController;
 use MdViewer\Http\Controllers\MediaController;
 use MdViewer\Http\Controllers\PageController;
+use MdViewer\Http\Controllers\RenderApiController;
 use MdViewer\Http\Controllers\ViewerController;
 
 final class FrontController
@@ -45,6 +48,14 @@ final class FrontController
             if ($api === '') {
                 return Response::json(['ok' => false, 'error' => 'missing action'], 400);
             }
+
+            // Machine render API: key-authenticated, stateless, no CSRF. Only
+            // taken when a key is actually supplied — without one the request
+            // keeps the legacy session+CSRF contract below.
+            if ($api === 'render' && self::hasApiKey($req)) {
+                return (new RenderApiController($this->app->config))->handle($req);
+            }
+
             if (!$this->app->csrf->validate($req)) {
                 return Response::json(['ok' => false, 'error' => 'csrf'], 403);
             }
@@ -113,5 +124,16 @@ final class FrontController
         }
 
         return (new BrowserController($this->app))->show($req->query('dir') ?? '');
+    }
+
+    /** True when the request carries a machine-API credential at all. */
+    private static function hasApiKey(Request $req): bool
+    {
+        $header = $req->header('X-Api-Key');
+        if ($header !== null && $header !== '') {
+            return true;
+        }
+
+        return $req->hasQuery('api_key');
     }
 }
