@@ -14,7 +14,10 @@
  *    `<pre><code class="hljs …">` blocks, no toolbars, no numbering, no TOC;
  *  - `html` → `MdViewer\Markdown\HtmlSanitizer` with its strict allowlist
  *    (`<script>`, `on*` handlers, `javascript:` URLs are removed);
- *  - `text` → `<pre>` + `htmlspecialchars()` so the text is shown verbatim;
+ *  - `text` → `<div class="md-text">` + `htmlspecialchars()`: the text is shown
+ *    verbatim but WRAPS. A `<pre>` was wrong for stored answers — it does not
+ *    break long lines, so a paragraph turned into a horizontal scrollbar
+ *    (portal request, 29.10.2026);
  *  - `auto` → HTML when the content starts with a known block tag, Markdown
  *    when any explicit Markdown signal is present (ties go to Markdown),
  *    plain text otherwise.
@@ -178,10 +181,20 @@ final class RenderService
         return $this->sanitizer()->sanitize($content);
     }
 
-    /** Plain text → escaped `<pre>` block (the only wrapping the API adds). */
+    /**
+     * Plain text → escaped block that WRAPS.
+     *
+     * `<pre>` shows the text verbatim but never wraps (pre-wrap is a CSS decision
+     * a separate consumer may not make), so a long stored answer produced a
+     * horizontal scrollbar. The inline style keeps the wrapping behaviour wherever
+     * the fragment lands — a portal modal, an HTML e-mail — without asking every
+     * consumer to ship a stylesheet.
+     */
     private function renderText(string $content): string
     {
-        return '<pre>' . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+        return '<div class="md-text" style="white-space:pre-wrap;overflow-wrap:anywhere">'
+            . htmlspecialchars($content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            . '</div>';
     }
 
     private function renderer(): Renderer

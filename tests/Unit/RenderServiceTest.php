@@ -59,13 +59,14 @@ final class RenderServiceTest extends TestCase
         self::assertStringNotContainsString('javascript:', $fragment->html);
     }
 
-    public function testTextIsEscapedInsidePre(): void
+    public function testTextIsEscapedInsideWrappingBlock(): void
     {
         $fragment = $this->service->process('просто текст <b>не тег</b>', 'text');
 
         self::assertSame('text', $fragment->format);
-        self::assertStringStartsWith('<pre>', $fragment->html);
-        self::assertStringEndsWith('</pre>', $fragment->html);
+        self::assertStringStartsWith('<div class="md-text"', $fragment->html);
+        self::assertStringEndsWith('</div>', $fragment->html);
+        self::assertStringContainsString('white-space:pre-wrap', $fragment->html);
         self::assertStringContainsString('&lt;b&gt;не тег&lt;/b&gt;', $fragment->html);
         self::assertStringNotContainsString('<b>', $fragment->html);
     }
@@ -95,7 +96,7 @@ final class RenderServiceTest extends TestCase
         $fragment = $this->service->process('просто текст без разметки');
 
         self::assertSame('text', $fragment->format);
-        self::assertStringStartsWith('<pre>', $fragment->html);
+        self::assertStringStartsWith('<div class="md-text"', $fragment->html);
     }
 
     public function testAutoPrefersHtmlWhenTheFirstTagIsABlockTag(): void

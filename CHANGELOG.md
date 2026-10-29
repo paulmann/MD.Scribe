@@ -3,6 +3,18 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.2.3 — “Clarity” (2026-10-29)
+
+### Changed
+
+- **`format=text` now wraps.** Plain text is emitted as
+  `<div class="md-text" style="white-space:pre-wrap;overflow-wrap:anywhere">`
+  instead of `<pre>`: verbatim text was right, but `<pre>` does not break
+  long lines, so a stored answer turned the portal's «Ответ AI» window
+  into a horizontal scrollbar. The inline style keeps the wrapping in any
+  consumer (portal modal, HTML e-mail) without a stylesheet.
+- Tests and `docs/http-api.md` follow the new fragment shape.
+
 ## 3.2.2 — “Borealis” (2026-10-29)
 
 Machine rendering over HTTP. The standalone renderer already worked from PHP

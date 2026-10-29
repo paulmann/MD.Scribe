@@ -215,7 +215,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 ```
 
 `format` accepts `auto` (default), `markdown`, `html` (sanitised) and `text`
-(`<pre>`). Contract, limits and statuses: **[docs/http-api.md](docs/http-api.md)**.
+(wrapped verbatim text in `<div class="md-text">`). Contract, limits and statuses: **[docs/http-api.md](docs/http-api.md)**.
 
 ---
 

@@ -36,7 +36,7 @@ header wins when both are present.
 | --- | --- | --- |
 | `markdown` | `MdViewer\Standalone\Renderer`, embed mode | bare HTML fragment: `<h1>`, `<ul>`, `<table>`, `<pre><code class="hljs language-php">`; no `<html>`/`<head>`/`<body>`, no toolbars, no heading numbering, no auto-TOC |
 | `html` | `MdViewer\Markdown\HtmlSanitizer` (DOM allowlist) | cleaned fragment: `<script>`, `on*` handlers, `javascript:` URLs and non-allowlisted tags are removed |
-| `text` | `<pre>` + `htmlspecialchars()` | the payload shown verbatim, `<` and `&` escaped |
+| `text` | `<div class="md-text">` + `htmlspecialchars()` | the payload shown verbatim and wrapped (`white-space:pre-wrap` inline), `<` and `&` escaped |
 | `auto` (default) | detection | HTML when the content starts with a block tag from `p, div, h1–h6, ul, ol, table, pre, blockquote, section, article, details, hr, br, img, a, span, code, strong, em`; Markdown when any explicit Markdown construct is present (`#` heading, `-`/`*`/`1.` list, ```` ``` ```` fence, `>` quote, `**bold**`, `[text](url)`, `\|…\|` table, `---`); ties go to Markdown; plain text otherwise |
 
 Success — `200`:

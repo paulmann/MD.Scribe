@@ -134,7 +134,7 @@ chmod 640 .md.ini
 6. Machine render API (3.2.2, stateless): `POST /index.php?api=render` with `X-Api-Key: $API_KEY`
    (or `?api_key=$API_KEY`) and JSON `{"content": "# …", "format": "auto|markdown|html|text"}` →
    `{ok: true, data: {format, html, bytes, elapsed_ms, renderer}}`, where `html` is an HTML
-   **fragment** (Markdown → standalone renderer in embed mode; html → sanitizer; text → `<pre>`).
+   **fragment** (Markdown → standalone renderer in embed mode; html → sanitizer; text → wrapped `<div class="md-text">`).
    Statuses: `401 bad_key`, `422 empty_content`, `422 bad_format`, `413 too_large` (> 256 KiB).
    A `POST ?api=render` **without** a key keeps the legacy session+CSRF clipboard contract.
 7. Backup before changing content: admin action `backup.create` (session and CSRF token; snapshot

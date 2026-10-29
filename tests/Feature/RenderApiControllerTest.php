@@ -60,7 +60,7 @@ final class RenderApiControllerTest extends TestCase
         self::assertStringNotContainsString('<script', $body['data']['html']);
     }
 
-    public function testTextFormatIsWrappedInPre(): void
+    public function testTextFormatIsWrappedInWrappingBlock(): void
     {
         $response = $this->handle(
             ['api' => 'render'],
@@ -71,6 +71,8 @@ final class RenderApiControllerTest extends TestCase
         $body = $this->decode($response);
         self::assertSame(200, $response->status());
         self::assertSame('text', $body['data']['format']);
+        self::assertStringStartsWith('<div class="md-text"', $body['data']['html']);
+        self::assertStringContainsString('white-space:pre-wrap', $body['data']['html']);
         self::assertStringContainsString('&lt;b&gt;', $body['data']['html']);
     }
 
