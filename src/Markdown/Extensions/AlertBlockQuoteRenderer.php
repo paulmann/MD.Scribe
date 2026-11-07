@@ -58,7 +58,7 @@ final class AlertBlockQuoteRenderer implements NodeRendererInterface
 
         $inner = $childRenderer->renderNodes($node->children());
 
-        if ($this->holder->current?->embedMode ?? false) {
+        if ($this->holder->current->embedMode ?? false) {
             // External page: no viewer-only copy control, just a quote.
             return '<blockquote class="md-quote">' . $inner . '</blockquote>';
         }
