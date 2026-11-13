@@ -10,7 +10,7 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.4.3';
+    public const string VERSION = '3.4.4';
     public const string CODENAME = 'Keystone';
     public const string PHP_MIN = '8.5.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';

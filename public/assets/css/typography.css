@@ -308,14 +308,20 @@
 
 /* ── Tables ────────────────────────────────────────────────────────────── */
 .md-body .md-table-wrap { margin: 1.5em 0; overflow-x: auto; border-radius: calc(var(--radius) - 2px); border: 1px solid var(--border); }
-.md-body table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 0.885em; }
+.md-body table {
+  border-collapse: collapse; width: 100%; min-width: 100%; font-size: 0.885em;
+  /* Tables fit the reading column and wrap their text. Drawing them at their
+     unwrapped content width made anything longer than the column clip at the
+     edge with no hint that it scrolls (fixed in 3.4.4). */
+  table-layout: auto;
+}
 .md-body thead th {
   background: color-mix(in oklch, var(--muted) 65%, transparent);
-  font-weight: 650; text-align: left; white-space: nowrap;
+  font-weight: 650; text-align: left; white-space: normal; overflow-wrap: break-word;
   border-bottom: 2px solid var(--border);
   padding: 0.6em 0.95em;
 }
-.md-body tbody td { padding: 0.55em 0.95em; border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent); vertical-align: top; }
+.md-body tbody td { padding: 0.55em 0.95em; border-bottom: 1px solid color-mix(in oklch, var(--border) 55%, transparent); vertical-align: top; overflow-wrap: break-word; }
 .md-body tbody tr:last-child td { border-bottom: 0; }
 .md-body tbody tr { transition: background-color 0.1s; }
 .md-body tbody tr:hover { background: color-mix(in oklch, var(--accent) 45%, transparent); }

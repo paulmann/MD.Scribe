@@ -46,6 +46,10 @@ ignores `.htaccess` — switch to the docroot-at-`public/` layout immediately.
 | Math shows raw TeX | `FEATURE_MATH` off, or KaTeX assets blocked (check CSP/404s for `/assets/vendor/katex/`) |
 | No syntax colors | Highlighting is server-side; a cached pre-3.0 render? Clear caches (Admin → Tools) |
 | Chinese/Japanese search misses | Index is CJK-bigram based — ensure the index rebuilt after adding docs (Admin → Search index) |
+| Whole site unstyled — huge logo on a black page | A `types { }` block replaced the inherited MIME table, so every `.css`/`.js` is served as `application/octet-stream`. Remove the `types` block and map the one extension with `location ~ \.webmanifest$ { default_type application/manifest+json; }` — see `docs/installation.md` |
+| Manifest served as `application/octet-stream` | `.webmanifest` is not in `mime.types`; use the per-location `default_type` above, never a `types` block |
+| Wide table cut off at the column edge | Stylesheets before 3.4.4 drew tables at `width: max-content` with `nowrap` headers; upgrade — tables now fit the reading column and wrap |
+| Anchor links to non-Latin headings do nothing | Before 3.3.0 the sanitiser dropped ids starting with a non-ASCII letter; upgrade |
 
 ## Uploads
 

@@ -3,6 +3,30 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.4.4 — “Keystone” (2026-11-13)
+
+### Fixed
+
+- **Wide tables were clipped at the column edge.** `.md-body table` was drawn at
+  `width: max-content` with `white-space: nowrap` in the header row, so a table
+  wider than the reading column ran past it and its text was cut off mid-word —
+  with no visible hint that it scrolls. Tables now take the column width and wrap
+  their cells (`overflow-wrap: break-word`), so nothing is clipped; genuinely wide
+  tables still scroll inside `.md-table-wrap`. Measured on a real document before
+  and after with a 1440px window: 896px table in a 736px column, then 736px.
+- **The documented MIME fix could break a whole vhost.** `docs/installation.md`
+  advised `types { application/manifest+json webmanifest; }`, but a `types` block
+  *replaces* the inherited MIME table (and Debian's `mime.types` is itself wrapped
+  in one, so re-including it there is a syntax error). Applying that advice on
+  nginx 1.24 served every `.css`, `.js` and `.svg` as `application/octet-stream`
+  and the site rendered unstyled. The guide now maps only the extension
+  (`location ~ \.webmanifest$ { default_type … }`), explains why `types` must not
+  be used, and adds a four-command check of the whole MIME table rather than of the
+  one new entry.
+- `docs/troubleshooting.md` gained the three symptoms that were found this way:
+  an unstyled vhost after a MIME change, a manifest served as octet-stream, and a
+  clipped wide table.
+
 ## 3.4.3 — “Keystone” (2026-11-13)
 
 ### Documented

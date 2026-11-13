@@ -153,23 +153,42 @@ reach the updater through the shipped `public/updater.php` bridge.
 
 ## Static MIME type for the PWA manifest
 
-`public/manifest.webmanifest` needs `application/manifest+json`. Most servers do
+`public/manifest.webmanifest` wants `application/manifest+json`. Most servers do
 not know the extension and fall back to `application/octet-stream`; browsers keep
-working, but the manifest is reported as a bad type in devtools and some do reject
-it. One line per server:
+working, but the manifest is reported as a bad type in devtools.
+
+**Do not fix this with a `types { }` block.** A `types` block *replaces* the whole
+inherited MIME table (and on Debian/Ubuntu `mime.types` is itself wrapped in one,
+so re-including it inside a `types` block is a syntax error). The result is that
+every `.css`, `.js` and `.svg` on the host turns into `application/octet-stream`
+and the site renders unstyled — measured on nginx 1.24, this is exactly what
+happens.
+
+Map the single extension instead, so nothing else is touched:
 
 ```nginx
 # nginx, inside the server block (or a vhost resource file)
-types { application/manifest+json webmanifest; }
+location ~ \.webmanifest$ {
+    default_type application/manifest+json;
+    try_files $uri =404;
+}
 ```
 
 ```apache
-# Apache
+# Apache — AddType only adds a mapping and is safe
 AddType application/manifest+json .webmanifest
 ```
 
 The service worker (`public/sw.js`) needs no change: `application/javascript` is
 already associated with `.js`, and its scope is the directory it is served from.
+
+After any MIME change, check the whole table, not just the new entry:
+
+```bash
+for f in assets/css/app.css assets/js/app.js assets/img/favicon.svg manifest.webmanifest; do
+  printf '%s  ' "$f"; curl -s -o /dev/null -w '%{content_type}\n' "https://host/$f"
+done
+```
 
 ## Verification checklist
 
