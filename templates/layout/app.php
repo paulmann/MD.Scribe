@@ -44,7 +44,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <meta property="og:type" content="article">
 <link rel="icon" href="<?= e($req->assetUrl('assets/img/favicon.svg')) ?>" type="image/svg+xml">
 <?php if ($app->config->bool('PWA_ENABLED')): ?>
-<link rel="manifest" href="<?= e($req->assetUrl('manifest.webmanifest')) ?>">
+<link rel="manifest" href="<?= e($req->url(['api' => 'manifest'])) ?>">
 <meta name="theme-color" content="#0b62c4">
 <?php endif; ?>
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/app.css')) ?>">

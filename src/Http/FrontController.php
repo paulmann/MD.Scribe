@@ -91,6 +91,7 @@ final class FrontController
                 'suggest' => $controller->suggest(),
                 'toc' => $controller->toc(),
                 'config' => $controller->publicConfig(),
+                'manifest' => $controller->manifest(),
                 default => Response::json(['ok' => false, 'error' => 'unknown action'], 400),
             };
         }

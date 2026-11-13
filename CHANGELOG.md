@@ -5,6 +5,14 @@ versions follow semver.
 
 ## 3.4.4 — “Keystone” (2026-11-13)
 
+### Changed
+
+- **The web app manifest is served by the application** (`?api=manifest`) with
+  `Content-Type: application/manifest+json`, and the layout links to that instead
+  of the static `public/manifest.webmanifest`. The media type no longer depends on
+  the host knowing the extension, so no server configuration is needed at all. The
+  static file still ships as a fallback.
+
 ### Fixed
 
 - **Wide tables were clipped at the column edge.** `.md-body table` was drawn at

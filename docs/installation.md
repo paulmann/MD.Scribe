@@ -151,23 +151,25 @@ controller derives its web prefix from `SCRIPT_NAME`, so assets, links and the
 service-worker scope stay inside `/mdscribe/`. Document-root-at-`public/` installs
 reach the updater through the shipped `public/updater.php` bridge.
 
-## Static MIME type for the PWA manifest
+## The PWA manifest needs no server configuration
 
-`public/manifest.webmanifest` wants `application/manifest+json`. Most servers do
-not know the extension and fall back to `application/octet-stream`; browsers keep
-working, but the manifest is reported as a bad type in devtools.
+`?api=manifest` (served by the application) returns the web app manifest with
+`Content-Type: application/manifest+json`, and that is what the layout links to.
+The media type is set by PHP, so it is correct on every host without touching
+`mime.types`.
 
-**Do not fix this with a `types { }` block.** A `types` block *replaces* the whole
-inherited MIME table (and on Debian/Ubuntu `mime.types` is itself wrapped in one,
-so re-including it inside a `types` block is a syntax error). The result is that
-every `.css`, `.js` and `.svg` on the host turns into `application/octet-stream`
-and the site renders unstyled — measured on nginx 1.24, this is exactly what
-happens.
+`public/manifest.webmanifest` still ships as a static fallback for deployments
+that prefer a file, and *it* is the one that arrives as
+`application/octet-stream` on a server that does not know the extension.
 
-Map the single extension instead, so nothing else is touched:
+**Do not "fix" that with a `types { }` block.** A `types` block *replaces* the
+whole inherited MIME table (and on Debian/Ubuntu `mime.types` is itself wrapped in
+one, so re-including it inside a `types` block is a syntax error). Measured on
+nginx 1.24: every `.css`, `.js` and `.svg` on the host becomes
+`application/octet-stream` and the site renders unstyled. If you really need the
+static file typed, map the single extension:
 
 ```nginx
-# nginx, inside the server block (or a vhost resource file)
 location ~ \.webmanifest$ {
     default_type application/manifest+json;
     try_files $uri =404;
@@ -175,17 +177,13 @@ location ~ \.webmanifest$ {
 ```
 
 ```apache
-# Apache — AddType only adds a mapping and is safe
 AddType application/manifest+json .webmanifest
 ```
-
-The service worker (`public/sw.js`) needs no change: `application/javascript` is
-already associated with `.js`, and its scope is the directory it is served from.
 
 After any MIME change, check the whole table, not just the new entry:
 
 ```bash
-for f in assets/css/app.css assets/js/app.js assets/img/favicon.svg manifest.webmanifest; do
+for f in assets/css/app.css assets/js/app.js assets/img/favicon.svg; do
   printf '%s  ' "$f"; curl -s -o /dev/null -w '%{content_type}\n' "https://host/$f"
 done
 ```

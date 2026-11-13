@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace MdViewer\Http\Controllers;
 
 use MdViewer\Core\App;
+use MdViewer\Core\Manifest;
 use MdViewer\Core\Response;
 use MdViewer\Files\MarkdownRepository;
 use MdViewer\Markdown\ExcerptService;
@@ -45,6 +46,32 @@ final class ApiController
         $result = $this->app->search()->search($q, $limit);
 
         return Response::json(['ok' => true] + $result);
+    }
+
+    /**
+     * Web app manifest (`?api=manifest`).
+     *
+     * Served here rather than as a static file so the response carries
+     * `application/manifest+json` whatever the web server knows about the
+     * extension — and so an install never depends on a `types { }` block, which
+     * would replace the whole MIME table (see docs/installation.md).
+     */
+    public function manifest(): Response
+    {
+        $req = $this->app->request;
+
+        // Scope and start_url stay inside the directory the entry script lives in,
+        // which is what makes a sub-directory install (`/docs/`) work.
+        $document = Manifest::build(
+            $this->app->config->str('SITE_NAME'),
+            $req->assetBase(),
+            $req->assetUrl('assets/img/favicon.svg'),
+        );
+
+        return Response::manifest((string) json_encode(
+            $document,
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE,
+        ));
     }
 
     public function suggest(): Response

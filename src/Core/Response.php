@@ -55,6 +55,21 @@ final class Response
         return new self($xml, $status, ['Content-Type' => 'application/xml; charset=utf-8']);
     }
 
+    /**
+     * Web app manifest. The type is set here, not by the server: `.webmanifest`
+     * is missing from most mime.types tables, and the usual server-side fix (a
+     * `types { }` block) replaces the whole table and breaks every css/js on the
+     * host. Serving it from PHP makes the correct type independent of the host.
+     */
+    public static function manifest(string $json, int $status = 200): self
+    {
+        return new self($json, $status, [
+            'Content-Type' => 'application/manifest+json; charset=utf-8',
+            'Cache-Control' => 'public, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public static function redirect(string $to, int $status = 302): self
     {
         return new self('', $status, ['Location' => $to, 'Cache-Control' => 'no-store']);
