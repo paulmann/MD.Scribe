@@ -10,9 +10,9 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.3.0';
-    public const string CODENAME = 'Lattice';
-    public const string PHP_MIN = '8.3.0';
+    public const string VERSION = '3.4.0';
+    public const string CODENAME = 'Keystone';
+    public const string PHP_MIN = '8.5.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';
     public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Scribe/main';
     public const string API_BASE = 'https://api.github.com/repos/paulmann/MD.Scribe';

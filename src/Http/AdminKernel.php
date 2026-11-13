@@ -25,6 +25,7 @@ use MdViewer\Core\Paths;
 use MdViewer\Core\Response;
 use MdViewer\Core\Version;
 use MdViewer\Files\BacklinkIndex;
+use MdViewer\Files\DocumentTemplates;
 use MdViewer\Files\FileManager;
 use MdViewer\Files\MarkdownRepository;
 use MdViewer\Files\RevisionService;
@@ -185,7 +186,7 @@ final class AdminKernel
                     (string) ($req->post('content') ?? "# New document\n"),
                     $actor,
                 )),
-                'file.rename' => $this->json($fm->rename((string) ($req->post('from') ?? ''), (string) ($req->post('to') ?? ''), $actor)),
+                'file.createFromTemplate' => $this->createFromTemplate($actor),                'file.rename' => $this->json($fm->rename((string) ($req->post('from') ?? ''), (string) ($req->post('to') ?? ''), $actor)),
                 'file.move' => $this->json($fm->move((string) ($req->post('from') ?? ''), (string) ($req->post('to_dir') ?? ''), $actor)),
                 'file.delete' => $this->json($fm->delete((string) ($req->post('path') ?? ''), $actor)),
                 'folder.create' => $this->json($fm->createFolder((string) ($req->post('path') ?? ''), $actor)),
@@ -302,6 +303,40 @@ final class AdminKernel
         }
 
         return $this->json($fm->uploadImage($file, (string) ($this->app->request->post('dir') ?? ''), $actor));
+    }
+
+    private function createFromTemplate(string $actor): Response
+    {
+        $req = $this->app->request;
+        $id = (string) ($req->post('template') ?? '');
+        $title = trim((string) ($req->post('title') ?? ''));
+        $dir = trim(str_replace('\\', '/', (string) ($req->post('dir') ?? '')), '/');
+
+        if (DocumentTemplates::get($id) === null) {
+            return Response::json(['ok' => false, 'error' => 'Unknown template.'], 400);
+        }
+        if ($title === '' || mb_strlen($title) > DocumentTemplates::MAX_TITLE_LENGTH) {
+            return Response::json(['ok' => false, 'error' => 'A title of 1–200 characters is required.'], 400);
+        }
+
+        $content = DocumentTemplates::render($id, $title);
+        if ($content === null) {
+            return Response::json(['ok' => false, 'error' => 'Unknown template.'], 400);
+        }
+
+        $name = DocumentTemplates::slug($title) . '.md';
+        $path = $dir === '' ? $name : $dir . '/' . $name;
+        if ($this->app->repo()->resolve($path) !== null) {
+            return Response::json(['ok' => false, 'error' => 'A document with that name already exists.'], 409);
+        }
+
+        $result = $this->app->fileManager()->write($path, $content, $actor);
+        if (($result['ok'] ?? false) === true) {
+            $this->app->audit->record('content.create_from_template', $actor, ['path' => $path, 'template' => $id]);
+            $result['editor_url'] = $this->app->request->url(['page' => 'editor', 'file' => $path]);
+        }
+
+        return $this->json($result);
     }
 
     private function revisionRead(): Response
@@ -497,7 +532,7 @@ final class AdminKernel
         ];
         $data = match ($page) {
             'dashboard' => $this->dashboardData(),
-            'files' => ['tree' => $this->app->fileManager()->tree()],
+            'files' => ['tree' => $this->app->fileManager()->tree(), 'templates' => DocumentTemplates::all()],
             'editor' => ['openFile' => (string) ($this->app->request->query('file') ?? ''), 'tree' => $this->app->fileManager()->tree()],
             'index' => ['stats' => $this->app->search()->stats()],
             'backups' => [

@@ -27,12 +27,90 @@ $fmt = static function (int $bytes): string {
     <input id="md-fm-filter" class="md-input" type="search" placeholder="Filter files…" aria-label="Filter files">
   </div>
   <div class="ml-auto flex flex-wrap gap-2">
-    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="mkdir"><?= Icons::svg('folder-plus', 'h-3.5 w-3.5') ?>New folder</button>
-    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="create"><?= Icons::svg('file-plus', 'h-3.5 w-3.5') ?>New document</button>
-    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="upload-image"><?= Icons::svg('image-plus', 'h-3.5 w-3.5') ?>Upload image</button>
-    <button type="button" class="md-btn md-btn-primary md-btn-sm" data-fm-action="upload-md"><?= Icons::svg('upload', 'h-3.5 w-3.5') ?>Upload .md</button>
+    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="mkdir"><?= Icons::svg('folder', 'h-3.5 w-3.5') ?>New folder</button>
+    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="create"><?= Icons::svg('file-text', 'h-3.5 w-3.5') ?>New document</button>
+    <button type="button" class="md-btn md-btn-outline md-btn-sm" data-fm-action="upload-image"><?= Icons::svg('upload', 'h-3.5 w-3.5') ?>Upload image</button>
+    <button type="button" class="md-btn md-btn-primary md-btn-sm" data-fm-action="upload-md"><?= Icons::svg('file-up', 'h-3.5 w-3.5') ?>Upload .md</button>
   </div>
 </div>
+
+<?php $templateList = is_array($templates ?? null) ? $templates : []; ?>
+<?php if ($templateList !== []): ?>
+<details class="md-card mb-4">
+  <summary class="md-card-header cursor-pointer select-none">
+    <h2 class="md-card-title"><?= Icons::svg('file-text', 'h-4 w-4 text-primary') ?>New from template</h2>
+    <span class="ml-auto text-xs text-muted-foreground">Five skeletons — ADR, meeting notes, how-to, reference, blank</span>
+  </summary>
+  <div class="md-card-body grid items-end gap-3 text-sm sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]">
+    <label class="flex flex-col gap-1">
+      <span class="text-xs text-muted-foreground">Template</span>
+      <select id="md-tpl-id" class="md-input">
+        <?php foreach ($templateList as $templateId => $template): ?>
+        <option value="<?= e((string) $templateId) ?>"><?= e($template['label']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-xs text-muted-foreground">Title</span>
+      <input id="md-tpl-title" class="md-input" type="text" maxlength="200" placeholder="e.g. Backup restore drill">
+    </label>
+    <button type="button" class="md-btn md-btn-primary md-btn-sm" id="md-tpl-create"><?= Icons::svg('plus', 'h-3.5 w-3.5') ?>Create</button>
+    <p class="text-xs text-muted-foreground sm:col-span-3" id="md-tpl-desc"></p>
+  </div>
+</details>
+<script nonce="<?= e($app->nonce()) ?>">
+document.addEventListener('DOMContentLoaded', function () {
+  var select = document.getElementById('md-tpl-id');
+  var title = document.getElementById('md-tpl-title');
+  var button = document.getElementById('md-tpl-create');
+  var desc = document.getElementById('md-tpl-desc');
+  if (!select || !title || !button) return;
+
+  var descriptions = <?= json_encode(array_map(static fn (array $t): string => (string) $t['description'], $templateList), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+  function syncDescription() { if (desc) { desc.textContent = descriptions[select.value] || ''; } }
+  select.addEventListener('change', syncDescription);
+  syncDescription();
+
+  async function create() {
+    var config = window.MDV_ADMIN || {};
+    var body = new URLSearchParams({
+      template: select.value,
+      title: title.value,
+      dir: '',
+      _token: config.csrf || ''
+    });
+    button.disabled = true;
+    try {
+      var response = await fetch(config.scriptUrl + '?action=file.createFromTemplate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRF-Token': config.csrf || '',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString(),
+        credentials: 'same-origin'
+      });
+      var data = await response.json().catch(function () { return null; });
+      if (!response.ok || !data || data.ok !== true) {
+        window.alert((data && data.error) || 'Create failed.');
+        button.disabled = false;
+        return;
+      }
+      window.location.href = data.editor_url || (config.scriptUrl + '?page=files');
+    } catch (error) {
+      window.alert(error.message);
+      button.disabled = false;
+    }
+  }
+
+  button.addEventListener('click', create);
+  title.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') { event.preventDefault(); create(); }
+  });
+});
+</script>
+<?php endif; ?>
 
 <div class="md-card overflow-hidden">
   <div class="overflow-x-auto">

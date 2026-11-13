@@ -3,6 +3,58 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.4.0 — “Keystone” (2026-11-13)
+
+PHP 8.3 and 8.4 are dropped; the platform is **PHP 8.5** (verified on 8.5.12).
+The updater becomes installable again, the editor gains a toolbar and templates,
+search learns operators, and the viewer can be installed as an offline app.
+
+### Changed
+
+- **PHP requirement raised to 8.5.** The bootstrap gate, `composer.json` and the
+  CI matrix no longer accept 8.3 or 8.4. Any 8.5.x patch release is accepted so a
+  host on the 8.5 line is not bricked by a patch-level floor; 8.5.12 is the
+  version the project is verified on.
+- **Licence is MIT** (was PolyForm Noncommercial 1.0.0). Commercial and private
+  use, modification and redistribution are allowed with the notice kept.
+- **The self-updater installs the release archive, not a branch tarball.**
+  `apply()` downloads the `MD.Scribe-<version>.zip` asset of the latest release,
+  refuses archives with unsafe paths, verifies every file against the manifest
+  embedded in the archive, backs up what it replaces and refuses the whole update
+  on the first mismatch. A branch tarball can never satisfy the manifest because
+  it does not contain `vendor/` — that was the reason every update failed.
+  `check()` now reports `archive` and `installable`, and the panel disables the
+  apply button when the release carries no archive.
+- `config/manifest.json` is regenerated for the release (it had been frozen at
+  3.1.0, so `status()` reported every later file as `modified`).
+
+### Added
+
+- **Search operators**: `tag:`, `path:` and quoted values (`tag:"release notes"`),
+  combinable with free text (`deploy tag:ops path:runbooks/`). Documents carry
+  their tags in the search index, so a filter needs no second lookup; an unknown
+  `word:` stays prose instead of silently dropping the word.
+- **Document templates**: five built-in skeletons (blank, ADR, meeting notes,
+  how-to, reference) with a **New from template** panel on the admin Files page.
+  A title becomes a path-safe slug, an existing document is refused with `409`,
+  and the new file opens in the editor.
+- **Editor toolbar**: bold, italic, inline code, link, wikilink, list, alert and
+  table insertions at the cursor (Ctrl/⌘+B and +I too), wired through a CSP-nonce
+  script so nothing has to be rebuilt.
+- **Offline reading (PWA)**: `public/manifest.webmanifest` plus `public/sw.js` —
+  assets are cache-first, documents are network-first with the last read copy as
+  the fallback, and JSON APIs are never cached. Toggle: `PWA_ENABLED`.
+- Admin action `file.createFromTemplate`; the toolbar buttons are text glyphs
+  because the generated icon map has no `bold`, `italic`, `link` or `table`.
+
+### Fixed
+
+- Admin and editor buttons referenced icon names that do not exist in the
+  generated map (`file-plus`, `folder-plus`, `image-plus`), so they rendered as
+  the fallback warning triangle.
+- `docs/development.md` now documents why `bin/md-scribe-render` sits outside
+  PHPStan and the CI lint step, and what that costs.
+
 ## 3.3.0 — “Lattice” (2026-11-13)
 
 A knowledge-base release: documents can link to each other by name, the

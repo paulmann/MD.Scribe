@@ -10,7 +10,7 @@ Two interfaces, one engine:
 
 | Interface | Use it from |
 | --- | --- |
-| `MdViewer\Standalone\Renderer` (PHP class) | any PHP 8.3+ code with the MD.Scribe tree and `vendor/` available |
+| `MdViewer\Standalone\Renderer` (PHP class) | any PHP 8.5+ code with the MD.Scribe tree and `vendor/` available |
 | `bin/md-scribe-render` (CLI) | shell scripts, cron jobs, static-site generators |
 
 Both produce the same HTML as the viewer — CommonMark 0.31 + GFM tables,
@@ -94,7 +94,7 @@ Exit codes: `0` success, `1` read/render error, `2` bad arguments.
 
 ## Requirements
 
-The same as the application: PHP ≥ 8.3 with `mbstring`, `dom`, `libxml`,
+The same as the application: PHP ≥ 8.5 with `mbstring`, `dom`, `libxml`,
 `json`, and `vendor/autoload.php` (`composer install --no-dev` or a release
 archive). The CLI needs no web server, no session and no writable `storage/`
 for rendering — only `.md.ini` readability; if it is missing, defaults apply.

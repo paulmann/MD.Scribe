@@ -53,13 +53,14 @@ final class HealthCheck
 
     private function phpVersion(): array
     {
-        $future = PHP_VERSION_ID >= 80500;
-
+        // The bootstrap gate has already refused anything below the minimum, so
+        // this check reports the fact instead of re-testing it — a branch here
+        // is provably dead for the analyser and only adds noise.
         return $this->check(
             'php',
             'PHP version',
             'ok',
-            PHP_VERSION . ($future ? ' — PHP 8.5 ready' : ' — meets the 8.3 minimum'),
+            PHP_VERSION . ' — meets the ' . MDSCRIBE_PHP_MIN . ' minimum',
         );
     }
 

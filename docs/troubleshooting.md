@@ -67,7 +67,7 @@ ignores `.htaccess` — switch to the docroot-at-`public/` layout immediately.
 
 | Symptom | Fix |
 | --- | --- |
-| “phar extension required” | `php -m | grep phar`; install/enable `php8.3-phar`… hmm, phar is compiled-in by default — if missing, rebuild PHP with `--enable-phar` or update manually |
+| “The PHP zip extension is required” | `php -m | grep zip`; install `php8.5-zip` (Debian/Ubuntu) or the matching package for your build. Backups and the self-updater both use it |
 | “Integrity check failed for X” | Release archive did not match its manifest — refused by design; retry later or update from a fresh archive manually |
 | Update button missing | `ALLOW_UPDATE = false` → enable in `.md.ini` |
 | After a bad update | `updater.php?restore=latest` (needs `ALLOW_RESTORE = true`) or restore an `app-*` backup from Admin → Backups |

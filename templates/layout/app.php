@@ -43,6 +43,10 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <meta property="og:description" content="<?= e($pageDescription ?? '') ?>">
 <meta property="og:type" content="article">
 <link rel="icon" href="<?= e($req->assetUrl('assets/img/favicon.svg')) ?>" type="image/svg+xml">
+<?php if ($app->config->bool('PWA_ENABLED')): ?>
+<link rel="manifest" href="<?= e($req->assetUrl('manifest.webmanifest')) ?>">
+<meta name="theme-color" content="#0b62c4">
+<?php endif; ?>
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/app.css')) ?>">
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/themes.css')) ?>">
 <link rel="stylesheet" href="<?= e($app->tpl->asset('css/typography.css')) ?>">
@@ -234,6 +238,17 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
 <ol id="md-toasts" class="md-toaster" aria-live="polite" aria-label="Notifications"></ol>
 
 <script nonce="<?= e($nonce) ?>">window.MDV_CONFIG = <?= json_encode($jsConfig ?? [], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+<?php if ($app->config->bool('PWA_ENABLED')): ?>
+<script nonce="<?= e($nonce) ?>">
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker
+      .register('<?= e($req->assetUrl('sw.js')) ?>')
+      .catch(function () { /* offline reading is optional: a failure changes nothing */ });
+  });
+}
+</script>
+<?php endif; ?>
 <script src="<?= e($app->tpl->asset('js/app.js')) ?>" defer></script>
 <?php if (!empty($extraScripts ?? [])): foreach ($extraScripts as $script): ?>
 <script src="<?= e($script) ?>" defer></script>

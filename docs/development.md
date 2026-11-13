@@ -69,7 +69,7 @@ database (`db/emoji.json`).
 ## Backend tooling
 
 ```bash
-composer test             # PHPUnit (126 tests)
+composer test             # PHPUnit (201 tests)
 composer stan             # PHPStan level 6 (strict types everywhere)
 composer check            # both
 php tools/build-manifest.php   # regenerate config/manifest.json (release step)
@@ -83,20 +83,42 @@ flags) have dedicated regression tests, including the historic v2 bugs
 
 ## Release checklist
 
-1. Bump `src/Core/Version.php` (`VERSION`).
+1. Bump `src/Core/Version.php` (`VERSION`, `CODENAME`).
 2. `cd tools/frontend && node build.mjs --vendor` — refresh assets.
-3. `php tools/build-themes.php` (runs inside build.mjs).
-4. `composer install --no-dev --optimize-autoloader` — slim vendor for shipping.
-5. `composer check` (with dev deps) — must be green.
-6. `php tools/build-manifest.php` — regenerate `config/manifest.json`
-   (runtime deps only; dev packages are excluded automatically).
-7. Update `CHANGELOG.md` and README badges.
-8. Tag + publish; the release archive should contain everything except
-   `storage/*` contents, `tools/frontend/node_modules` and `.md.ini`.
+3. `composer check` (with dev deps) — must be green, plus
+   `pwsh -File tools/Invoke-ProjectDoctrine.ps1` (baseline: 0 errors, 1 warning).
+4. Build the release tree in a clean copy of the tag: `composer install --no-dev
+   --optimize-autoloader` — the archive ships `vendor/` so an install needs no
+   Composer on the host.
+5. `php tools/build-manifest.php` **in that same tree** and copy the resulting
+   `config/manifest.json` back into the repository: the updater verifies every
+   file in the archive against the manifest embedded in it, and refuses the whole
+   update on the first mismatch.
+6. Zip the tree (everything except `storage/*` contents,
+   `tools/frontend/node_modules` and `.md.ini`) as `MD.Scribe-<version>.zip`.
+7. Update `CHANGELOG.md` and the README badges; commit.
+8. Tag `v<version>`, create the GitHub **release** and attach the archive — the
+   updater downloads the release asset, not the branch tarball, because a branch
+   tarball never contains `vendor/`.
+
+### Code outside static analysis
+
+`bin/md-scribe-render` (the standalone CLI renderer) is not in PHPStan's `paths`
+and not in the CI lint list. That is a deliberate exclusion with a price:
+
+- it is a user-facing entry point that runs outside the request lifecycle, so it
+  was kept out of the analysis of `src` + the web entry scripts;
+- the price is paid by hand — run `php -l bin/md-scribe-render` before editing it
+  and a smoke run after (`bin/md-scribe-render --html README.md > /tmp/out.html`);
+- the doctrine checker does not cover it either, so a syntax error there reaches
+  a release and only fails at runtime.
+
+Everything else — `src`, `public`, `templates`, `tools`, `tests` and the three
+root scripts — is linted in CI, and `src` is analysed at level 6.
 
 ## Coding standards
 
-- `declare(strict_types=1)` in every file; PHP 8.3 features welcome
+- `declare(strict_types=1)` in every file; PHP 8.5 features welcome
   (typed class constants, readonly promotion, `#[\Override]` where apt,
   enums for closed sets, `json_validate()`).
 - PSR-12-ish formatting; PSR-4 namespaces under `MdViewer\`.

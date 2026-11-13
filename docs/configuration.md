@@ -64,6 +64,7 @@ everyone (shown as <kbd>locked</kbd> in the UI).
 | `FEATURE_COMMAND_PALETTE` | true | Ctrl+K palette |
 | `FEATURE_LIGHTBOX` | true | Click-to-zoom images |
 | `FEATURE_READING_PROGRESS` | true | Header progress bar |
+| `PWA_ENABLED` | true | Web manifest + service worker for offline reading |
 
 ## Content & uploads
 

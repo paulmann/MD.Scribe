@@ -1,4 +1,4 @@
-# Project context: MD.Scribe 3.3.0 «Lattice»
+# Project context: MD.Scribe 3.4.0 «Keystone»
 
 Deep reference for an agent working on this repository. Read `AGENTS.md` first;
 read the code before asserting anything. Everything here was verified against
@@ -16,7 +16,7 @@ revisions, self-updater, health checks, audit trail, static export).
 
 - **No database, no framework, no server-side Node, no build step on the host.**
   Every document is a file; every cache is a JSON file under `storage/`.
-- **Deployment shape:** PHP >= 8.3 with `mbstring`, `dom`, `libxml`, `json`
+- **Deployment shape:** PHP >= 8.5 with `mbstring`, `dom`, `libxml`, `json`
   (`src/bootstrap.php` refuses to boot otherwise). Docroot is either `public/`
   (recommended) or the project root, where root shims (`index.php`, `md.php`,
   `updater.php`) keep the v2 URL contract.
@@ -202,12 +202,14 @@ If the PHP user differs from the deploy user, the first symptom is
   runtime vendor files). The updater reads the *archive's own* manifest and
   refuses the entire update on the first hash mismatch
   (`src/Admin/UpdateService.php:221-233`).
-- **Known broken state:** the committed manifest is still 3.1.0 while the code
-  is 3.3.0, and `apply()` downloads the `main` branch tarball, which never
-  contains `vendor/` (gitignored). Both facts independently make
-  `update.apply` fail until a release regenerates the manifest **and** the
-  distribution question (vendor in the archive) is settled. Do not present the
-  updater as working without re-measuring this.
+- **How an update works (3.4.0):** `apply()` downloads the `.zip` asset of the
+  latest release, refuses entries with unsafe paths, verifies every file against
+  the manifest embedded in the archive and refuses the whole update on the first
+  mismatch. The archive ships `vendor/`, which is why a branch tarball can never
+  satisfy the manifest. `check()` reports `archive` and `installable`.
+- **The manifest is regenerated at release time**, in a tree that has
+  `composer install --no-dev` applied, and committed. Until that step runs the
+  doctrine checker warns that the manifest is behind the code.
 - Tags exist for v3.1.0, v3.2.0, v3.2.1; the only GitHub release is v3.1.0
   (measured 2026-11-13 with `gh release list`). CI does not run on tags.
 
@@ -226,7 +228,7 @@ PHPStan analyses `src` + the five entry scripts only — `bin/`, `tools/` and
 `templates/` are outside it. CI lints `src public templates tools tests` and the
 three root scripts, but **not** `bin/md-scribe-render`.
 
-Baseline at 3.3.0 on Windows (PHP 8.5.0): PHPStan clean; PHPUnit 188 tests, all
+Baseline at 3.4.0 on Windows (PHP 8.5.0): PHPStan clean; PHPUnit 201 tests, all
 green. Until 3.3.0 one assertion in `PathValidatorTest` compared a native Windows
 path with a `/`-separated literal and failed on Windows only — a test-portability
 defect that has since been fixed.

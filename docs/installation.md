@@ -8,7 +8,7 @@ PHP runs and pointing a web server at it.
 
 | Component | Required | Notes |
 | --- | --- | --- |
-| PHP | **8.3+** (8.4 / 8.5 supported) | `mbstring`, `dom`, `libxml`, `json` |
+| PHP | **8.5+** (verified on 8.5.12) | `mbstring`, `dom`, `libxml`, `json` |
 | PHP (recommended) | `curl`, `phar`, `zip`, `opcache` | updater, backup archives, performance |
 | Web server | any | Apache, nginx, Caddy, LiteSpeed, `php -S` |
 | Disk | ~15 MB | app + vendored assets |
@@ -43,7 +43,7 @@ server {
 
     location ~ \.php$ {
         include fastcgi_params;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
 
@@ -65,7 +65,7 @@ rewrite (`try_files` equivalent), compression and cache headers. Required:
 ```caddy
 docs.example.com {
     root * /var/www/docs/public
-    php_fastcgi unix//run/php/php8.3-fpm.sock
+    php_fastcgi unix//run/php/php8.5-fpm.sock
     try_files {path} /index.php?{query}
     file_server
     encode zstd gzip

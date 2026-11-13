@@ -24,7 +24,7 @@ use MdViewer\Markdown\ExcerptService;
 
 final class SearchIndex
 {
-    private const int INDEX_VERSION = 1;
+    private const int INDEX_VERSION = 2;
     private const int MAX_TERMS_PER_DOC = 400;
     private const int SNIPPET_RADIUS = 110;
 
@@ -53,7 +53,9 @@ final class SearchIndex
     /**
      * Search the corpus.
      *
-     * @return array{query: string, took_ms: int, total: int, results: list<array{path: string, title: string, snippet: string, score: int, modified: int}>}
+     * Free text plus `tag:` and `path:` filters (see parseQuery).
+     *
+     * @return array{query: string, took_ms: int, total: int, results: list<array{path: string, title: string, snippet: string, score: int, modified: int}>, filters: array{tags: list<string>, path: ?string}}
      */
     public function search(string $query, int $limit = 50): array
     {
@@ -63,32 +65,44 @@ final class SearchIndex
         $docs = $index['docs'] ?? [];
         $inverted = $index['inverted'] ?? [];
 
-        $terms = self::tokenize($query);
-        if ($terms === []) {
-            return ['query' => $query, 'took_ms' => 0, 'total' => 0, 'results' => []];
+        $parsed = self::parseQuery($query);
+        $terms = $parsed['terms'];
+        $filters = ['tags' => $parsed['tags'], 'path' => $parsed['path']];
+
+        if ($terms === [] && $parsed['tags'] === [] && $parsed['path'] === null) {
+            return ['query' => $query, 'took_ms' => 0, 'total' => 0, 'results' => [], 'filters' => $filters];
         }
 
         $scores = [];
-        foreach ($terms as $term) {
-            foreach ($inverted[$term] ?? [] as $docId => $weight) {
-                $scores[$docId] = ($scores[$docId] ?? 0) + (int) $weight;
-            }
-        }
-        // AND-preference: documents matching every term rank above partial ones.
-        $termCount = count($terms);
-        foreach ($scores as $docId => $score) {
-            $matches = 0;
+        if ($terms !== []) {
             foreach ($terms as $term) {
-                if (isset($inverted[$term][$docId])) {
-                    $matches++;
+                foreach ($inverted[$term] ?? [] as $docId => $weight) {
+                    $scores[$docId] = ($scores[$docId] ?? 0) + (int) $weight;
                 }
             }
-            if ($matches === $termCount && $termCount > 1) {
-                $scores[$docId] = (int) $score * 3;
-            } elseif ($matches < $termCount) {
-                $scores[$docId] = (int) ((int) $score * $matches / $termCount);
+            // AND-preference: documents matching every term rank above partial ones.
+            $termCount = count($terms);
+            foreach ($scores as $docId => $score) {
+                $matches = 0;
+                foreach ($terms as $term) {
+                    if (isset($inverted[$term][$docId])) {
+                        $matches++;
+                    }
+                }
+                if ($matches === $termCount && $termCount > 1) {
+                    $scores[$docId] = (int) $score * 3;
+                } elseif ($matches < $termCount) {
+                    $scores[$docId] = (int) ((int) $score * $matches / $termCount);
+                }
+            }
+        } else {
+            // Filter-only query: every document is a candidate.
+            foreach (array_keys($docs) as $docId) {
+                $scores[(string) $docId] = 1;
             }
         }
+
+        $scores = $this->applyFilters($scores, $docs, $parsed['tags'], $parsed['path']);
         arsort($scores);
 
         $results = [];
@@ -115,7 +129,93 @@ final class SearchIndex
             'took_ms' => (int) ((hrtime(true) - $started) / 1_000_000),
             'total' => $total,
             'results' => $results,
+            'filters' => $filters,
         ];
+    }
+
+    /**
+     * Split a query into free-text terms and filters.
+     *
+     *   tag:docs   tag:"release notes"   path:docs/   path:"docs/api"
+     *
+     * Anything else is free text, so a colon in prose never silently drops a
+     * word. `path:` is a case-insensitive prefix match on the relative path.
+     *
+     * @return array{terms: list<string>, tags: list<string>, path: ?string}
+     */
+    public static function parseQuery(string $query): array
+    {
+        $tags = [];
+        $path = null;
+        $rest = $query;
+
+        if (preg_match_all('/(?:^|\s)(tag|path):("([^"]*)"|\S+)/iu', $query, $matches, PREG_SET_ORDER) !== false) {
+            foreach ($matches as $match) {
+                $operator = mb_strtolower($match[1]);
+                // Group 3 only exists for the quoted alternative; PHP omits a
+                // trailing unmatched group instead of padding it.
+                $quoted = $match[3] ?? '';
+                $value = $quoted !== '' ? (string) $quoted : (string) $match[2];
+                $value = trim($value, "\"'");
+
+                if ($operator === 'tag') {
+                    $tag = TagService::normalizeTag($value);
+                    if ($tag !== null && !in_array($tag, $tags, true)) {
+                        $tags[] = $tag;
+                    }
+                } else {
+                    $prefix = mb_strtolower(trim(str_replace('\\', '/', $value), '/'));
+                    $path = $prefix === '' ? null : $prefix;
+                }
+
+                $rest = str_replace($match[0], ' ', $rest);
+            }
+        }
+
+        return ['terms' => self::tokenize($rest), 'tags' => $tags, 'path' => $path];
+    }
+
+    /**
+     * @param array<string, int> $scores
+     * @param array<string, mixed> $docs
+     * @param list<string> $tags
+     * @return array<string, int>
+     */
+    private function applyFilters(array $scores, array $docs, array $tags, ?string $path): array
+    {
+        if ($tags === [] && $path === null) {
+            return $scores;
+        }
+
+        foreach (array_keys($scores) as $docId) {
+            $doc = $docs[$docId] ?? null;
+            if (!is_array($doc)) {
+                unset($scores[$docId]);
+                continue;
+            }
+
+            if ($path !== null && !str_starts_with(mb_strtolower((string) ($doc['path'] ?? '')), $path)) {
+                unset($scores[$docId]);
+                continue;
+            }
+
+            if ($tags === []) {
+                continue;
+            }
+
+            $docTags = array_map(
+                static fn (mixed $tag): string => mb_strtolower((string) $tag),
+                (array) ($doc['tags'] ?? []),
+            );
+            foreach ($tags as $tag) {
+                if (!in_array($tag, $docTags, true)) {
+                    unset($scores[$docId]);
+                    continue 2;
+                }
+            }
+        }
+
+        return $scores;
     }
 
     /**
@@ -202,6 +302,7 @@ final class SearchIndex
                 'excerpt' => $excerpt,
                 'modified' => $file['modified'],
                 'size' => $file['size'],
+                'tags' => TagService::fromFrontMatter($frontMatter),
             ];
 
             // Weighted terms: title > headings > body

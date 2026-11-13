@@ -11,10 +11,15 @@ declare(strict_types=1);
 
 namespace {
     // ── PHP version gate ────────────────────────────────────────────────────
-    if (PHP_VERSION_ID < 80300) {
+    // PHP 8.3 and 8.4 are no longer supported. The floor is the 8.5 branch: the
+    // project is verified on 8.5.12 and accepts any 8.5.x patch release, so a
+    // host on the 8.5 line is never bricked by a patch-level floor.
+    define('MDSCRIBE_PHP_MIN', '8.5.0');
+    define('MDSCRIBE_PHP_MIN_ID', 80500);
+    if (PHP_VERSION_ID < MDSCRIBE_PHP_MIN_ID) {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');
-        exit('MD.Scribe 3.0 requires PHP >= 8.3.0; running ' . PHP_VERSION . ".\n");
+        exit('MD.Scribe 3.4 requires PHP >= ' . MDSCRIBE_PHP_MIN . '; running ' . PHP_VERSION . ".\n");
     }
 
     // ── Required extensions ─────────────────────────────────────────────────

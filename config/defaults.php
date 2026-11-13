@@ -182,6 +182,11 @@ return [
         'label' => 'Reading progress bar',
         'description' => 'Thin progress indicator under the header while scrolling.',
     ],
+    'PWA_ENABLED' => [
+        'type' => 'bool', 'default' => true, 'section' => 'interface',
+        'label' => 'Offline reading (PWA)',
+        'description' => 'Serve a web manifest and a service worker so the viewer can open previously read documents offline.',
+    ],
 
     // ── Uploads & clipboard ────────────────────────────────────────────────
     'DISABLE_UPLOAD' => [

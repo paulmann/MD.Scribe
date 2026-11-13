@@ -22,6 +22,12 @@ $bodyPage = 'search';
   <header class="mb-6">
     <h1 class="text-3xl font-bold tracking-tight"><?= Icons::svg('search', 'h-7 w-7 mr-2 inline-block align-[-4px] text-primary') ?>Search</h1>
     <p class="mt-2 text-muted-foreground">Full-text search across every document in the library. No database, no cloud.</p>
+    <p class="mt-1 text-xs text-muted-foreground">
+      Operators: <code class="md-code-inline">tag:docs</code>,
+      <code class="md-code-inline">tag:"release notes"</code>,
+      <code class="md-code-inline">path:docs/</code>. Combine them with words:
+      <code class="md-code-inline">deploy tag:ops path:runbooks/</code>.
+    </p>
   </header>
 
   <form class="md-input-wrap md-input-lg mb-6" action="<?= e($req->scriptUrl()) ?>" method="get" role="search" data-search-form>

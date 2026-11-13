@@ -1,7 +1,7 @@
 # Upgrade guide: v2 → v3
 
 MD.Scribe 3 is a ground-up rewrite of the v2 monolith (`md.php` 4,700 lines,
-`updater.php` 2,800 lines) into a structured PHP 8.3 application — with the
+`updater.php` 2,800 lines) into a structured PHP 8 application — with the
 **same deployment spirit** (copy files, no database) and the **same URL and
 config contracts** where they existed.
 

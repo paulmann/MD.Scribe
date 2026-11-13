@@ -1,14 +1,14 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.3.0
+ * Version: 3.4.0
 -->
 
 # MD.Scribe 3
 
-> A secure, self-hosted **PHP 8.3 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
+> A secure, self-hosted **PHP 8.5 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
-[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-184%20passed-brightgreen)](tests)
+[![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
+[![Tests](https://img.shields.io/badge/tests-201%20passed-brightgreen)](tests)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
 [![CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
 
@@ -57,7 +57,7 @@ php -S localhost:8080 -t public public/router.php
 Production deployments (docroot at `public/`, docroot at project root, Apache,
 nginx, Caddy, Docker, shared hosting): **[docs/installation.md](docs/installation.md)**.
 
-Requirements: **PHP ≥ 8.3** with `mbstring`, `dom`, `libxml`, `json`
+Requirements: **PHP ≥ 8.5** with `mbstring`, `dom`, `libxml`, `json`
 (`curl` + `phar` + `zip` recommended for the updater and backup archives).
 
 ---
@@ -70,10 +70,11 @@ Requirements: **PHP ≥ 8.3** with `mbstring`, `dom`, `libxml`, `json`
 | --- | --- |
 | Typography | Fluid type scale, text size / page width / line-height controls, serif & system font options, print stylesheet |
 | Navigation | Auto TOC with scrollspy, heading numbers + hover anchors, `[TOC]` placeholder, breadcrumbs, prev/next pager, folder sidebar, skip links |
-| Discovery | Server-side **full-text search** (inverted index, CJK-aware), **Ctrl+K command palette** (documents, headings, actions), **tag index** (`?page=tags`), sitemap.xml, RSS feed |
+| Discovery | Server-side **full-text search** (inverted index, CJK-aware) with **operators** (`tag:`, `path:`, quoted values), **Ctrl+K command palette** (documents, headings, actions), **tag index** (`?page=tags`), sitemap.xml, RSS feed |
 | Rich content | Server-side **syntax highlighting** (~190 languages), **Mermaid** diagrams with auto-repair + diagnostics, **KaTeX** math (incl. mhchem), GitHub-style **alerts**, task lists, footnotes, definition lists, `==marks==`, ^super^/~sub~script, 1,900+ emoji shortcodes, image **lightbox** with captions, reading-time estimates |
 | Knowledge base | **Wikilinks** (`[[Page]]`, `[[Page\|Alias]]`, `[[Page#Heading]]`) with missing-page markers, **backlinks** (“Linked from”), frontmatter **tags** with a public index, per-document **revision history** with restore, **static site export** to a self-contained ZIP |
 | Glossary | Any two-column table becomes hover/tap **tooltips** with alias expansion (`Term (ABBR)`), live DOM content — zero duplication |
+| Offline | Installable **PWA**: web manifest + service worker — assets cache-first, documents network-first with the last read copy as fallback, JSON APIs never cached (`PWA_ENABLED`) |
 | Themes | 12 presets + neutral × accent × radius × font mixer, light/dark/**system auto-detect**, per-visitor persistence, admin-managed **custom themes**, FOUC-free pre-paint bootstrap |
 
 ### Markdown support
@@ -93,8 +94,8 @@ matrix:
 | Page | What it does |
 | --- | --- |
 | **Dashboard** | Corpus stats, index freshness, health summary, quick actions, recent docs, activity feed |
-| **Files** | Tree of all content, filter, create/rename/move/delete (soft-delete to **trash**), folders, multi-upload (.md + images with content sniffing) |
-| **Editor** | Split-pane live preview (the *real* engine), ⌘S save with **sha256 conflict detection**, word/reading-time counter, image upload at cursor, deep links `?page=editor&file=…` |
+| **Files** | Tree of all content, filter, create/rename/move/delete (soft-delete to **trash**), folders, multi-upload (.md + images with content sniffing), **new from template** |
+| **Editor** | Split-pane live preview (the *real* engine), **Markdown toolbar** (bold, italic, code, link, wikilink, list, alert, table), ⌘S save with **sha256 conflict detection**, word/reading-time counter, image upload at cursor, deep links `?page=editor&file=…` |
 | **Search index** | Stats, freshness, on-demand rebuild |
 | **Backups & trash** | One-click content snapshots (+ `.md.ini`), restore with automatic pre-restore safety copy, zip download, prune-ready listing, deleted-file restore |
 | **Revisions** | Per-document save history (newest `REVISIONS_MAX`, default 20), read-only preview, restore that keeps the current content as a `(pre-restore)` revision |
@@ -321,7 +322,9 @@ works. Step-by-step: **[docs/upgrade-from-v2.md](docs/upgrade-from-v2.md)**.
 
 ## License
 
-PolyForm Noncommercial 1.0.0 — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Free for commercial and private use, modification
+and redistribution, with the copyright notice kept. Earlier versions (up to
+3.3.0) shipped under PolyForm Noncommercial 1.0.0.
 Markdown engine: [league/commonmark](https://commonmark.thephpleague.com/) (BSD-3).
 Highlighting: [scrivo/highlight.php](https://github.com/scrivo/highlight.php) (BSD-3, highlight.js port).
 Diagrams: [Mermaid](https://mermaid.js.org/) (MIT). Math: [KaTeX](https://katex.org/) (MIT).

@@ -60,7 +60,7 @@ final class UpdateService
     /**
      * Check GitHub for the latest release. Cached for 15 minutes unless forced.
      *
-     * @return array{ok: bool, current: string, latest?: string, newer?: bool, notes?: string, url?: string, checked_at?: string, error?: string}
+     * @return array{ok: bool, current: string, latest?: string, newer?: bool, notes?: string, url?: string, checked_at?: string, archive?: string, installable?: bool, error?: string}
      */
     public function check(bool $force = false): array
     {
@@ -76,7 +76,6 @@ final class UpdateService
         ]);
 
         if ($result['error'] !== null || !is_array($result['data'])) {
-            // Unauthenticated rate limit or offline — fall back to the raw README badge line.
             return [
                 'ok' => false,
                 'current' => $current,
@@ -89,6 +88,24 @@ final class UpdateService
         $url = (string) ($result['data']['html_url'] ?? Version::REPO . '/releases');
         $newer = $tag !== '' && Version::compare($tag, $current) > 0;
 
+        // The updater installs the release **archive**, so report whether one is
+        // attached: a release without it cannot be applied, and the panel says so
+        // instead of offering a button that fails at the last step.
+        $archive = '';
+        foreach ((array) ($result['data']['assets'] ?? []) as $asset) {
+            if (!is_array($asset)) {
+                continue;
+            }
+            $name = (string) ($asset['name'] ?? '');
+            if (preg_match('/\.zip$/i', $name) !== 1) {
+                continue;
+            }
+            $archive = $name;
+            if (str_starts_with($name, 'MD.Scribe-')) {
+                break;
+            }
+        }
+
         $payload = [
             'ok' => true,
             'current' => $current,
@@ -97,6 +114,8 @@ final class UpdateService
             'notes' => mb_substr($notes, 0, 20000),
             'url' => $url,
             'checked_at' => date('c'),
+            'archive' => $archive,
+            'installable' => $archive !== '',
         ];
         $this->cacheCheck($payload);
 
@@ -154,8 +173,13 @@ final class UpdateService
     }
 
     /**
-     * Apply an update: download the main-branch tarball, verify against its
-     * embedded manifest, back up, then replace changed files.
+     * Apply an update: download the **release archive**, verify every file
+     * against the manifest embedded in it, back up, then replace what changed.
+     *
+     * The archive must be the asset attached to the GitHub release
+     * (`MD.Scribe-<version>.zip`), not a branch tarball: the release ships
+     * `vendor/`, a branch tarball never does, and the manifest lists vendor —
+     * so a branch download fails its own integrity check by construction.
      *
      * @return array{ok: bool, error?: string, from?: string, to?: string, replaced?: int, unchanged?: int, backup?: string|null}
      */
@@ -164,8 +188,8 @@ final class UpdateService
         if (!$this->config->bool('ALLOW_UPDATE')) {
             return ['ok' => false, 'error' => 'ALLOW_UPDATE is false in .md.ini — updates are disabled.'];
         }
-        if (!class_exists(\PharData::class)) {
-            return ['ok' => false, 'error' => 'The PHP phar extension is required to apply updates.'];
+        if (!class_exists(\ZipArchive::class)) {
+            return ['ok' => false, 'error' => 'The PHP zip extension is required to apply updates.'];
         }
 
         $tmpDir = Paths::state() . '/update-' . bin2hex(random_bytes(4));
@@ -174,34 +198,82 @@ final class UpdateService
         }
 
         try {
-            // 1. Download the release tarball.
-            $tarPath = $tmpDir . '/release.tar.gz';
-            $download = $this->http()->get(Version::REPO . '/archive/refs/heads/main.tar.gz');
+            // 1. Resolve the release asset (the archive that carries vendor/).
+            $release = $this->http()->getJson(Version::API_BASE . '/releases/latest', [
+                'Accept: application/vnd.github+json',
+                'X-GitHub-Api-Version: 2022-11-28',
+            ]);
+            if ($release['error'] !== null || !is_array($release['data'])) {
+                return ['ok' => false, 'error' => 'Cannot read the latest release: ' . ($release['error'] ?? 'HTTP ' . $release['status'])];
+            }
+
+            $assetUrl = '';
+            $assetName = '';
+            foreach ((array) ($release['data']['assets'] ?? []) as $asset) {
+                if (!is_array($asset)) {
+                    continue;
+                }
+                $name = (string) ($asset['name'] ?? '');
+                $url = (string) ($asset['browser_download_url'] ?? '');
+                if ($url === '' || preg_match('/\.zip$/i', $name) !== 1) {
+                    continue;
+                }
+                $assetUrl = $url;
+                $assetName = $name;
+                if (str_starts_with($name, 'MD.Scribe-')) {
+                    break; // prefer the product archive over any extra zip
+                }
+            }
+            if ($assetUrl === '') {
+                return [
+                    'ok' => false,
+                    'error' => 'The latest release has no .zip archive attached. The updater needs MD.Scribe-<version>.zip '
+                        . '(build it with tools/build-manifest.php; see docs/development.md).',
+                ];
+            }
+
+            // 2. Download it.
+            $zipPath = $tmpDir . '/release.zip';
+            $download = $this->http()->get($assetUrl, null, ['Accept: application/octet-stream']);
             if ($download['error'] !== null || $download['status'] !== 200 || $download['body'] === '') {
                 return ['ok' => false, 'error' => 'Download failed: ' . ($download['error'] ?? 'HTTP ' . $download['status'])];
             }
             if (strlen($download['body']) > 200 * 1024 * 1024) {
                 return ['ok' => false, 'error' => 'Release archive is implausibly large; refused.'];
             }
-            file_put_contents($tarPath, $download['body']);
+            file_put_contents($zipPath, $download['body']);
 
-            // 2. Extract.
-            $phar = new \PharData($tarPath);
-            $phar->decompress();
-            $phar->extractTo($tmpDir, null, true);
-            // GitHub names the extracted root after the repository, and the
-            // repository may have been renamed: accept any '<name>-main' /
-            // '<name>-<ref>' directory rather than pinning one product name.
-            $inner = array_values(array_filter(
-                glob($tmpDir . '/*-*', GLOB_ONLYDIR) ?: [],
-                static fn (string $dir): bool => is_file($dir . '/config/manifest.json'),
-            ));
-            // Fall back to a tarball that extracted flat (no wrapper directory).
-            if ($inner === [] && is_file($tmpDir . '/config/manifest.json')) {
-                $inner = [$tmpDir];
+            // 3. Extract, refusing any entry that could escape the target.
+            $zip = new \ZipArchive();
+            if ($zip->open($zipPath) !== true) {
+                return ['ok' => false, 'error' => 'Cannot open ' . $assetName . ' as a ZIP archive.'];
             }
-            $sourceRoot = $inner[0] ?? null;
-            if ($sourceRoot === null || !is_file($sourceRoot . '/config/manifest.json')) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+                if ($name === '' || str_starts_with($name, '/') || str_contains($name, '..') || preg_match('/[\x00-\x1F]/', $name) === 1) {
+                    $zip->close();
+
+                    return ['ok' => false, 'error' => 'Archive contains an unsafe path: ' . $name];
+                }
+            }
+            if (!$zip->extractTo($tmpDir)) {
+                $zip->close();
+
+                return ['ok' => false, 'error' => 'Cannot extract ' . $assetName . '.'];
+            }
+            $zip->close();
+
+            // A flat archive is the release convention; a single wrapper
+            // directory is tolerated for archives built by hand.
+            $sourceRoot = $tmpDir;
+            if (!is_file($sourceRoot . '/config/manifest.json')) {
+                $inner = array_values(array_filter(
+                    glob($tmpDir . '/*', GLOB_ONLYDIR) ?: [],
+                    static fn (string $dir): bool => is_file($dir . '/config/manifest.json'),
+                ));
+                $sourceRoot = $inner[0] ?? '';
+            }
+            if ($sourceRoot === '' || !is_file($sourceRoot . '/config/manifest.json')) {
                 return ['ok' => false, 'error' => 'Archive does not look like a valid release (config/manifest.json missing).'];
             }
 

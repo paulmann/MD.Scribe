@@ -37,6 +37,10 @@ upload, backup now, rebuild index, clear caches, link check, update check.
 - **Rename/move** — validated target paths, refuses overwrites.
 - **Delete** — *soft*: files move to `storage/backups/trash/` and can be
   restored from **Backups & trash**.
+- **New from template** — five skeletons (blank, ADR, meeting notes, how-to,
+  reference). Enter a title, get `<dir>/<slug>.md` with today's date filled in;
+  an existing document of the same name is refused with `409`, and the new file
+  opens in the editor.
 
 ## Editor
 
@@ -91,6 +95,21 @@ sizes and timestamps unchanged.
 Stats (documents, terms, size, built-at, freshness) and on-demand rebuild.
 The index also rebuilds automatically when the corpus fingerprint (file
 count + newest mtime + total bytes) changes.
+
+### Search operators
+
+The public search box (and `?api=search&q=…`) understands three things:
+
+| Operator | Example | Meaning |
+| --- | --- | --- |
+| `tag:` | `tag:docs` | Only documents whose frontmatter carries that tag (normalised: lower-case, spaces → dashes) |
+| `tag:"…"` | `tag:"release notes"` | The quoted form matches a tag that contains a space |
+| `path:` | `path:runbooks/` | Case-insensitive prefix match on the relative path |
+
+They combine with free text and with each other: `deploy tag:ops path:runbooks/`
+returns documents that contain “deploy”, carry `ops` and live under `runbooks/`.
+A filter on its own is a valid query. An unknown `word:` is treated as prose — a
+colon never silently drops a word from the query.
 
 ## Backups & trash
 
