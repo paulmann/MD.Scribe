@@ -126,14 +126,22 @@ for cron use (see development docs).
 
 ## Updates
 
-- **Check** — GitHub releases API, 15-minute cache, shows version delta and
-  release notes.
-- **Apply** (`ALLOW_UPDATE = true`) — downloads the release tarball **once**,
-  verifies **every file** against the archive's sha256 manifest (mismatch →
-  refuse), backs up files it will replace, swaps only changed files.
+- **Check** — GitHub releases API, 15-minute cache, shows version delta, release
+  notes and whether the release actually carries an installable `.zip`.
+- **Apply** (`ALLOW_UPDATE = true`) — downloads the **release archive** once (the
+  asset that ships `vendor/`; a branch tarball is never used, it cannot satisfy
+  its own manifest), refuses paths that escape the tree, verifies **every file**
+  against the archive's sha256 manifest (mismatch → refuse the whole update),
+  backs up the files it will replace, swaps only the changed ones.
   `content/`, `storage/`, `.md.ini` are never touched.
-- Machine API for external tooling stays v2-compatible through the root
-  `updater.php` shim — see [http-api.md](http-api.md#machine-api).
+- **Dry run** (`POST …&action=install&dry_run=1`, or `Updater::plan()`) — the same
+  download and verification with no writes; it reports the files that would be
+  replaced. It reads the release, not the local manifest, so "nothing to do"
+  means the release matches this install and not just that the files match
+  themselves.
+- Machine API for external tooling stays v2-compatible through `updater.php`
+  (reached via the shipped `public/updater.php` bridge on a docroot-`public`
+  install) — see [http-api.md](http-api.md#machine-api).
 
 ## Settings
 

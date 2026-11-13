@@ -209,9 +209,12 @@ Envelope (unchanged from v2):
   missing`), no network I/O.
 - `conflicts` — files that differ from the shipped manifest (dry-run report;
   never writes).
-- `install` — verified release apply (POST only; `dry_run=1` stops after the
-  report). HTTP codes: `200`, `400` unknown action, `403` unauthorized,
-  `405` install-without-POST.
+- `install` — verified release apply (POST only). `dry_run=1` downloads the
+  release archive, verifies every entry inside it against the manifest embedded
+  in it and reports which files **would** be replaced (`steps`, `to`, `asset`,
+  `verified`, `unchanged`); it writes nothing, and it fails rather than pretending
+  when the release has no archive. HTTP codes: `200`, `400` unknown action, `403`
+  unauthorized, `405` install-without-POST.
 
 ## Feeds
 

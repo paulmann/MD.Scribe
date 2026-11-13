@@ -99,17 +99,38 @@ if ($format === 'json' && $action !== '') {
         }
         $dryRun = (string) ($_GET['dry_run'] ?? '') === '1';
         if ($dryRun) {
-            $files = $service->status();
-            $would = array_values(array_filter($files, static fn (array $f): bool => $f['status'] !== 'present'));
-            $envelope(true, 'install', [
-                'files' => $files,
-                'steps' => array_map(static fn (array $f): array => [
-                    'step' => 'install:' . $f['path'],
-                    'status' => 'dry-run',
-                    'detail' => $f['status'],
-                ], $would),
+            // A dry run judged against the local manifest would only say "my files
+            // match my manifest", which is not what an update would do. This one
+            // downloads the release, verifies it against its embedded manifest and
+            // reports the real difference — without writing anything.
+            $plan = $service->plan();
+            if (($plan['ok'] ?? false) === true) {
+                $envelope(true, 'install', [
+                    'to' => $plan['to'],
+                    'asset' => $plan['asset'],
+                    'verified' => $plan['verified'],
+                    'unchanged' => $plan['unchanged'],
+                    'files' => $service->status(),
+                    'steps' => array_map(static fn (string $rel): array => [
+                        'step' => 'install:' . $rel,
+                        'status' => 'dry-run',
+                        'detail' => 'would be replaced',
+                    ], (array) ($plan['replace'] ?? [])),
+                    'conflicts' => (array) ($plan['replace'] ?? []),
+                    'errors' => [],
+                ]);
+                exit;
+            }
+
+            $envelope(false, 'install', [
+                'files' => $service->status(),
+                'steps' => [[
+                    'step' => 'install:plan',
+                    'status' => 'error',
+                    'detail' => (string) ($plan['error'] ?? 'cannot read the release'),
+                ]],
                 'conflicts' => [],
-                'errors' => [],
+                'errors' => [(string) ($plan['error'] ?? 'cannot read the release')],
             ]);
             exit;
         }

@@ -6,13 +6,17 @@
  * Supports conditional GET (ETag / If-None-Match), hard timeouts, redirect
  * limits and a descriptive user agent. Never throws on transport failure —
  * callers get a structured result and decide.
+ *
+ * Intentionally not final: the updater tests substitute a subclass that answers
+ * with a local release archive, so the download-and-verify path runs against a
+ * real zip without touching the network.
  */
 
 declare(strict_types=1);
 
 namespace MdViewer\Core;
 
-final class HttpClient
+class HttpClient
 {
     public function __construct(
         private readonly int $timeout = 20,

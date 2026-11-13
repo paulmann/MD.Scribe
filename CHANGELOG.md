@@ -3,6 +3,24 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.4.2 — “Keystone” (2026-11-13)
+
+### Fixed
+
+- **A dry run lied about what an update would do.** `dry_run=1` compared the
+  local files with the *local* manifest, so an install that matched its own
+  manifest reported "nothing to replace" no matter what the release contained —
+  a green answer that examined the wrong object. It now downloads the release
+  archive, verifies every entry against the manifest embedded in it and reports
+  the files that would really be replaced (`to`, `asset`, `verified`,
+  `unchanged`, `steps`); it still writes nothing, and it fails loudly when the
+  release has no archive instead of reporting success.
+- The admin Updates panel now shows whether the release carries an installable
+  archive and disables **Apply** when it does not, instead of offering a button
+  that fails at the last step.
+- Download and verification moved into one `openRelease()` path shared by
+  `apply()` and `plan()`, so a dry run and a real update cannot drift apart.
+
 ## 3.4.1 — “Keystone” (2026-11-13)
 
 ### Fixed

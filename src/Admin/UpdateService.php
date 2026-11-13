@@ -4,10 +4,11 @@
  * MD.Scribe 3.0 — self-update service.
  *
  * Modernised v2 updater: instead of crawling dozens of raw files, it asks the
- * GitHub API for the latest release, compares versions, and (on apply)
- * downloads the release tarball once, verifies every file against the
- * tarball's own manifest (sha256), backs the current installation up to
- * storage/backups/app-<version>/ and swaps only the files that changed.
+ * GitHub API for the latest release, compares versions, and on apply downloads
+ * the **release archive** once (the asset that ships vendor/), refuses unsafe
+ * paths, verifies every file against the archive's own manifest (sha256), backs
+ * the current installation up to storage/backups/app-<timestamp>/ and swaps only
+ * the files that changed. plan() is the same path without the writes.
  *
  * The machine API keeps the v2 verbs: status (local state, no network),
  * conflicts (dry-run diff report), install (apply).
@@ -198,91 +199,14 @@ final class UpdateService
         }
 
         try {
-            // 1. Resolve the release asset (the archive that carries vendor/).
-            $release = $this->http()->getJson(Version::API_BASE . '/releases/latest', [
-                'Accept: application/vnd.github+json',
-                'X-GitHub-Api-Version: 2022-11-28',
-            ]);
-            if ($release['error'] !== null || !is_array($release['data'])) {
-                return ['ok' => false, 'error' => 'Cannot read the latest release: ' . ($release['error'] ?? 'HTTP ' . $release['status'])];
+            // 1-3. Download the release archive, refuse unsafe paths, and verify
+            // every file in it against the manifest embedded in it.
+            $release = $this->openRelease($tmpDir);
+            if (($release['ok'] ?? false) !== true) {
+                return ['ok' => false, 'error' => (string) ($release['error'] ?? 'release unavailable')];
             }
-
-            $assetUrl = '';
-            $assetName = '';
-            foreach ((array) ($release['data']['assets'] ?? []) as $asset) {
-                if (!is_array($asset)) {
-                    continue;
-                }
-                $name = (string) ($asset['name'] ?? '');
-                $url = (string) ($asset['browser_download_url'] ?? '');
-                if ($url === '' || preg_match('/\.zip$/i', $name) !== 1) {
-                    continue;
-                }
-                $assetUrl = $url;
-                $assetName = $name;
-                if (str_starts_with($name, 'MD.Scribe-')) {
-                    break; // prefer the product archive over any extra zip
-                }
-            }
-            if ($assetUrl === '') {
-                return [
-                    'ok' => false,
-                    'error' => 'The latest release has no .zip archive attached. The updater needs MD.Scribe-<version>.zip '
-                        . '(build it with tools/build-manifest.php; see docs/development.md).',
-                ];
-            }
-
-            // 2. Download it.
-            $zipPath = $tmpDir . '/release.zip';
-            $download = $this->http()->get($assetUrl, null, ['Accept: application/octet-stream']);
-            if ($download['error'] !== null || $download['status'] !== 200 || $download['body'] === '') {
-                return ['ok' => false, 'error' => 'Download failed: ' . ($download['error'] ?? 'HTTP ' . $download['status'])];
-            }
-            if (strlen($download['body']) > 200 * 1024 * 1024) {
-                return ['ok' => false, 'error' => 'Release archive is implausibly large; refused.'];
-            }
-            file_put_contents($zipPath, $download['body']);
-
-            // 3. Extract, refusing any entry that could escape the target.
-            $zip = new \ZipArchive();
-            if ($zip->open($zipPath) !== true) {
-                return ['ok' => false, 'error' => 'Cannot open ' . $assetName . ' as a ZIP archive.'];
-            }
-            for ($i = 0; $i < $zip->numFiles; $i++) {
-                $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
-                if ($name === '' || str_starts_with($name, '/') || str_contains($name, '..') || preg_match('/[\x00-\x1F]/', $name) === 1) {
-                    $zip->close();
-
-                    return ['ok' => false, 'error' => 'Archive contains an unsafe path: ' . $name];
-                }
-            }
-            if (!$zip->extractTo($tmpDir)) {
-                $zip->close();
-
-                return ['ok' => false, 'error' => 'Cannot extract ' . $assetName . '.'];
-            }
-            $zip->close();
-
-            // A flat archive is the release convention; a single wrapper
-            // directory is tolerated for archives built by hand.
-            $sourceRoot = $tmpDir;
-            if (!is_file($sourceRoot . '/config/manifest.json')) {
-                $inner = array_values(array_filter(
-                    glob($tmpDir . '/*', GLOB_ONLYDIR) ?: [],
-                    static fn (string $dir): bool => is_file($dir . '/config/manifest.json'),
-                ));
-                $sourceRoot = $inner[0] ?? '';
-            }
-            if ($sourceRoot === '' || !is_file($sourceRoot . '/config/manifest.json')) {
-                return ['ok' => false, 'error' => 'Archive does not look like a valid release (config/manifest.json missing).'];
-            }
-
-            // 3. Verify + diff against the remote manifest.
-            $remoteManifestRaw = (string) @file_get_contents($sourceRoot . '/config/manifest.json');
-            if (!json_validate($remoteManifestRaw)) {
-                return ['ok' => false, 'error' => 'Remote manifest is corrupt.'];
-            }
-            $remoteManifest = json_decode($remoteManifestRaw, true);
+            $sourceRoot = (string) $release['sourceRoot'];
+            $remoteManifest = $release['manifest'];
             $remoteVersion = (string) ($remoteManifest['version'] ?? 'unknown');
 
             $toReplace = [];
@@ -290,24 +214,15 @@ final class UpdateService
             foreach ((array) ($remoteManifest['files'] ?? []) as $entry) {
                 $rel = (string) ($entry['path'] ?? '');
                 $sha = (string) ($entry['sha256'] ?? '');
-                if ($rel === '' || $sha === '' || !preg_match('#^[A-Za-z0-9._/\-]+$#', $rel)) {
+                if ($rel === '' || $sha === '') {
                     continue;
-                }
-                $candidate = $sourceRoot . '/' . $rel;
-                if (!is_file($candidate) || hash_file('sha256', $candidate) !== $sha) {
-                    // Archive does not match its own manifest — refuse entirely.
-                    return ['ok' => false, 'error' => 'Integrity check failed for ' . $rel . '; update refused.'];
                 }
                 $local = Paths::root() . '/' . $rel;
                 if (is_file($local) && hash_file('sha256', $local) === $sha) {
                     $unchanged++;
                     continue;
                 }
-                $toReplace[$rel] = $candidate;
-            }
-
-            if ($toReplace === []) {
-                return ['ok' => true, 'from' => Version::VERSION, 'to' => $remoteVersion, 'replaced' => 0, 'unchanged' => $unchanged, 'backup' => null];
+                $toReplace[$rel] = $sourceRoot . '/' . $rel;
             }
 
             // 4. Back up the files we are about to replace.
@@ -362,6 +277,184 @@ final class UpdateService
         } finally {
             $this->deleteTree($tmpDir);
         }
+    }
+
+    /**
+     * Dry run: what would an update replace, judged against the release archive
+     * itself rather than against the local manifest.
+     *
+     * Downloads the asset, verifies every entry inside it against the manifest
+     * embedded in it, and compares hashes with the installed tree. **Writes
+     * nothing** to the project: the archive lives in a temporary directory under
+     * storage/state and is removed before returning.
+     *
+     * @return array{ok: bool, error?: string, from?: string, to?: string, asset?: string, verified?: int, replace?: list<string>, unchanged?: int, conflicts?: int}
+     */
+    public function plan(): array
+    {
+        if (!class_exists(\ZipArchive::class)) {
+            return ['ok' => false, 'error' => 'The PHP zip extension is required to inspect a release.'];
+        }
+
+        $tmpDir = Paths::state() . '/plan-' . bin2hex(random_bytes(4));
+        if (!@mkdir($tmpDir, 0o755, true)) {
+            return ['ok' => false, 'error' => 'Cannot create a temporary directory.'];
+        }
+
+        try {
+            $release = $this->openRelease($tmpDir);
+            if (($release['ok'] ?? false) !== true) {
+                return ['ok' => false, 'error' => (string) ($release['error'] ?? 'release unavailable')];
+            }
+
+            $sourceRoot = (string) $release['sourceRoot'];
+            $manifest = $release['manifest'];
+            $replace = [];
+            $unchanged = 0;
+            $conflicts = 0;
+            $verified = 0;
+
+            foreach ((array) ($manifest['files'] ?? []) as $entry) {
+                $rel = (string) ($entry['path'] ?? '');
+                $sha = (string) ($entry['sha256'] ?? '');
+                if ($rel === '' || $sha === '' || preg_match('#^[A-Za-z0-9._/\-]+$#', $rel) !== 1) {
+                    continue;
+                }
+                $verified++;
+                $local = Paths::root() . '/' . $rel;
+                if (is_file($local) && hash_file('sha256', $local) === $sha) {
+                    $unchanged++;
+                    continue;
+                }
+                if (is_file($local)) {
+                    $conflicts++; // present but different — would be overwritten
+                }
+                $replace[] = $rel;
+            }
+
+            return [
+                'ok' => true,
+                'from' => Version::VERSION,
+                'to' => (string) ($manifest['version'] ?? 'unknown'),
+                'asset' => (string) $release['asset'],
+                'verified' => $verified,
+                'replace' => $replace,
+                'unchanged' => $unchanged,
+                'conflicts' => $conflicts,
+            ];
+        } finally {
+            $this->deleteTree($tmpDir);
+        }
+    }
+
+    /**
+     * Download the latest release archive and verify it against its own manifest.
+     *
+     * @return array{ok: bool, error?: string, asset?: string, sourceRoot?: string, manifest?: array<string, mixed>}
+     */
+    private function openRelease(string $tmpDir): array
+    {
+        // 1. Resolve the release asset (the archive that carries vendor/).
+        $release = $this->http()->getJson(Version::API_BASE . '/releases/latest', [
+            'Accept: application/vnd.github+json',
+            'X-GitHub-Api-Version: 2022-11-28',
+        ]);
+        if ($release['error'] !== null || !is_array($release['data'])) {
+            return ['ok' => false, 'error' => 'Cannot read the latest release: ' . ($release['error'] ?? 'HTTP ' . $release['status'])];
+        }
+
+        $assetUrl = '';
+        $assetName = '';
+        foreach ((array) ($release['data']['assets'] ?? []) as $asset) {
+            if (!is_array($asset)) {
+                continue;
+            }
+            $name = (string) ($asset['name'] ?? '');
+            $url = (string) ($asset['browser_download_url'] ?? '');
+            if ($url === '' || preg_match('/\.zip$/i', $name) !== 1) {
+                continue;
+            }
+            $assetUrl = $url;
+            $assetName = $name;
+            if (str_starts_with($name, 'MD.Scribe-')) {
+                break; // prefer the product archive over any extra zip
+            }
+        }
+        if ($assetUrl === '') {
+            return [
+                'ok' => false,
+                'error' => 'The latest release has no .zip archive attached. The updater needs MD.Scribe-<version>.zip '
+                    . '(see docs/development.md, release checklist).',
+            ];
+        }
+
+        // 2. Download it.
+        $zipPath = $tmpDir . '/release.zip';
+        $download = $this->http()->get($assetUrl, null, ['Accept: application/octet-stream']);
+        if ($download['error'] !== null || $download['status'] !== 200 || $download['body'] === '') {
+            return ['ok' => false, 'error' => 'Download failed: ' . ($download['error'] ?? 'HTTP ' . $download['status'])];
+        }
+        if (strlen($download['body']) > 200 * 1024 * 1024) {
+            return ['ok' => false, 'error' => 'Release archive is implausibly large; refused.'];
+        }
+        file_put_contents($zipPath, $download['body']);
+
+        // 3. Extract, refusing any entry that could escape the target.
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            return ['ok' => false, 'error' => 'Cannot open ' . $assetName . ' as a ZIP archive.'];
+        }
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+            if ($name === '' || str_starts_with($name, '/') || str_contains($name, '..') || preg_match('/[\x00-\x1F]/', $name) === 1) {
+                $zip->close();
+
+                return ['ok' => false, 'error' => 'Archive contains an unsafe path: ' . $name];
+            }
+        }
+        if (!$zip->extractTo($tmpDir)) {
+            $zip->close();
+
+            return ['ok' => false, 'error' => 'Cannot extract ' . $assetName . '.'];
+        }
+        $zip->close();
+
+        // A flat archive is the release convention; a single wrapper directory
+        // is tolerated for archives built by hand.
+        $sourceRoot = $tmpDir;
+        if (!is_file($sourceRoot . '/config/manifest.json')) {
+            $inner = array_values(array_filter(
+                glob($tmpDir . '/*', GLOB_ONLYDIR) ?: [],
+                static fn (string $dir): bool => is_file($dir . '/config/manifest.json'),
+            ));
+            $sourceRoot = $inner[0] ?? '';
+        }
+        if ($sourceRoot === '' || !is_file($sourceRoot . '/config/manifest.json')) {
+            return ['ok' => false, 'error' => 'Archive does not look like a valid release (config/manifest.json missing).'];
+        }
+
+        // 4. The archive's own manifest, and every entry verified against it.
+        $remoteManifestRaw = (string) @file_get_contents($sourceRoot . '/config/manifest.json');
+        if (!json_validate($remoteManifestRaw)) {
+            return ['ok' => false, 'error' => 'Remote manifest is corrupt.'];
+        }
+        $manifest = json_decode($remoteManifestRaw, true);
+        if (!is_array($manifest)) {
+            return ['ok' => false, 'error' => 'Remote manifest is corrupt.'];
+        }
+        foreach ((array) ($manifest['files'] ?? []) as $entry) {
+            $rel = (string) ($entry['path'] ?? '');
+            $sha = (string) ($entry['sha256'] ?? '');
+            if ($rel === '' || $sha === '' || preg_match('#^[A-Za-z0-9._/\-]+$#', $rel) !== 1) {
+                continue;
+            }
+            $candidate = $sourceRoot . '/' . $rel;
+            if (!is_file($candidate) || hash_file('sha256', $candidate) !== $sha) {
+                return ['ok' => false, 'error' => 'Integrity check failed for ' . $rel . '; update refused.'];
+            }
+        }
+
+        return ['ok' => true, 'asset' => $assetName, 'sourceRoot' => $sourceRoot, 'manifest' => $manifest];
     }
 
     /** Restore application files from an app-* backup. */

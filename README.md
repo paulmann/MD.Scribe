@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.1
+ * Version: 3.4.2
 -->
 
 # MD.Scribe 3

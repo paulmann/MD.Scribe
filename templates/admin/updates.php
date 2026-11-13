@@ -49,10 +49,17 @@ $allowUpdate = $app->config->bool('ALLOW_UPDATE');
       <p class="text-sm text-muted-foreground">Last check failed: <?= e((string) ($update['error'] ?? 'unknown error')) ?></p>
       <?php endif; ?>
 
+      <?php if (($update['ok'] ?? false) === true && ($update['newer'] ?? false) === true && ($update['installable'] ?? true) === false): ?>
+      <div class="md-flash md-flash-warning mb-3">
+        <?= Icons::svg('circle-alert', 'h-4 w-4') ?> Release v<?= e((string) ($update['latest'] ?? '?')) ?> has no <code class="md-code-inline">.zip</code> asset attached, so it cannot be installed by the updater. Install it manually from the release page, or publish the archive (see <code class="md-code-inline">docs/development.md</code>).
+      </div>
+      <?php endif; ?>
+
       <div class="flex flex-wrap gap-2">
         <button type="button" class="md-btn md-btn-outline md-btn-sm" data-update-check><?= Icons::svg('refresh-cw', 'h-3.5 w-3.5') ?>Check for updates</button>
         <?php if ($allowUpdate): ?>
-        <button type="button" class="md-btn md-btn-primary md-btn-sm" data-update-apply <?= ($update['newer'] ?? false) ? '' : 'disabled' ?>><?= Icons::svg('download', 'h-3.5 w-3.5') ?>Apply update</button>
+        <?php $applyReady = ($update['newer'] ?? false) === true && ($update['installable'] ?? true) === true; ?>
+        <button type="button" class="md-btn md-btn-primary md-btn-sm" data-update-apply <?= $applyReady ? '' : 'disabled' ?>><?= Icons::svg('download', 'h-3.5 w-3.5') ?>Apply update</button>
         <?php endif; ?>
         <a class="md-btn md-btn-ghost md-btn-sm" href="<?= e((string) ($update['url'] ?? MdViewer\Core\Version::REPO . '/releases')) ?>" target="_blank" rel="noopener noreferrer"><?= Icons::svg('external-link', 'h-3.5 w-3.5') ?>Releases on GitHub</a>
       </div>
