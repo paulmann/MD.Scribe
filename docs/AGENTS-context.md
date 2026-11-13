@@ -154,7 +154,7 @@ annotate → metadata → `RenderResult`.
   implementation, and adding one is the defect this class exists to prevent
   (`src/Files/PathValidator.php:6-18`).
 - `FileManager::write()` is atomic: temp file + `LOCK_EX` + `chmod 0644` +
-  `rename` (`src/Files/FileManager.php:368-386`). It supports optimistic
+  `rename` (`src/Files/FileManager.php:370-387`). It supports optimistic
   concurrency (`$expectedHash` → `409`), caps a document at 8 MB, and records
   `content.create` / `content.update` in the audit trail.
 - Deletes are soft: the file is renamed into `storage/backups/trash/` with a
@@ -299,7 +299,7 @@ CI runs on pushes to `main` and on pull requests. PHPStan analyses `src` + the f
 only — `bin/`, `tools/` and `templates/` are outside it. CI lints `src public templates tools tests`
 and the three root scripts, but **not** `bin/md-scribe-render`. The doctrine checker also
 enforces `declare(strict_types=1)` in every `src/` file and a PHPStan ratchet that
-forbids new `ignoreErrors` entries (`phpstan.neon:29-32`).
+forbids new `ignoreErrors` entries (`phpstan.neon:33-34`).
 
 Baseline at 3.4.4 on Windows (PHP 8.5.0): `php vendor\bin\phpunit --no-coverage`
 reports `Tests: 214, Assertions: 678, Skipped: 1`, exit 0; PHPStan level 6 is clean;
