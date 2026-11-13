@@ -63,11 +63,18 @@ $script:MaxExamples = $MaxExamples
 # `.work` are agent scratch directories: they hold snapshots and staging copies
 # of earlier runs, including stale copies of this very file, so reading them
 # produces findings about code that no longer exists.
-$script:CodeExclusionPattern = '\\(?:\.git|\.zwork|\.dev_agent|\.work|vendor|node_modules|bower_components|__pycache__|\.venv|dist|build|coverage)\\'
+#
+# The patterns are matched against the path RELATIVE to the project root. Matching
+# the absolute path looks equivalent and is not: a project that lives under
+# `C:\build\site` or `D:\vendor\docs` would have every file excluded, and the
+# checks would then examine zero objects. That is how this rule was found - a copy
+# of the repository under a `.work` scratch directory made two checks report a
+# FALSE PASS with "examined 0".
+$script:CodeExclusionPattern = '(?:^|/)(?:\.git|\.zwork|\.dev_agent|\.work|vendor|node_modules|bower_components|__pycache__|\.venv|dist|build|coverage)(?:/|$)'
 
 # Secrets are scanned with a NARROW exclusion: a secret-shaped file can sit
 # inside an asset directory, so reusing the pattern above would blind the check.
-$script:SecretExclusionPattern = '\\(?:\.git|\.zwork|\.dev_agent|\.work)\\'
+$script:SecretExclusionPattern = '(?:^|/)(?:\.git|\.zwork|\.dev_agent|\.work)(?:/|$)'
 
 # --------------------------------------------------------------- framework
 
@@ -108,7 +115,8 @@ function Get-RepositoryFile {
     $result = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
 
     foreach ($file in $items) {
-        if ($file.FullName -match $pattern) { continue }
+        $relative = Get-RelativePath $file.FullName
+        if (('/' + $relative) -match $pattern) { continue }
         if ($Extension.Count -gt 0 -and $Extension -notcontains $file.Extension.ToLowerInvariant()) { continue }
         $result.Add($file)
     }
