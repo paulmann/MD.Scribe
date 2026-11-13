@@ -3,6 +3,18 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.4.3 — “Keystone” (2026-11-13)
+
+### Documented
+
+- **Static MIME type for the PWA manifest.** nginx and Apache do not know
+  `.webmanifest`, so `public/manifest.webmanifest` was served as
+  `application/octet-stream` on a real host (measured on nginx 1.24: browsers
+  accept it, devtools reports a bad type). `docs/installation.md` now carries the
+  one-line `types` / `AddType` fix, next to a note that `sw.js` needs nothing.
+- `docs/installation.md` gained a **Verified installations** table: layouts that
+  were actually exercised end to end, with the PHP version and the checks that ran.
+
 ## 3.4.2 — “Keystone” (2026-11-13)
 
 ### Fixed

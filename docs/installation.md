@@ -151,6 +151,26 @@ controller derives its web prefix from `SCRIPT_NAME`, so assets, links and the
 service-worker scope stay inside `/mdscribe/`. Document-root-at-`public/` installs
 reach the updater through the shipped `public/updater.php` bridge.
 
+## Static MIME type for the PWA manifest
+
+`public/manifest.webmanifest` needs `application/manifest+json`. Most servers do
+not know the extension and fall back to `application/octet-stream`; browsers keep
+working, but the manifest is reported as a bad type in devtools and some do reject
+it. One line per server:
+
+```nginx
+# nginx, inside the server block (or a vhost resource file)
+types { application/manifest+json webmanifest; }
+```
+
+```apache
+# Apache
+AddType application/manifest+json .webmanifest
+```
+
+The service worker (`public/sw.js`) needs no change: `application/javascript` is
+already associated with `.js`, and its scope is the directory it is served from.
+
 ## Verification checklist
 
 - [ ] `https://site/` renders the welcome document
