@@ -1,7 +1,7 @@
 {
     "app": "MD.Scribe",
     "version": "3.4.4",
-    "generated": "2026-11-13T21:04:04+00:00",
+    "generated": "2026-11-13T21:06:28+00:00",
     "php_min": "8.5.0",
     "files": [
         {
@@ -30,8 +30,8 @@
         },
         {
             "path": "CHANGELOG.md",
-            "sha256": "cc09db6a61fdd34dde536fce68544a7e577a6fd96eccfeaa2042340239b6f2fb",
-            "bytes": 24006,
+            "sha256": "34fae05cf76f3ff06a140fe36a1441e21287af2c9b1a21cf46b708ee54d871d0",
+            "bytes": 24388,
             "version": "3.4.4"
         },
         {
@@ -156,8 +156,8 @@
         },
         {
             "path": "docs/installation.md",
-            "sha256": "83acbbfa72049faa61e829393023d68b9b5d2ad6a2e2c9f75cc92fa06a41e60e",
-            "bytes": 7223,
+            "sha256": "916728a892fcb4553d1abcf8db41a859108ca9898af05ae22f9601b14185743f",
+            "bytes": 7119,
             "version": "3.4.4"
         },
         {
@@ -647,6 +647,12 @@
             "version": "3.4.4"
         },
         {
+            "path": "src/Core/Manifest.php",
+            "sha256": "3cd1a85c10a00558aab81e7390b9cf0932c0ad5a56eb2771a2fd9e8ca94de434",
+            "bytes": 1665,
+            "version": "3.4.4"
+        },
+        {
             "path": "src/Core/Paths.php",
             "sha256": "cd22fd4ca4fcd9ed98168399e87a7a39c53f37529e695dbef6069e2e86a8ca77",
             "bytes": 3422,
@@ -660,8 +666,8 @@
         },
         {
             "path": "src/Core/Response.php",
-            "sha256": "4340dc082e5d92c704f2eae8bf5445e41bd7c0c57271456f0d14d01b0d4093b6",
-            "bytes": 4315,
+            "sha256": "22dbd342d71dc32345dfee522b89da5a808895caaffd95810d1e59c3e4995736",
+            "bytes": 4977,
             "version": "3.4.4"
         },
         {
@@ -750,8 +756,8 @@
         },
         {
             "path": "src/Http/Controllers/ApiController.php",
-            "sha256": "ec65cc4f799559bdfd2745f3dd27d5a5df31c9ee5069fc0d9de7bef6ac879b4e",
-            "bytes": 5823,
+            "sha256": "4be6798cf1e2e178086c60cad0b40491a9f7e48c86c2d9ff6b9558f86f1b1676",
+            "bytes": 6831,
             "version": "3.4.4"
         },
         {
@@ -798,8 +804,8 @@
         },
         {
             "path": "src/Http/FrontController.php",
-            "sha256": "9bfa187c9c65b8c06c48e6be28efeea131d049a60c5fdbc2442d37524fa98a6d",
-            "bytes": 5441,
+            "sha256": "a85ddbc18c2d144c20e88383cbb32af52d6d4e5af301716c0cae0f3addbbcf45",
+            "bytes": 5496,
             "version": "3.4.4"
         },
         {
@@ -1170,8 +1176,8 @@
         },
         {
             "path": "templates/layout/app.php",
-            "sha256": "441ec0931a959ffae2fdfd77872d42a3844b223cc023d76aef5edd10a2414153",
-            "bytes": 15547,
+            "sha256": "acf7273cceb9fc8747b6f94da54b8188e7f651e2c2bae9cd712b182d6f2ae673",
+            "bytes": 15541,
             "version": "3.4.4"
         },
         {
@@ -1380,8 +1386,8 @@
         },
         {
             "path": "vendor/composer/autoload_classmap.php",
-            "sha256": "dc24baa8117e1b1ddb6d91b21b876b63c270374cb298415acbf5231c0ab021fa",
-            "bytes": 64751,
+            "sha256": "ec67b02a1fc0b7401ff77a428e509a2b1dc7ac68bf7516b798ad7f546fdacb5a",
+            "bytes": 64822,
             "version": "3.4.4"
         },
         {
@@ -1410,8 +1416,8 @@
         },
         {
             "path": "vendor/composer/autoload_static.php",
-            "sha256": "315191363e0935573aae5abec23ed369b3b813477e047589f7fbf04f091c80d8",
-            "bytes": 72525,
+            "sha256": "d317716735f5c654485c594a4579df5cc51c634cae9242ba9f9a95d991e0d2f2",
+            "bytes": 72610,
             "version": "3.4.4"
         },
         {
@@ -1422,7 +1428,7 @@
         },
         {
             "path": "vendor/composer/installed.php",
-            "sha256": "c41c32f81f220916fbb0ee77cf3686a575d1fd65ed2a35d74943d833d084624a",
+            "sha256": "5309cf95d4bcd015fa947a3a30a2bd0787cad7319920383b779b2509525f5819",
             "bytes": 4119,
             "version": "3.4.4"
         },
