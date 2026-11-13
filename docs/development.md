@@ -66,10 +66,42 @@ Icon workflow: add the lucide name to `tools/frontend/icons.json`, run
 Emoji map: `src/Markdown/EmojiMap.php` is generated from the GitHub gemoji
 database (`db/emoji.json`).
 
+## Dependency policy — what is vendored, what is fetched, by whom
+
+No host running MD.Scribe fetches anything from a package registry or a CDN at
+runtime. The three dependency sets and their owners:
+
+| Set | Installed | What reaches a host |
+|---|---|---|
+| PHP runtime — `league/commonmark`, `scrivo/highlight.php` | `composer install --no-dev` while the release archive is built | `vendor/` inside `MD.Scribe-<version>.zip` |
+| PHP dev — `phpunit/phpunit`, `phpstan/phpstan` | `composer install` in a working copy | nothing |
+| Frontend — mermaid, katex, lucide-static, Inter/JetBrains Mono, tailwind, esbuild | `npm install` in `tools/frontend`, development time only | the committed `public/assets/vendor/` (39 files) and `src/View/Icons.php` |
+
+Consequences worth remembering:
+
+- A dependency version reaches a user only through a commit — a Composer or npm
+  install on the server is never part of an installation, and the docroot
+  (`public/`) contains nothing that points outside the host
+  (`Content-Security-Policy: default-src 'self'`, `src/Core/App.php`).
+- The one outbound request the application knows how to make is the updater
+  reading `Version::API_BASE` (`src/Admin/UpdateService.php:74`, called from the
+  admin updates page — `src/Http/AdminKernel.php:543` — and from
+  `action=update.check`, cached for 15 minutes). A failure is reported, never
+  fatal: an installation without internet access simply sees "GitHub API
+  unavailable". `ALLOW_UPDATE` (default `false`, `src/Admin/UpdateService.php:189`)
+  gates *applying* an update, not the check; nothing else in the tree opens a
+  socket.
+- Dependabot (`.github/dependabot.yml`) watches the three ecosystems above, once
+  a month, at most two open pull requests each. It is a maintenance reminder,
+  not a delivery channel: a `public/assets/vendor/` change is a rendering change,
+  so it needs `node build.mjs --vendor` and a page check before merge, and a
+  `composer.json` bump of a runtime package needs the release archive rebuilt
+  and `config/manifest.json` regenerated (release checklist step 5).
+
 ## Backend tooling
 
 ```bash
-composer test             # PHPUnit (201 tests)
+composer test             # PHPUnit (214 tests, 1 skipped)
 composer stan             # PHPStan level 6 (strict types everywhere)
 composer check            # both
 php tools/build-manifest.php   # regenerate config/manifest.json (release step)
@@ -86,7 +118,8 @@ flags) have dedicated regression tests, including the historic v2 bugs
 1. Bump `src/Core/Version.php` (`VERSION`, `CODENAME`).
 2. `cd tools/frontend && node build.mjs --vendor` — refresh assets.
 3. `composer check` (with dev deps) — must be green, plus
-   `pwsh -File tools/Invoke-ProjectDoctrine.ps1` (baseline: 0 errors, 1 warning).
+   `pwsh -File tools/Invoke-ProjectDoctrine.ps1` (baseline: 12 checks, 0 errors,
+   0 warnings).
 4. Build the release tree in a clean copy of the tag: `composer install --no-dev
    --optimize-autoloader` — the archive ships `vendor/` so an install needs no
    Composer on the host.

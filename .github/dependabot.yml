@@ -1,19 +1,38 @@
 version: 2
 
+# Scope of this file: *version* updates only. Security updates are a repository
+# setting (Settings → Code security), not a key here, so the monthly cadence
+# below never delays a security advisory.
+#
+# Cadence is deliberately slow. MD.Scribe ships its dependencies as files: the
+# release archive carries `vendor/` and `public/assets/vendor/` is committed, so
+# a version bump changes what users run only when the owner regenerates and
+# re-verifies those files. A weekly stream of pull requests therefore produced
+# review demand without producing a shipped change. Two open pull requests per
+# ecosystem is the cap: once they are open, Dependabot stops adding more.
+
 updates:
-  # PHP runtime and development dependencies (league/commonmark, highlight.php,
-  # phpunit, phpstan). Patches and minor bumps arrive together; a major bump is
-  # raised on its own so it can be reviewed against the release notes.
+  # PHP runtime and development dependencies (league/commonmark,
+  # scrivo/highlight.php, phpunit, phpstan). Patches and minor bumps arrive
+  # together; a major bump is raised on its own so it can be reviewed against
+  # the release notes.
   - package-ecosystem: composer
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "06:00"
       timezone: Etc/UTC
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # PHPUnit 13 is a dev-tool major and `require-dev` pins ^11.5. The
+      # condition names the major instead of `update-types: semver-major`:
+      # `ignore` also silences security updates, so a blanket rule would hide
+      # a future advisory as well. Patches inside 11.x still arrive, and 14.x
+      # will be proposed again once upstream reaches it.
+      - dependency-name: "phpunit/phpunit"
+        versions: ["13.x"]
     groups:
       composer-minor:
         patterns:
@@ -23,17 +42,30 @@ updates:
           - patch
 
   # Frontend build pipeline under tools/frontend. These packages never run on a
-  # production server: their output is committed to public/assets/.
+  # production server: their output is copied into public/assets/vendor/ and
+  # committed. A major bump here (mermaid, katex, lucide-static) changes shipped
+  # rendering, so it stays a separate pull request and needs `node build.mjs
+  # --vendor` plus a page check before merge.
   - package-ecosystem: npm
     directory: "/tools/frontend"
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "06:15"
       timezone: Etc/UTC
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # Both majors change what a reader sees, and both need
+      # `node build.mjs --vendor` plus a page check rather than a merge:
+      # mermaid 12 changes flow edge-ID syntax, lucide 1.x can rename icons and
+      # `src/View/Icons.php` silently falls back to `circle-alert` for a name it
+      # no longer finds. Named version, not `semver-major`, so patches in the
+      # current lines keep flowing (see the composer block for the reason).
+      - dependency-name: "mermaid"
+        versions: ["12.x"]
+      - dependency-name: "lucide-static"
+        versions: ["1.x"]
     groups:
       frontend-minor:
         patterns:
@@ -42,15 +74,15 @@ updates:
           - minor
           - patch
 
-  # Actions used by .github/workflows/ci.yml.
+  # Actions used by .github/workflows/ci.yml. A major bump changes the runner
+  # image and the PHP/Node setup, so it is raised on its own.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
       time: "06:30"
       timezone: Etc/UTC
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     commit-message:
       prefix: "chore(ci)"
     groups:

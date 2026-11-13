@@ -32,6 +32,22 @@ All notable changes to this project are documented here. The format is
 - `AGENTS.md` reduced to a 118-line map (commands, invariants, traps, machine
   APIs, verification, prohibitions); the deep reference it used to carry moved
   to `docs/AGENTS-context.md`, and stale PHP 8.3 / 3.3.0 facts were corrected.
+- Dependabot version updates moved from a weekly to a monthly cadence with an
+  `open-pull-requests-limit` of two per ecosystem: the seven first-run pull
+  requests showed that a bump only reaches a user when the owner regenerates
+  `public/assets/vendor/` or the release archive, so the weekly stream asked for
+  reviews without shipping anything.
+- Three major bumps are deferred in `dependabot.yml` by version, not by update
+  type: mermaid `12.x` (flow edge-ID syntax changed; the bundle is copied by
+  `node build.mjs --vendor`), lucide-static `1.x` (icon names can change and
+  `src/View/Icons.php` falls back to `circle-alert` without a word) and
+  phpunit `13.x` (`require-dev` pins `^11.5`). An `update-types: semver-major`
+  rule was rejected on purpose: `ignore` also silences security updates, so it
+  would hide a future advisory along with the noise.
+- `docs/development.md` gained a dependency policy section: which packages are
+  installed at release time, which files travel inside the archive, what the
+  frontend pipeline copies into the repository, and that the only outbound
+  request the application makes is the updater's release check.
 
 ### Fixed
 
