@@ -15,7 +15,7 @@
     "esbuild": "^0.25.0"
   },
   "dependencies": {
-    "mermaid": "^11.6.0",
+    "mermaid": "^12.3.0",
     "katex": "^0.16.22",
     "lucide-static": "^0.469.0",
     "@fontsource-variable/inter": "^5.2.5",
