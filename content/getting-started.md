@@ -5,14 +5,14 @@ tags: [install, guide]
 
 # Getting started: install in two minutes
 
-MD.Scribe v3 is a folder, not a service. Drop it on any PHP 8.3 host and it
+MD.Scribe v3 is a folder, not a service. Drop it on any PHP 8.5 host and it
 runs — no database, no Node.js on the server, no build step.
 
 ## Requirements
 
 | Component | Minimum | Notes |
 | --------- | ------- | ----- |
-| PHP       | 8.3     | `mbstring`, `dom`, `libxml`, `json`; `curl` for the updater |
+| PHP       | 8.5     | `mbstring`, `dom`, `libxml`, `json`; `curl` for the updater |
 | Disk      | ~15 MB  | including vendored Mermaid + KaTeX |
 | Web server | any    | Apache, nginx, Caddy, or `php -S` |
 
@@ -53,7 +53,7 @@ server {
     location / { try_files $uri /index.php$is_args$args; }
     location ~ \.php$ {
         include fastcgi_params;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
     }
     # src/, storage/, config/ are outside the docroot — unreachable by design.

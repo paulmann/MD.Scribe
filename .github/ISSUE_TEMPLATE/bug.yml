@@ -1,0 +1,128 @@
+name: Bug report
+description: A crash, a wrong render, a failed install step or an admin panel defect.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        MD.Scribe is self-hosted, so a defect can rarely be reproduced without the exact
+        version, environment and command. Fill in as much as you can.
+
+        **Do not paste secrets.** API keys, the admin password or its hash, session
+        cookies, private keys, real domains, IP addresses and personal data must be
+        replaced with `REDACTED` before you submit. Use `localhost` or `example.com` in
+        examples.
+  - type: input
+    id: version
+    attributes:
+      label: MD.Scribe version
+      description: The release you installed, from the dashboard or the archive name (latest 3.4.4).
+      placeholder: "3.4.4"
+    validations:
+      required: true
+  - type: input
+    id: php
+    attributes:
+      label: PHP version
+      description: The first line of `php -v`.
+      placeholder: "PHP 8.5.0 (cli) (built: ...)"
+    validations:
+      required: true
+  - type: dropdown
+    id: server
+    attributes:
+      label: Web server and SAPI
+      options:
+        - Apache with mod_php
+        - Apache with PHP-FPM
+        - nginx with PHP-FPM
+        - Caddy with PHP-FPM
+        - PHP built-in server (php -S)
+        - Docker image from deploy/
+        - Other (describe it below)
+    validations:
+      required: true
+  - type: dropdown
+    id: layout
+    attributes:
+      label: Installation layout
+      options:
+        - Docroot at public/
+        - Docroot at the project root
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "Debian 12, Ubuntu 24.04, Windows 11, shared hosting"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command or URL
+      description: Copy it verbatim and replace your own host with localhost or example.com.
+      render: shell
+      placeholder: |
+        curl -i "http://localhost:8080/index.php?file=guide/start.md"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output and exit code
+      description: Paste the output as text, not as a screenshot, with secrets removed.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour, and what happened instead
+      description: What you expected to see, and what the application actually returned.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Non-default `.md.ini` keys and admin settings that matter for this defect.
+      placeholder: |
+        APP_ENV = production
+        ALLOW_RAW_HTML = false
+        ALLOW_EXTERNAL_IMAGES = false
+        DISABLE_UPLOAD = true
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The shortest sequence that triggers the defect, starting from a known state.
+      placeholder: |
+        1. Install 3.4.4 with the docroot at public/
+        2. Put a document in content/guide/start.md
+        3. Request ...
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried
+      description: The docs page you followed, and the checks you ran (health, logs, cache).
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched existing issues, the wiki and docs before opening this report.
+          required: true
+        - label: I removed secrets, cookies, real hosts, IP addresses and personal data here.
+          required: true
+        - label: This is not a security vulnerability (those use the private advisory channel).
+          required: true

@@ -1,0 +1,74 @@
+name: Feature request
+description: Propose a capability, a configuration option or a behaviour change for MD.Scribe.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem before the solution. MD.Scribe deliberately has no plugin
+        API, no database and no runtime dependency on a network service, so a proposal
+        that needs one of those is a different project, not a small feature.
+
+        Small, well-scoped changes are the ones that get implemented. If you can open a
+        pull request for this, say so below.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem you are trying to solve
+      description: What you do today, where it breaks down, and who else has the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What it should do, including configuration keys, defaults and affected pages.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Viewer and library
+        - Admin panel
+        - Markdown engine and sanitizer
+        - Search and command palette
+        - Theming and assets
+        - HTTP API and integrations
+        - Installation and deployment
+        - Documentation and translations
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Settings, a different workflow, or a docs change that would also solve it.
+    validations:
+      required: false
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Compatibility and dependency impact
+      description: New runtime dependency, network call, database, or change to the v2 URL contract?
+      placeholder: |
+        New runtime dependency: no
+        Network call at runtime: no
+        Affects the v2 URL contract (md.php, updater.php, query-parameter routes): no
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched the existing issues, the wiki and docs/ for this request first.
+          required: true
+        - label: I understand a new runtime dependency needs a discussion before code is written.
+          required: true
+        - label: I am willing to open a pull request for this if the approach is accepted.
+          required: false

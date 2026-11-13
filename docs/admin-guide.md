@@ -141,7 +141,7 @@ for cron use (see development docs).
   themselves.
 - Machine API for external tooling stays v2-compatible through `updater.php`
   (reached via the shipped `public/updater.php` bridge on a docroot-`public`
-  install) — see [http-api.md](http-api.md#machine-api).
+  install) — see [http-api.md](http-api.md#machine-api-v2-compatible).
 
 ## Settings
 

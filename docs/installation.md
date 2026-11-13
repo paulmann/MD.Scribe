@@ -19,7 +19,7 @@ PHP runs and pointing a web server at it.
 The cleanest and safest layout: `src/`, `config/`, `storage/`, `templates/`
 and `vendor/` are physically unreachable from the web.
 
-```
+```text
 /var/www/docs/            ← project root
 ├── public/               ← DOCUMENT ROOT
 │   ├── index.php

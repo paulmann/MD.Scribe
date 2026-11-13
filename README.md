@@ -5,13 +5,50 @@
 
 # MD.Scribe 3
 
-> A secure, self-hosted **PHP 8.5 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
+MD.Scribe is a self-hosted Markdown documentation platform in PHP 8.5: a CommonMark/GFM-complete
+viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams and KaTeX math,
+plus an admin panel with a content manager, editor, backups, a verified self-updater and an audit
+trail. It needs no database, no framework and no build step on the server, and every asset ships
+locally, so the whole application works offline.
 
-[![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
+<!-- md-i18n:switcher -->
+**Read this in:** English · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md) · [हिन्दी](README.hi.md) · [中文](README.zh.md) · [Русский](README.ru.md)
+
+[![CI](https://github.com/paulmann/MD.Scribe/actions/workflows/ci.yml/badge.svg)](https://github.com/paulmann/MD.Scribe/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
 [![Tests](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
-[![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
-[![CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
-[![Wiki](https://img.shields.io/badge/docs-wiki-181717?logo=github&logoColor=white)](https://github.com/paulmann/MD.Scribe/wiki)
+[![CDN requests](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
+
+<img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
+     alt="MD.Scribe — self-hosted PHP 8.5 Markdown documentation platform with a viewer and an admin panel"
+     width="100%">
+
+[**Quick start**](#quick-start) · [**Feature tour**](#feature-tour) · [**Configuration**](#configuration--mdini) · [**Documentation**](#documentation) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**Changelog**](CHANGELOG.md) · [**Security**](SECURITY.md) · [**Contributing**](CONTRIBUTING.md)
+
+> **Documentation status.** The version and every number in this README were measured on
+> 2026-11-14 against the `main` tree of 3.4.4, with the command named where the number appears.
+> Task-oriented guides live in the [wiki](https://github.com/paulmann/MD.Scribe/wiki/Home);
+> reference documentation lives in [`docs/`](docs/installation.md).
+
+## Contents
+
+- [What is MD.Scribe?](#what-is-mdscribe)
+- [Quick start](#quick-start)
+- [Feature tour](#feature-tour)
+- [Configuration — `.md.ini`](#configuration--mdini)
+- [URL contract](#url-contract)
+- [Embedding and CLI rendering](#embedding-and-cli-rendering)
+- [Security](#security)
+- [In numbers](#in-numbers)
+- [Development](#development)
+- [Documentation](#documentation)
+- [Languages of the documentation](#languages-of-the-documentation)
+- [Upgrading from v2](#upgrading-from-v2)
+- [Contributing](#contributing)
+- [License](#license)
+- [Help the project: evidence, not engagement](#help-the-project-evidence-not-engagement)
 
 ---
 
@@ -249,6 +286,24 @@ Defense in depth — details and the hardening checklist:
 - **Secrets**: `.md.ini` is never served (`.htaccess` + outside-docroot
   layouts); machine API answers JSON only.
 
+Reporting a vulnerability: **[SECURITY.md](SECURITY.md)**.
+
+---
+
+## In numbers
+
+Measured on 2026-11-14 against the `main` tree of 3.4.4:
+
+| Surface | Value | Measurement source |
+| --- | ---: | --- |
+| PHP source files | 116 | `Get-ChildItem src,public,templates -Recurse -Filter *.php` |
+| Test files | 22 | `Get-ChildItem tests -Recurse -Filter *.php` |
+| PHPUnit tests | 214 tests, 678 assertions, 1 skipped | `composer test` |
+| Documentation pages | 12 | `Get-ChildItem docs -Filter *.md` |
+| Runtime Composer packages | 2 (`league/commonmark`, `scrivo/highlight.php`) | `composer.json` → `require` |
+| Curated themes | 12 | `config/themes.php` |
+| CDN requests at runtime | 0 | `default-src 'self'` in the enforced CSP |
+
 ---
 
 ## Development
@@ -257,7 +312,7 @@ Defense in depth — details and the hardening checklist:
 composer install                 # dev deps: phpunit, phpstan
 cd tools/frontend && npm install && node build.mjs && cd ../..
 
-composer test                    # 126 PHPUnit tests
+composer test                    # 214 PHPUnit tests, 678 assertions
 composer stan                    # PHPStan level 6
 php -S localhost:8080 -t public public/router.php
 ```
@@ -318,9 +373,35 @@ reference you check against the tag you run.
 | [docs/theming.md](docs/theming.md) | Theme system, tokens, custom themes, recipes |
 | [docs/security.md](docs/security.md) | Threat model, hardening checklist, CSP notes |
 | [docs/http-api.md](docs/http-api.md) | JSON endpoints (public + admin + machine API) |
+| [docs/standalone-renderer.md](docs/standalone-renderer.md) | Embedding the Markdown pipeline, CLI and HTTP render API |
 | [docs/development.md](docs/development.md) | Architecture, build pipeline, testing, releases |
 | [docs/troubleshooting.md](docs/troubleshooting.md) | Common problems and fixes |
 | [docs/upgrade-from-v2.md](docs/upgrade-from-v2.md) | Migration mapping and steps |
+| [docs/AGENTS-context.md](docs/AGENTS-context.md) | Deep project context for coding agents |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to propose a change and what must pass first |
+| [SECURITY.md](SECURITY.md) | Supported versions and private vulnerability reporting |
+| [CHANGELOG.md](CHANGELOG.md) | Every release, Keep a Changelog format |
+
+---
+
+## Languages of the documentation
+
+The English README is canonical. A translated README mirrors this file section for section, and
+is updated in the same commit whenever a heading, a command or a number changes. The wiki and
+`docs/` remain English.
+
+| Language | File | Notes |
+| --- | --- | --- |
+| English | [README.md](README.md) | Canonical |
+| Russian | [README.ru.md](README.ru.md) | Translation of this file |
+| German | [README.de.md](README.de.md) | Translation of this file |
+| Chinese (Simplified) | [README.zh.md](README.zh.md) | Translation of this file |
+| Hindi | [README.hi.md](README.hi.md) | Translation of this file |
+| Spanish | [README.es.md](README.es.md) | Translation of this file |
+| French | [README.fr.md](README.fr.md) | Translation of this file |
+
+A translation that falls behind is a defect: report it with the language and the section, or open
+a pull request that fixes it.
 
 ---
 
@@ -329,6 +410,17 @@ reference you check against the tag you run.
 Drop-in: deploy v3 beside your v2 files, move (or point `BROWSE_DIR` at) your
 documents, keep the root `md.php` shim — every old bookmark and `?file=` link
 works. Step-by-step: **[docs/upgrade-from-v2.md](docs/upgrade-from-v2.md)**.
+
+---
+
+## Contributing
+
+One logical change per pull request, a test for new behaviour, and no new runtime dependency
+without a discussion first. The gates are `composer test` (214 tests) and `composer stan`
+(PHPStan level 6); both must exit `0`. Conventions, commit style, the documentation language
+policy and the bug-report checklist: **[CONTRIBUTING.md](CONTRIBUTING.md)**. This project follows
+the [Contributor Covenant 2.1](CODE_OF_CONDUCT.md); help with a question or a triage is
+described in [SUPPORT.md](SUPPORT.md).
 
 ## License
 
@@ -340,3 +432,17 @@ Highlighting: [scrivo/highlight.php](https://github.com/scrivo/highlight.php) (B
 Diagrams: [Mermaid](https://mermaid.js.org/) (MIT). Math: [KaTeX](https://katex.org/) (MIT).
 Icons: [Lucide](https://lucide.dev/) (ISC). Emoji data: [gemoji](https://github.com/github/gemoji) (MIT).
 Fonts: Inter & JetBrains Mono (SIL OFL).
+
+## Help the project: evidence, not engagement
+
+What actually helps, in order of value:
+
+- a **compatibility report**: PHP version (`php -v`), web-server and version, deployment layout
+  (docroot `public/`, docroot at root, shared hosting), and the exact command with its output —
+  one report per unique combination, after searching the existing issues;
+- a **documentation fix** as a pull request that names the file and the line;
+- a **sanitised case study** published with its data owner's permission;
+- a **dependency or security note** for a fork or a wrapper, disclosed in the same place.
+
+Never automate stars, forks, watchers, comments, issues, pull requests or bulk messages to the
+maintainer or to third parties. An agent may draft a report; a human publishes it after review.

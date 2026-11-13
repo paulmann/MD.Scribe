@@ -2,7 +2,7 @@
 
 ## Architecture
 
-```
+```text
 Request → public/index.php (or md.php shim)
         → App::boot()          config · logger · session · csrf · request
         → FrontController      query-parameter routing (works without rewrites)

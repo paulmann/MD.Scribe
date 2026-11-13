@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use MD.Scribe in research, teaching or a published deployment, cite it as below."
+title: MD.Scribe
+abstract: >-
+  Self-hosted PHP 8.5 Markdown documentation platform: a CommonMark and GFM viewer with
+  full-text search, a command palette, Mermaid diagrams and KaTeX math, plus an admin
+  panel with editor, backups, audit trail and a verified self-updater. No database, no
+  framework, no build step on the server and no CDN dependencies.
+type: software
+authors:
+  - family-names: Deynekin
+    given-names: Mikhail
+    alias: paulmann
+version: 3.4.4
+date-released: 2026-11-13
+license: MIT
+repository-code: "https://github.com/paulmann/MD.Scribe"
+keywords:
+  - markdown
+  - documentation
+  - php
+  - self-hosted
+  - admin-panel
+  - commonmark
+  - gfm

@@ -1,0 +1,62 @@
+version: 2
+
+updates:
+  # PHP runtime and development dependencies (league/commonmark, highlight.php,
+  # phpunit, phpstan). Patches and minor bumps arrive together; a major bump is
+  # raised on its own so it can be reviewed against the release notes.
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      composer-minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # Frontend build pipeline under tools/frontend. These packages never run on a
+  # production server: their output is committed to public/assets/.
+  - package-ecosystem: npm
+    directory: "/tools/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:15"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      frontend-minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # Actions used by .github/workflows/ci.yml.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:30"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions-minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

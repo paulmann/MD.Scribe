@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="MD.Scribe — A Markdown documentation site in PHP 8.5 with a viewer, full-text search, an editor and an admin panel.">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#1b3354"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#background)"/>
+  <rect x="0" y="0" width="1280" height="5" rx="0" fill="#4f9cf9" stroke="#4f9cf9" stroke-width="1"/>
+  <text x="48" y="84" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#4f9cf9" text-anchor="start">SELF-HOSTED MARKDOWN DOCUMENTATION</text>
+  <text x="48" y="172" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="76" font-weight="700" fill="#e6edf3" text-anchor="start"><tspan x="48"><tspan fill="#4f9cf9">M</tspan>D.Scribe</tspan></text>
+  <text x="48" y="242" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="30" font-weight="700" fill="#e6edf3" text-anchor="start">A Markdown documentation site in PHP 8.5 with a viewer, full-text search, an</text>
+  <text x="48" y="280" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="30" font-weight="700" fill="#e6edf3" text-anchor="start">editor and an admin panel.</text>
+  <text x="48" y="342" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="20" fill="#96a4b2" text-anchor="start">No database. No framework. No build step on the server.</text>
+  <rect x="48" y="368" width="123" height="36" rx="18" fill="#141d29" stroke="#2a3848" stroke-width="1"/>
+  <text x="66" y="392" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="18" fill="#96a4b2" text-anchor="start">MIT license</text>
+  <rect x="183" y="368" width="108" height="36" rx="18" fill="#141d29" stroke="#2a3848" stroke-width="1"/>
+  <text x="201" y="392" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="18" fill="#96a4b2" text-anchor="start">214 tests</text>
+  <rect x="303" y="368" width="119" height="36" rx="18" fill="#141d29" stroke="#2a3848" stroke-width="1"/>
+  <text x="321" y="392" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="18" fill="#96a4b2" text-anchor="start">12 themes</text>
+  <rect x="434" y="368" width="226" height="36" rx="18" fill="#141d29" stroke="#2a3848" stroke-width="1"/>
+  <text x="452" y="392" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="18" fill="#96a4b2" text-anchor="start">2 runtime dependencies</text>
+  <rect x="672" y="368" width="160" height="36" rx="18" fill="#141d29" stroke="#2a3848" stroke-width="1"/>
+  <text x="690" y="392" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="18" fill="#96a4b2" text-anchor="start">0 CDN requests</text>
+  <rect x="48" y="416" width="1184" height="154" rx="16" fill="#0a1018" stroke="#22303f" stroke-width="1"/>
+  <circle cx="68" cy="438" r="6" fill="#ff5f56"/>
+  <circle cx="90" cy="438" r="6" fill="#ffbd2e"/>
+  <circle cx="112" cy="438" r="6" fill="#27c93f"/>
+  <line x1="48" y1="460" x2="1232" y2="460" stroke="#22303f" stroke-width="1"/>
+  <text x="144" y="443" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#96a4b2" text-anchor="start">MD.Scribe · paulmann.github.io/MD.Scribe</text>
+  <text x="76" y="486" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#e6edf3" text-anchor="start"><tspan fill="#4f9cf9">$ </tspan>php -S localhost:8080 -t public public/router.php</text>
+  <text x="76" y="513" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#96a4b2" text-anchor="start">MD.Scribe 3.4.4 - Keystone</text>
+  <text x="76" y="540" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#96a4b2" text-anchor="start">214 tests, 678 assertions - PHPStan level 6</text>
+  <text x="48" y="606" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="19" font-weight="700" fill="#e6edf3" text-anchor="start">github.com/paulmann/MD.Scribe</text>
+  <text x="1232" y="606" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="19" font-weight="700" fill="#e6edf3" text-anchor="end">paulmann.github.io/MD.Scribe</text>
+  <circle cx="938.015625" cy="599" r="5" fill="#3fb950"/>
+</svg>

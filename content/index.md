@@ -17,7 +17,7 @@ JavaScript ship with the app.
 
 ## Why MD.Scribe
 
-- **Zero dependencies at runtime** — plain PHP 8.3, no database, no build step on the server.
+- **Zero dependencies at runtime** — plain PHP 8.5, no database, no build step on the server.
 - **Full Markdown** — CommonMark + GitHub Flavored Markdown, footnotes, definition lists, math, diagrams, alerts and more.
 - **Secure by default** — every document passes a DOM-allowlist sanitizer; CSP, hardened sessions and path-traversal-proof validation.
 - **A real admin panel** — content manager, uploads, backups, updater, settings editor, logs, health checks and an audit trail.

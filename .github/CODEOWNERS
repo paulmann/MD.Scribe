@@ -1,0 +1,4 @@
+# Default owner for every path in this repository.
+# A pull request that changes a path below requires a review from its owner.
+
+* @paulmann

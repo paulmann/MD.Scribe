@@ -1,9 +1,47 @@
 # Changelog
 
-All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
-versions follow semver.
+All notable changes to this project are documented here. The format is
+[Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 3.4.4 — “Keystone” (2026-11-13)
+## Unreleased
+
+### Added
+
+- README translations for Russian, German, Chinese, Hindi, Spanish and French
+  (`README.ru.md`, `README.de.md`, `README.zh.md`, `README.hi.md`,
+  `README.es.md`, `README.fr.md`) with a language switcher in every language.
+- Community and compliance files — `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  `SUPPORT.md`, `SECURITY.md`, `CITATION.cff`, `.editorconfig`,
+  `.gitattributes`, the pull-request template, issue forms, `CODEOWNERS`,
+  Dependabot configuration — and `assets/social-preview.png` + `.svg` for the
+  README banner.
+- `.ghagent.json`, which records the repository's documentation contract for
+  the steward (`ghagent audit`, `doc`, `changelog`, `assets`, `privacy`); the
+  sample corpus under `content/` is excluded because it uses the application's
+  own query routes and a deliberate dead-link fixture.
+
+### Changed
+
+- README rebuilt to the repository documentation contract: one-paragraph
+  summary, table of contents, banner image, measured numbers and their source,
+  "For agents" link, language switcher.
+- CHANGELOG normalized to Keep a Changelog (ISO-dated version headings,
+  standard change types); repository metadata (description, topics) refreshed
+  to PHP 8.5.
+- `AGENTS.md` reduced to a 118-line map (commands, invariants, traps, machine
+  APIs, verification, prohibitions); the deep reference it used to carry moved
+  to `docs/AGENTS-context.md`, and stale PHP 8.3 / 3.3.0 facts were corrected.
+
+### Fixed
+
+- Dead anchor in `docs/admin-guide.md`, a placeholder link in
+  `docs/http-api.md`, and code fences without a language tag in `docs/`.
+- Sample content still claimed PHP 8.3 (`content/index.md`,
+  `content/getting-started.md`, including an nginx snippet); both now state the
+  8.5 floor.
+
+## 3.4.4 - 2026-11-13
 
 ### Changed
 
@@ -35,9 +73,9 @@ versions follow semver.
   an unstyled vhost after a MIME change, a manifest served as octet-stream, and a
   clipped wide table.
 
-## 3.4.3 — “Keystone” (2026-11-13)
+## 3.4.3 - 2026-11-13
 
-### Documented
+### Changed
 
 - **Static MIME type for the PWA manifest.** nginx and Apache do not know
   `.webmanifest`, so `public/manifest.webmanifest` was served as
@@ -47,7 +85,7 @@ versions follow semver.
 - `docs/installation.md` gained a **Verified installations** table: layouts that
   were actually exercised end to end, with the PHP version and the checks that ran.
 
-## 3.4.2 — “Keystone” (2026-11-13)
+## 3.4.2 - 2026-11-13
 
 ### Fixed
 
@@ -65,7 +103,7 @@ versions follow semver.
 - Download and verification moved into one `openRelease()` path shared by
   `apply()` and `plan()`, so a dry run and a real update cannot drift apart.
 
-## 3.4.1 — “Keystone” (2026-11-13)
+## 3.4.1 - 2026-11-13
 
 ### Fixed
 
@@ -79,30 +117,11 @@ versions follow semver.
   docroot-at-root install that path does not exist. It now points at whichever of
   `admin.php` / `public/admin.php` is actually present.
 
-## 3.4.0 — “Keystone” (2026-11-13)
+## 3.4.0 - 2026-11-13
 
 PHP 8.3 and 8.4 are dropped; the platform is **PHP 8.5** (verified on 8.5.12).
 The updater becomes installable again, the editor gains a toolbar and templates,
 search learns operators, and the viewer can be installed as an offline app.
-
-### Changed
-
-- **PHP requirement raised to 8.5.** The bootstrap gate, `composer.json` and the
-  CI matrix no longer accept 8.3 or 8.4. Any 8.5.x patch release is accepted so a
-  host on the 8.5 line is not bricked by a patch-level floor; 8.5.12 is the
-  version the project is verified on.
-- **Licence is MIT** (was PolyForm Noncommercial 1.0.0). Commercial and private
-  use, modification and redistribution are allowed with the notice kept.
-- **The self-updater installs the release archive, not a branch tarball.**
-  `apply()` downloads the `MD.Scribe-<version>.zip` asset of the latest release,
-  refuses archives with unsafe paths, verifies every file against the manifest
-  embedded in the archive, backs up what it replaces and refuses the whole update
-  on the first mismatch. A branch tarball can never satisfy the manifest because
-  it does not contain `vendor/` — that was the reason every update failed.
-  `check()` now reports `archive` and `installable`, and the panel disables the
-  apply button when the release carries no archive.
-- `config/manifest.json` is regenerated for the release (it had been frozen at
-  3.1.0, so `status()` reported every later file as `modified`).
 
 ### Added
 
@@ -123,6 +142,25 @@ search learns operators, and the viewer can be installed as an offline app.
 - Admin action `file.createFromTemplate`; the toolbar buttons are text glyphs
   because the generated icon map has no `bold`, `italic`, `link` or `table`.
 
+### Changed
+
+- **PHP requirement raised to 8.5.** The bootstrap gate, `composer.json` and the
+  CI matrix no longer accept 8.3 or 8.4. Any 8.5.x patch release is accepted so a
+  host on the 8.5 line is not bricked by a patch-level floor; 8.5.12 is the
+  version the project is verified on.
+- **Licence is MIT** (was PolyForm Noncommercial 1.0.0). Commercial and private
+  use, modification and redistribution are allowed with the notice kept.
+- **The self-updater installs the release archive, not a branch tarball.**
+  `apply()` downloads the `MD.Scribe-<version>.zip` asset of the latest release,
+  refuses archives with unsafe paths, verifies every file against the manifest
+  embedded in the archive, backs up what it replaces and refuses the whole update
+  on the first mismatch. A branch tarball can never satisfy the manifest because
+  it does not contain `vendor/` — that was the reason every update failed.
+  `check()` now reports `archive` and `installable`, and the panel disables the
+  apply button when the release carries no archive.
+- `config/manifest.json` is regenerated for the release (it had been frozen at
+  3.1.0, so `status()` reported every later file as `modified`).
+
 ### Fixed
 
 - Admin and editor buttons referenced icon names that do not exist in the
@@ -131,7 +169,7 @@ search learns operators, and the viewer can be installed as an offline app.
 - `docs/development.md` now documents why `bin/md-scribe-render` sits outside
   PHPStan and the CI lint step, and what that costs.
 
-## 3.3.0 — “Lattice” (2026-11-13)
+## 3.3.0 - 2026-11-13
 
 A knowledge-base release: documents can link to each other by name, the
 library knows who links where, frontmatter tags get a real index, every save
@@ -180,6 +218,9 @@ keeps history, and the whole site can be exported as static HTML.
 - `FileManager` accepts an optional `RevisionService` and stores a revision
   after every successful write.
 - `RenderCache::key()` takes an optional corpus stamp (backwards compatible).
+- `config/manifest.json` is still the 3.1.0 release manifest; regenerate it
+  with `php tools/build-manifest.php` when cutting a release (see
+  `docs/development.md`).
 
 ### Fixed
 
@@ -193,13 +234,7 @@ keeps history, and the whole site can be exported as static HTML.
   `/`-separated literal and failed on Windows only; the assertion now normalises
   the separator.
 
-### Notes
-
-- `config/manifest.json` is still the 3.1.0 release manifest; regenerate it
-  with `php tools/build-manifest.php` when cutting a release (see
-  `docs/development.md`).
-
-## 3.2.3 — “Clarity” (2026-10-29)
+## 3.2.3 - 2026-10-29
 
 ### Changed
 
@@ -211,7 +246,7 @@ keeps history, and the whole site can be exported as static HTML.
   consumer (portal modal, HTML e-mail) without a stylesheet.
 - Tests and `docs/http-api.md` follow the new fragment shape.
 
-## 3.2.2 — “Borealis” (2026-10-29)
+## 3.2.2 - 2026-10-29
 
 Machine rendering over HTTP. The standalone renderer already worked from PHP
 and the shell; an application that stores Markdown answers needed it as a
@@ -246,7 +281,7 @@ service — no session, no CSRF token, no browser.
 - `docs/http-api.md` — new section documenting the machine render API.
 - `AGENTS.md`, `README`-adjacent docs reference version 3.2.2.
 
-## 3.2.1 — “Borealis” (2026-10-22)
+## 3.2.1 - 2026-10-22
 
 ### Added
 
@@ -260,7 +295,7 @@ service — no session, no CSRF token, no browser.
 
 - Standalone HTML pages now use the neutral `← Files` back label.
 
-## 3.2.0 — “Borealis” (2026-10-22)
+## 3.2.0 - 2026-10-22
 
 Embedding release: the rendering pipeline is now usable outside the viewer.
 
@@ -290,7 +325,7 @@ Embedding release: the rendering pipeline is now usable outside the viewer.
 - README: new "Embedding and CLI rendering" section.
 - `AGENTS.md` and `docs/` reference version 3.2.0.
 
-## 3.1.0 — “Aurora” (2026-10-14)
+## 3.1.0 - 2026-10-14
 
 A rename release. The project is published as **MD.Scribe** — same code, same
 contracts, new name and new home. Nothing in the application behaviour changes.
@@ -313,18 +348,6 @@ contracts, new name and new home. Nothing in the application behaviour changes.
 - `composer.lock` `content-hash` recomputed for the renamed package; verified
   with `composer validate --check-lock` → *"composer.json is valid"*.
 - `config/manifest.json` rebuilt (921 shipped files).
-
-### Fixed
-
-- **The self-updater no longer pins a product name when unpacking a release
-  archive.** It located the extracted root with `glob('.../MD.Viewer-*')`, so a
-  renamed repository — which GitHub names after the repository, e.g.
-  `MD.Scribe-main/` — would have been rejected with *"does not look like a
-  release"*. It now accepts any `<name>-<ref>` directory that contains
-  `config/manifest.json`, with a fallback for a flat archive.
-
-### Notes
-
 - The PHP namespace `MdViewer\` is unchanged. It is an internal identifier
   namespace, shared by every class in `src/`, and renaming it would touch every
   file for no user-visible gain. Third-party code that type-hints these classes
@@ -336,11 +359,28 @@ contracts, new name and new home. Nothing in the application behaviour changes.
   list and the machine-API envelope are unchanged, and `.md.ini` keys are the
   same (`SITE_NAME` keeps whatever value the installation already has).
 
-## 3.0.1 — “Aurora” (2026-10-14)
+### Fixed
+
+- **The self-updater no longer pins a product name when unpacking a release
+  archive.** It located the extracted root with `glob('.../MD.Viewer-*')`, so a
+  renamed repository — which GitHub names after the repository, e.g.
+  `MD.Scribe-main/` — would have been rejected with *"does not look like a
+  release"*. It now accepts any `<name>-<ref>` directory that contains
+  `config/manifest.json`, with a fallback for a flat archive.
+
+## 3.0.1 - 2026-10-14
 
 Bug-fix release. Two defects of the same class — a path comparison that assumed
 `/` as the directory separator — both found by serving the application rather
 than by reading it.
+
+### Changed
+
+- Behaviour on Linux and macOS is unchanged by both fixes — there the separator
+  is `/`, so the old comparisons already held. Confirmed by serving the same
+  tree on Debian (PHP 8.5) and on Windows.
+- `REPAIR_VERSION` in `MermaidNormalizer` stays at `3.0.0`: it versions the
+  mermaid repair rules, which this release does not touch.
 
 ### Fixed
 
@@ -360,21 +400,39 @@ than by reading it.
   (940 entries against the correct 921). Both sides are normalised before
   comparing, and `config/manifest.json` was rebuilt.
 
-### Notes
-
-- Behaviour on Linux and macOS is unchanged by both fixes — there the separator
-  is `/`, so the old comparisons already held. Confirmed by serving the same
-  tree on Debian (PHP 8.5) and on Windows.
-- `REPAIR_VERSION` in `MermaidNormalizer` stays at `3.0.0`: it versions the
-  mermaid repair rules, which this release does not touch.
-
-## 3.0.0 — “Aurora” (2026-10-10)
+## 3.0.0 - 2026-10-10
 
 A complete professional refactor of MD.Viewer v2 (the 4,700-line `md.php`
 monolith) into a structured PHP 8.3 application — plus a full admin panel,
 a 2026 design system and zero CDN dependencies.
 
-### Architecture
+### Added
+
+- **NEW**: math ($…$ / $$…$$) via local KaTeX; GitHub-style alerts
+  (`> [!NOTE]` …); definition lists; `{#id .class}` attributes; smart
+  punctuation (opt-in); YAML frontmatter (title/description/tags/author/
+  date/**draft**/toc/numbering); `==mark==` (was v2-extra); inline
+  footnotes; `[TOC]` placeholder; relative `.md` link rewriting with
+  dead-link markers; media route for relative images; 1,913 emoji aliases
+  (was 16).
+- **KEEP & PORT**: glossary tooltips with alias expansion, universal
+  pattern chains, Mermaid auto-repair engine (extended: balance-aware
+  quoting of round node labels), heading numbering with manual-detection,
+  colon-split hero titles, DOUBLE_LINE_BREAKS soft-break behaviour.
+- **FIX (inherited)**: the v2.16 `<path>` infinite-loop input is a
+  regression test; fence-length nesting (v2.2.8) is native to CommonMark.
+- Session login (password_hash, per-IP rate limiting, first-run setup gated
+  by localhost-or-one-time-code), CSRF on every mutation, full audit trail.
+- Dashboard · file manager (tree, CRUD, soft-delete + trash, folders,
+  multi-upload) · split-pane editor (live engine preview, sha256 conflict
+  detection, image insertion, deep links) · search-index control · content
+  backups (create/list/restore/download/delete, pre-restore safety
+  snapshots) · updater (GitHub release check, sha256-verified apply,
+  app backups/restore) · schema-driven settings editor · custom themes ·
+  logs & audit viewer · security/health checks (20+) · tools (broken-link /
+  dead-anchor / missing-media / orphan checker, cache control).
+
+### Changed
 
 - **REWRITE**: monolith → PSR-4 application (`src/Core`, `Http`, `Markdown`,
   `Files`, `Admin`, `Theme`, `View`) with strict types everywhere.
@@ -391,9 +449,6 @@ a 2026 design system and zero CDN dependencies.
   `updater.php`, machine API envelope, `mdv_feat_*` cookies, per-directory
   `.md.ini` layering, glossary DOM contract, 14-layer path validation with
   the v2.16/v2.18 Unicode rules).
-
-### Design & frontend
-
 - **NEW**: shadcn/ui-token design system on a **local Tailwind CSS v4
   build** — hand-built vanilla-JS components (dialogs, sheets, dropdowns,
   switches, toasts, command palette) with keyboard/a11y support.
@@ -407,35 +462,14 @@ a 2026 design system and zero CDN dependencies.
   word-wrap toggle, reading-preference steppers.
 - **CHANGE**: zero CDN — Mermaid, KaTeX (+mhchem), Inter, JetBrains Mono
   and all icons are vendored; CSP enforces `default-src 'self'`.
-
-### Markdown
-
-- **NEW**: math ($…$ / $$…$$) via local KaTeX; GitHub-style alerts
-  (`> [!NOTE]` …); definition lists; `{#id .class}` attributes; smart
-  punctuation (opt-in); YAML frontmatter (title/description/tags/author/
-  date/**draft**/toc/numbering); `==mark==` (was v2-extra); inline
-  footnotes; `[TOC]` placeholder; relative `.md` link rewriting with
-  dead-link markers; media route for relative images; 1,913 emoji aliases
-  (was 16).
-- **KEEP & PORT**: glossary tooltips with alias expansion, universal
-  pattern chains, Mermaid auto-repair engine (extended: balance-aware
-  quoting of round node labels), heading numbering with manual-detection,
-  colon-split hero titles, DOUBLE_LINE_BREAKS soft-break behaviour.
-- **FIX (inherited)**: the v2.16 `<path>` infinite-loop input is a
-  regression test; fence-length nesting (v2.2.8) is native to CommonMark.
-
-### Admin panel (new)
-
-- Session login (password_hash, per-IP rate limiting, first-run setup gated
-  by localhost-or-one-time-code), CSRF on every mutation, full audit trail.
-- Dashboard · file manager (tree, CRUD, soft-delete + trash, folders,
-  multi-upload) · split-pane editor (live engine preview, sha256 conflict
-  detection, image insertion, deep links) · search-index control · content
-  backups (create/list/restore/download/delete, pre-restore safety
-  snapshots) · updater (GitHub release check, sha256-verified apply,
-  app backups/restore) · schema-driven settings editor · custom themes ·
-  logs & audit viewer · security/health checks (20+) · tools (broken-link /
-  dead-anchor / missing-media / orphan checker, cache control).
+- **NEW**: 126 PHPUnit tests (333 assertions) incl. security regression
+  suites; PHPStan level 6 clean; GitHub Actions CI; Docker + nginx + Caddy +
+  Apache configs; `php -S` dev router; release manifest builder;
+  `.gitignore`; MIT LICENSE retained.
+- **DOCS**: README rewritten; `docs/` — installation, configuration
+  reference, markdown matrix, admin guide, theming, security model, HTTP &
+  machine API, development & release process, troubleshooting, upgrade
+  guide.
 
 ### Security
 
@@ -447,18 +481,5 @@ a 2026 design system and zero CDN dependencies.
   octet-stream downloads, per-directory flag layering, machine-API key
   semantics, three-level feature gating (ini / server / UI).
 
-### Quality & operations
-
-- **NEW**: 126 PHPUnit tests (333 assertions) incl. security regression
-  suites; PHPStan level 6 clean; GitHub Actions CI; Docker + nginx + Caddy +
-  Apache configs; `php -S` dev router; release manifest builder;
-  `.gitignore`; MIT LICENSE retained.
-- **DOCS**: README rewritten; `docs/` — installation, configuration
-  reference, markdown matrix, admin guide, theming, security model, HTTP &
-  machine API, development & release process, troubleshooting, upgrade
-  guide.
-
-## 2.x (legacy)
-
-See the v2 repository history — `md.php` up to v2.18.0 and `updater.php`
-up to v3.14.0, with the changelog embedded in the file headers.
+**2.x (legacy).** See the v2 repository history — `md.php` up to v2.18.0 and
+`updater.php` up to v3.14.0, with the changelog embedded in the file headers.

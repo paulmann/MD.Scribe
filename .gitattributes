@@ -1,0 +1,23 @@
+# Normalize every text file to LF, in the repository and in the working tree.
+# The exceptions below are the only ones: Windows batch files must keep CRLF so
+# cmd.exe can execute them, and binary assets must never be converted or diffed.
+* text=auto eol=lf
+
+# Binary assets: no EOL conversion, no text diff.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+*.phar binary
+
+# Windows scripts keep CRLF (cmd.exe does not execute an LF-only batch file).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# PowerShell runs under pwsh on every platform here; keep it LF like the rest.
+*.ps1 text eol=lf

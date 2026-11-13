@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Wiki
+    url: https://github.com/paulmann/MD.Scribe/wiki
+    about: Task-oriented guide to install, configure, operate and upgrade. Start at Home.
+  - name: Documentation in docs/
+    url: https://github.com/paulmann/MD.Scribe/tree/main/docs
+    about: Reference pages for the tag you run, covering configuration, the API and admin.
+  - name: Security report
+    url: https://github.com/paulmann/MD.Scribe/security/advisories/new
+    about: Report a vulnerability privately. Do not open a public issue for a security defect.

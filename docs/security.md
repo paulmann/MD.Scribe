@@ -57,7 +57,7 @@ em-dashes, `%2e%2e%2f`, doubled slashes).
 
 ## Content-Security-Policy
 
-```
+```text
 default-src 'self';
 script-src  'self' 'nonce-<per-request>';
 style-src   'self' 'unsafe-inline';
