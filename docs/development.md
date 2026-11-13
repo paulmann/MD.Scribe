@@ -100,6 +100,13 @@ flags) have dedicated regression tests, including the historic v2 bugs
 8. Tag `v<version>`, create the GitHub **release** and attach the archive — the
    updater downloads the release asset, not the branch tarball, because a branch
    tarball never contains `vendor/`.
+9. **Deploy that archive to a real host and re-run the checks before announcing
+   anything**: the six requests in `docs/installation.md` "Verification
+   checklist", the admin health check, and the updater dry run
+   (`POST updater.php?api_key=…&action=install&format=json&dry_run=1`, which must
+   report the files it would replace — or none, with `verified` equal to the
+   manifest size). A release published before this step is a hypothesis, not a
+   release; three defects in the 3.4.x line were found only here.
 
 ### Code outside static analysis
 
