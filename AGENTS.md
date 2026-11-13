@@ -125,8 +125,9 @@ pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .\tools\In
 php -S 127.0.0.1:8099 -t public public/router.php
 ```
 
-Baseline recorded on 2026-11-13 on PHP 8.5.0 / Windows: `tools/Invoke-ProjectDoctrine.ps1`
-prints **0 ошибок, 1 предупреждение** (the warning is the stale release manifest),
+Baseline recorded on 2026-11-13 on PHP 8.5.12 / Windows: `tools/Invoke-ProjectDoctrine.ps1`
+prints **0 ошибок, 0 предупреждений** (the manifest was regenerated for 3.4.2; before
+that step the same run warned that the manifest was behind the code),
 PHPStan is clean and PHPUnit runs 188 tests with no failures.
 
 ## Product and operations guide

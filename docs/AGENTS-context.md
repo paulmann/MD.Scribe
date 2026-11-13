@@ -1,4 +1,4 @@
-# Project context: MD.Scribe 3.4.0 «Keystone»
+# Project context: MD.Scribe 3.4.2 «Keystone»
 
 Deep reference for an agent working on this repository. Read `AGENTS.md` first;
 read the code before asserting anything. Everything here was verified against
@@ -228,7 +228,7 @@ PHPStan analyses `src` + the five entry scripts only — `bin/`, `tools/` and
 `templates/` are outside it. CI lints `src public templates tools tests` and the
 three root scripts, but **not** `bin/md-scribe-render`.
 
-Baseline at 3.4.0 on Windows (PHP 8.5.0): PHPStan clean; PHPUnit 201 tests, all
+Baseline at 3.4.2 on Windows (PHP 8.5.12): PHPStan clean; PHPUnit 206 tests, all
 green. Until 3.3.0 one assertion in `PathValidatorTest` compared a native Windows
 path with a `/`-separated literal and failed on Windows only — a test-portability
 defect that has since been fixed.

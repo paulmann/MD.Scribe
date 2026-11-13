@@ -138,6 +138,19 @@ manifest, backs up replaced files to `storage/backups/app-*/` and swaps them.
 `content/`, `storage/` and `.md.ini` are never touched. Manual upgrades:
 replace the code directories, keep those three.
 
+## Verified installations
+
+Layouts that were actually exercised end to end, with what was measured:
+
+| Host | Layout | PHP | Checked |
+| --- | --- | --- | --- |
+| Ubuntu 26.04, nginx, PHP-FPM per-site pool | A — docroot `public/`, mounted in a sub-directory (`/mdscribe/`) next to another application | 8.5.12 | viewer, library, tags page, search with `tag:`/`path:`, missing document → 404, `manifest.webmanifest` + `sw.js` served, machine API `status`/`conflicts`/`install dry_run` (948 files verified against the release archive), `public/updater.php` bridge |
+
+A sub-directory install needs nothing beyond the document root: the front
+controller derives its web prefix from `SCRIPT_NAME`, so assets, links and the
+service-worker scope stay inside `/mdscribe/`. Document-root-at-`public/` installs
+reach the updater through the shipped `public/updater.php` bridge.
+
 ## Verification checklist
 
 - [ ] `https://site/` renders the welcome document
