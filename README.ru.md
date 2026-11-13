@@ -420,7 +420,7 @@ MD.Scribe/
 Одно логическое изменение на pull request, тест на новое поведение и никаких новых зависимостей
 времени выполнения без предварительного обсуждения. Обязательные проверки — `composer test`
 (214 тестов) и `composer stan` (PHPStan уровня 6); обе должны завершиться с кодом `0`.
-Соглашения, стиль коммитов, языковая политика документации и контрольный список отчёта об
+Соглашения, стиль коммитов, языковая политика документации и контрольный список для отчёта об
 ошибке: **[CONTRIBUTING.md](CONTRIBUTING.md)**. Проект следует
 [Contributor Covenant 2.1](CODE_OF_CONDUCT.md); помощь с вопросом или разбором описана в
 [SUPPORT.md](SUPPORT.md).
@@ -433,7 +433,7 @@ MIT — см. [LICENSE](LICENSE). Свободно для коммерческо
 Движок Markdown: [league/commonmark](https://commonmark.thephpleague.com/) (BSD-3).
 Подсветка: [scrivo/highlight.php](https://github.com/scrivo/highlight.php) (BSD-3, порт highlight.js).
 Диаграммы: [Mermaid](https://mermaid.js.org/) (MIT). Формулы: [KaTeX](https://katex.org/) (MIT).
-Иконки: [Lucide](https://lucide.dev/) (ISC). Данные эмодзи: [gemoji](https://github.com/github/gemoji) (MIT).
+Иконки: [Lucide](https://lucide.dev/) (ISC). Эмодзи: [gemoji](https://github.com/github/gemoji) (MIT).
 Шрифты: Inter и JetBrains Mono (SIL OFL).
 
 ## Помощь проекту: факты, а не активность
