@@ -1,6 +1,8 @@
 # MD.Scribe — agent instructions
 
-> Verified against repository state on 2026-11-13. Version covered: **3.3.0 "Lattice"**.
+> Verified against repository state on 2026-11-14. Version covered: **3.4.4 "Keystone"**.
+> PHP floor is 8.5 (verified on 8.5.12); licence is MIT. The wiki
+> (`https://github.com/paulmann/MD.Scribe/wiki`) is the task guide, `docs/` the reference.
 > This file has two parts: the developer contract (below) and the operator guide
 > that shipped with 3.2.x, kept because it answers installation and failure-mode
 > questions the developer sections do not repeat.
@@ -27,7 +29,12 @@ generic "PHP work": this codebase loads four specific things onto it.
    per-request CSP nonce. A new endpoint fits those, it does not bypass them.
 4. **The release contract.** One version in three carriers, a checksum manifest
    the updater trusts absolutely, and an update path that refuses everything on
-   the first mismatch.
+   the first mismatch. `apply()` installs the *release archive* (which carries
+   `vendor/`); `plan()` is the same read-only verification for a dry run.
+5. **The install surface.** A PHP floor that is a gate, a licence, a PWA manifest
+   served by the application, and a documentation set that the project's own
+   checker reads. Anything a reader copies from the docs is code (`nginx`
+   snippets included) — a wrong snippet breaks a host, not a test.
 
 What counts as failure here: a document lost; a path escaping the browse root; a
 rendered page that silently loses an id, an attribute or a link; an index serving
@@ -62,7 +69,18 @@ the past while claiming to be current; a green run that examined nothing.
 9. **Version = CHANGELOG = README.** All three carriers move in one commit;
    `tools/Invoke-ProjectDoctrine.ps1` compares them.
 10. **`config/manifest.json` is generated, never hand-edited.** It is a release
-    artefact of `tools/build-manifest.php`.
+    artefact of `tools/build-manifest.php`, produced in a tree that already has
+    `composer install --no-dev` applied.
+11. **The web app manifest is served by the application.** `?api=manifest` →
+    `ApiController::manifest()` → `Core\Manifest::build()` →
+    `Response::manifest()` (`src/Core/Manifest.php`, `src/Core/Response.php`). The
+    layout links the endpoint; a static `manifest.webmanifest` link is a defect
+    because its media type becomes the server's business.
+12. **Document tables fit the reading column.** `.md-body table` is `width: 100%`
+    with wrapping cells, and `tools/frontend/src/css/typography.css` is copied
+    byte-for-byte onto `public/assets/css/typography.css`
+    (`tools/frontend/build.mjs`). Editing only the built copy reverts on the next
+    build.
 
 ## Traps
 
@@ -78,7 +96,11 @@ the past while claiming to be current; a green run that examined nothing.
 | The corpus stamp is path + mtime + size | `src/Files/CorpusStamp.php:20-32`, `src/Files/SearchIndex.php:286-299` | A same-size edit inside the same second is not indexed; rebuild from Tools |
 | Templates are not strict and extract with `EXTR_SKIP` | `src/View/Template.php:94-98` | A data key colliding with a local is dropped without warning |
 | PHPUnit fails on risky tests and on any output | `phpunit.xml:7-9` | An `echo` in a test fails the suite |
-| The committed manifest is 3.1.0 while the code is 3.3.0 | `config/manifest.json:3` | `update.apply` refuses everything; regenerate before a release |
+| The manifest is a release artefact and goes stale silently | `config/manifest.json`, `tools/build-manifest.php` | `status()` reports every later file as `modified`, and the updater refuses the whole run on the first hash mismatch |
+| A `types { }` block in nginx replaces the whole MIME table | measured on the deployment host (nginx 1.24) | Every `.css`/`.js`/`.svg` becomes `application/octet-stream` and the site renders unstyled — a documented snippet did exactly this; map one extension with `location ~ \\.webmanifest$ { default_type … }` instead |
+| Tables drawn at `width: max-content` clip at the column edge | `tools/frontend/src/css/typography.css` | A 736px column held an 896px table; text was cut mid-word with no scroll hint. `public/assets/css/typography.css` is a copy — fix both or the build reverts it |
+| A dry run that compares files with the local manifest always says "nothing to replace" | `src/Admin/UpdateService.php` (`plan()` vs `status()`) | It examined the wrong object: it must download the release archive and verify against the manifest *inside* it |
+| The updater needs the release archive, not a branch tarball | `src/Admin/UpdateService.php`, `docs/development.md` step 8 | A branch tarball never contains `vendor/`, so it can never satisfy the manifest — the update refuses itself |
 | PHPStan does not see `bin/`, `tools/` or `templates/` | `phpstan.neon:3-9` | A syntax error there passes analysis (CI still lints templates and tools; `bin/` is linted by neither) |
 
 ## Where to look
@@ -93,6 +115,10 @@ the past while claiming to be current; a green run that examined nothing.
 | Indexes (search, backlinks, tags) | `src/Files/SearchIndex.php`, `src/Files/BacklinkIndex.php`, `src/Files/TagService.php` |
 | Security review | `src/Core/App.php`, `src/Markdown/HtmlSanitizer.php`, `docs/security.md` |
 | Release and updater | `src/Core/Version.php`, `tools/build-manifest.php`, `src/Admin/UpdateService.php`, `docs/development.md` |
+| PWA, manifest, offline reading | `src/Core/Manifest.php`, `src/Core/Response.php`, `public/sw.js`, `templates/layout/app.php` |
+| Document templates, editor toolbar | `src/Files/DocumentTemplates.php`, `templates/admin/files.php`, `templates/admin/editor.php` |
+| Search operators (`tag:`, `path:`) | `src/Files/SearchIndex.php` (`parseQuery`, `applyFilters`), `tests/Feature/SearchOperatorsTest.php` |
+| The project's own conventions | `tools/Invoke-ProjectDoctrine.ps1` (12 checks; every rule has a negative fixture) |
 | Documentation to keep in sync | `README.md`, `CHANGELOG.md`, `docs/` |
 
 ## Working agreement
@@ -125,29 +151,35 @@ pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .\tools\In
 php -S 127.0.0.1:8099 -t public public/router.php
 ```
 
-Baseline recorded on 2026-11-13 on PHP 8.5.12 / Windows: `tools/Invoke-ProjectDoctrine.ps1`
-prints **0 ошибок, 0 предупреждений** (the manifest was regenerated for 3.4.2; before
-that step the same run warned that the manifest was behind the code),
-PHPStan is clean and PHPUnit runs 188 tests with no failures.
+Baseline recorded on 2026-11-14 on PHP 8.5.12 / Windows: `tools/Invoke-ProjectDoctrine.ps1`
+prints **0 ошибок, 0 предупреждений** across 12 checks (the release manifest is
+regenerated at 3.4.4; while it lags the code the same run warns instead of failing),
+PHPStan level 6 is clean and PHPUnit runs 214 tests / 679 assertions with no failures.
+
+The three checks added in 3.4.4 are the ones that would have caught the defects this
+project actually shipped: the manifest media type, the table-layout rules (including
+"both CSS copies are identical") and the ban on paste-ready `types { }` snippets in
+the guides. Each was proven by breaking it in a sandbox copy and watching that check
+fail alone.
 
 ## Product and operations guide
 
 The rest of this file is the operator guide that shipped with 3.2.x: how to
 install, configure and run MD.Scribe, and what each failure looks like. Version
-references inside it were updated to 3.3.0.
+references inside it were updated to 3.4.4.
 
 ### 1. What it is
 
 MD.Scribe is a self-hosted documentation platform: point it at a folder of `.md` files and it
 serves a CommonMark/GFM viewer, a searchable library, themes, and an admin panel with an editor,
 backups and a self-updater. It is a plain PHP application - no database, no framework, no
-server-side Node.js, no build step - deployed by placing the tree on a PHP 8.3+ host. It is not a
+server-side Node.js, no build step - deployed by placing the tree on a PHP 8.5+ host. It is not a
 hosted service and not a database-backed CMS: every document is a file on disk.
 
 | | |
 |---|---|
-| Runtime / platform | PHP >= 8.3 with `mbstring`, `dom`, `libxml`, `json` (`curl`, `phar`, `zip`, `opcache` recommended); any web server (Apache, nginx, Caddy, LiteSpeed, `php -S`); no database |
-| Entry points | `public/index.php` (viewer), `public/admin.php` (admin panel and admin JSON API); root `index.php`, `md.php`, `updater.php` for docroot-at-root installs and the v2 URL contract |
+| Runtime / platform | PHP >= 8.5 (verified on 8.5.12; 8.3 and 8.4 are refused at bootstrap) with `mbstring`, `dom`, `libxml`, `json` (`curl`, `zip`, `opcache` recommended); any web server (Apache, nginx, Caddy, LiteSpeed, `php -S`); no database; licence MIT |
+| Entry points | `public/index.php` (viewer), `public/admin.php` (admin panel and admin JSON API), `public/updater.php` (bridge so `/updater.php` answers on a docroot-`public` install); root `index.php`, `md.php`, `updater.php` for docroot-at-root installs and the v2 URL contract |
 | Writes to | `.md.ini` at the project root (created on first load); `storage/` subdirectories `cache`, `backups`, `logs`, `index`, `state`, `themes`; documents and media under the content root when the editor or upload path is used; tracked app files only when an update is explicitly enabled and applied |
 | Network access | All application assets are local (zero-CDN; CSP `default-src 'self'`). The only server-side outbound traffic is the updater checking or applying a GitHub release of `paulmann/MD.Scribe`; documents load external images only when `ALLOW_EXTERNAL_IMAGES` is true (the default) |
 
@@ -155,7 +187,7 @@ hosted service and not a database-backed CMS: every document is a file on disk.
 
 | Requirement | Why | Check |
 |---|---|---|
-| PHP >= 8.3 | `src/bootstrap.php` answers HTTP 500 below 8.3 | `php -v` |
+| PHP >= 8.5 | `src/bootstrap.php` answers HTTP 500 below 8.5 | `php -v` |
 | Extensions `mbstring`, `json`, `dom`, `libxml` | the bootstrap refuses to run without them | `php -m` |
 | `vendor/autoload.php` present | the bootstrap exits with "vendor/autoload.php is missing" | `test -f vendor/autoload.php` |
 | `storage/` writable by the PHP user | cache, search index, logs, backups, rate-limit state | `test -w storage` (first load creates the subdirectories) |
@@ -304,7 +336,7 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| HTTP 500 "requires PHP >= 8.3.0" | older PHP | upgrade PHP; do not patch the gate |
+| HTTP 500 "requires PHP >= 8.5.0" | older PHP | upgrade PHP; do not patch the gate |
 | HTTP 500 "requires the PHP extension 'X'" | extension not loaded | enable it in php.ini or the FPM pool |
 | HTTP 500 "vendor/autoload.php is missing" | bare clone without dependencies | `composer install --no-dev --optimize-autoloader`, or use the release archive |
 | "Something went wrong" page | unhandled error | read `storage/logs/app-YYYY-MM-DD.log`; set `APP_DEBUG = true` only temporarily and never on a public host |
@@ -315,6 +347,8 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
 | Upload 413 | `MAX_UPLOAD_MB` or PHP `upload_max_filesize` / `post_max_size` | raise both; SVG uploads are refused by design |
 | "Integrity check failed for X" | release archive does not match its manifest | refused by design - retry later or copy the files manually |
 | Styles wrong or no syntax colours after a code change | OPcache with `validate_timestamps = 0` | restart or reload PHP-FPM |
+| Whole site unstyled — huge logo on a black page | a `types { }` block replaced the MIME table, so css/js are `application/octet-stream` | remove the block; map the single extension instead (`docs/installation.md`) |
+| `/updater.php` answers 404 | docroot is `public/` on a tree older than 3.4.1 | use the shipped `public/updater.php` bridge or the admin panel |
 
 ### 8. Limits
 

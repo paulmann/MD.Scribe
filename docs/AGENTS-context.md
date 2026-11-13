@@ -1,9 +1,13 @@
-# Project context: MD.Scribe 3.4.2 «Keystone»
+# Project context: MD.Scribe 3.4.4 «Keystone»
 
 Deep reference for an agent working on this repository. Read `AGENTS.md` first;
 read the code before asserting anything. Everything here was verified against
-the tree at 3.3.0 — when a line number disagrees with the file, the file wins
+the tree at 3.4.4 — when a line number disagrees with the file, the file wins
 and the disagreement is a documentation defect worth reporting.
+
+Platform facts that changed in the 3.4 line: **PHP floor is 8.5** (8.3 and 8.4 are
+refused at bootstrap; verified on 8.5.12), the licence is **MIT**, and the web app
+manifest is served by the application rather than as a static file.
 
 ---
 
@@ -39,6 +43,16 @@ revisions, self-updater, health checks, audit trail, static export).
 Dispatch order for GET: `download` → `media` → `api` → `page` → `file` → home
 document → browser (`src/Http/FrontController.php:75-126`). A request carrying
 both `?page=` and `?file=` resolves as a page.
+
+**JSON GET endpoints** live in one `match` (`src/Http/FrontController.php`):
+`search`, `suggest`, `toc`, `config` and — since 3.4.4 — `manifest`. The manifest
+is deliberately *not* a static file: `.webmanifest` is missing from most
+`mime.types` tables, so a static file arrives as `application/octet-stream`, and
+the usual server-side fix (a `types { }` block) replaces the whole MIME table and
+turns every css/js on the host into octet-stream. `ApiController::manifest()` builds
+the document through `Core\Manifest::build()` (name, scope and start_url from
+`SITE_NAME` and the install prefix, so a sub-directory install gets `/docs/`) and
+answers through `Response::manifest()`, which sets the media type itself.
 
 **Adding a public page** is four edits: an arm in the `match` at
 `src/Http/FrontController.php:103-111`, a method on
@@ -123,6 +137,18 @@ annotate → metadata → `RenderResult`.
   `<timestamp>-<flattened path>` name; restore parses the original path back out
   (`src/Files/FileManager.php:192-234`). A path containing a literal `__` cannot
   be restored to its original name — known limitation.
+- **Document templates** (`src/Files/DocumentTemplates.php`, 3.4.4) are five
+  built-in skeletons (blank, ADR, meeting notes, how-to, reference) with
+  `{{title}}` / `{{date}}` / `{{slug}}` placeholders. They are strings, not files,
+  so nothing on disk can drift from them. `slug()` is Unicode-aware and capped at
+  80 characters; a title of pure punctuation becomes `untitled`. The admin action
+  `file.createFromTemplate` writes through `FileManager::write()` (so it is
+  audited), refuses an existing path with `409`, and returns `editor_url`.
+- **The editor toolbar** (`templates/admin/editor.php`) inserts Markdown at the
+  cursor through a CSP-nonce script and dispatches an `input` event, so the dirty
+  flag, word count and live preview update exactly as if the user had typed.
+  Buttons use text glyphs where the generated icon map has no name (`bold`,
+  `italic`, `link`, `table` do not exist in `src/View/Icons.php`).
 - Revisions (3.3.0) are written **after** a successful save
   (`src/Files/FileManager.php:155-156`), one directory per document keyed by
   `sha256(relative path)`, newest `REVISIONS_MAX` kept
@@ -147,6 +173,19 @@ is invisible; **Tools → Rebuild** (actions `index.rebuild`, `backlinks.rebuild
 Backlinks are built from `WikilinkResolver::extract()`, which strips fenced
 blocks and inline code first (`src/Files/WikilinkResolver.php:150-200`), so a
 `[[example]]` in a code sample never creates a phantom backlink.
+
+### Search operators (3.4.4)
+
+`SearchIndex::parseQuery()` splits a query into free-text terms and filters:
+`tag:ops`, `tag:"release notes"` (normalised through
+`TagService::normalizeTag()`), `path:runbooks/` (case-insensitive prefix). The index
+records each document's frontmatter tags (`INDEX_VERSION = 2`), so a tag filter
+needs no second lookup; `applyFilters()` drops non-matching documents from the
+score map, and a filter-only query starts from every document. An unknown `word:`
+stays prose — a colon never silently drops a word. The response echoes the parsed
+filters (`"filters":{"tags":[…],"path":…}`) so a client can tell "nothing matched"
+from "the filter was not understood". Regressions live in
+`tests/Feature/SearchOperatorsTest.php`.
 
 ## 6. Security model
 
@@ -198,10 +237,10 @@ If the PHP user differs from the deploy user, the first symptom is
   `Version: x.y.z` comment in `README.md`. `tools/Invoke-ProjectDoctrine.ps1`
   compares all three.
 - **`config/manifest.json` is a release artefact** produced by
-  `php tools/build-manifest.php` (921 entries at 3.1.0: 198 project files + 723
+  `php tools/build-manifest.php` (949 entries at 3.4.4: 226 project files + 723
   runtime vendor files). The updater reads the *archive's own* manifest and
   refuses the entire update on the first hash mismatch
-  (`src/Admin/UpdateService.php:221-233`).
+  (`src/Admin/UpdateService.php`, `openRelease()`).
 - **How an update works (3.4.0):** `apply()` downloads the `.zip` asset of the
   latest release, refuses entries with unsafe paths, verifies every file against
   the manifest embedded in the archive and refuses the whole update on the first
@@ -210,8 +249,15 @@ If the PHP user differs from the deploy user, the first symptom is
 - **The manifest is regenerated at release time**, in a tree that has
   `composer install --no-dev` applied, and committed. Until that step runs the
   doctrine checker warns that the manifest is behind the code.
-- Tags exist for v3.1.0, v3.2.0, v3.2.1; the only GitHub release is v3.1.0
-  (measured 2026-11-13 with `gh release list`). CI does not run on tags.
+- **`plan()` is the honest dry run.** `dry_run=1` used to compare local files
+  with the *local* manifest, which always answered "nothing to replace" — it was
+  examining the wrong object. `plan()` downloads the release archive, verifies it
+  against the manifest inside it and reports what would change; it writes nothing.
+  `apply()` and `plan()` share `openRelease()`, so they cannot drift apart.
+- **Releases:** one tag at a time in the 3.4 line — `v3.4.4` is the only 3.4
+  release (measured 2026-11-14 with `gh release list`); the archive asset
+  `MD.Scribe-3.4.4.zip` is attached and was deployed and verified before the
+  release was published. CI runs on branches and on the release commit.
 
 ## 9. Build and test toolchain
 
@@ -223,13 +269,14 @@ If the PHP user differs from the deploy user, the first symptom is
 | `composer check` | stan, then test |
 | `php -S 127.0.0.1:8099 -t public public/router.php` | the smoke target CI uses |
 | `node build.mjs` (in `tools/frontend`) | rebuilds `public/assets`; outputs are committed and CI warns (non-blocking) on drift |
+| `pwsh -File tools/Invoke-ProjectDoctrine.ps1` | 12 convention checks; read-only, no PHP executed; `-ProjectRoot` lets you run it against a sandbox copy |
 
 PHPStan analyses `src` + the five entry scripts only — `bin/`, `tools/` and
 `templates/` are outside it. CI lints `src public templates tools tests` and the
 three root scripts, but **not** `bin/md-scribe-render`.
 
-Baseline at 3.4.2 on Windows (PHP 8.5.12): PHPStan clean; PHPUnit 206 tests, all
-green. Until 3.3.0 one assertion in `PathValidatorTest` compared a native Windows
+Baseline at 3.4.4 on Windows (PHP 8.5.12): PHPStan level 6 clean; PHPUnit 214 tests /
+679 assertions, all green; the doctrine checker 12 checks, 0 errors, 0 warnings. Until 3.3.0 one assertion in `PathValidatorTest` compared a native Windows
 path with a `/`-separated literal and failed on Windows only — a test-portability
 defect that has since been fixed.
 
@@ -245,6 +292,12 @@ defect that has since been fixed.
 | `Icons::svg()` falls back to `circle-alert` for unknown names | `src/View/Icons.php:326` | A typo looks like a deliberate warning icon; only ~58 names exist |
 | Corpus stamp is path+mtime+size | `src/Files/CorpusStamp.php:20-32`, `src/Files/SearchIndex.php:286-299` | Same-size edit in the same second stays unindexed; rebuild from Tools |
 | Templates run without `strict_types` and `extract(..., EXTR_SKIP)` | `src/View/Template.php:94-98` | A data key colliding with a local is dropped without warning |
+| A `types { }` block in nginx replaces the whole MIME table | `docs/installation.md`, measured on nginx 1.24 at the deployment host | Every `.css`/`.js`/`.svg` becomes `application/octet-stream`; the site renders unstyled. The project shipped this advice once — see the 3.4.4 changelog entry |
+| Document tables at `width: max-content` with nowrap headers | `tools/frontend/src/css/typography.css` | A 736px column held an 896px table and the text was clipped mid-word; both CSS copies must stay identical (the build copies one onto the other) |
+| A dry run that reads the local manifest examines the wrong object | `src/Admin/UpdateService.php` (`plan()` vs `status()`) | It answers "nothing to replace" whatever the release contains — a false PASS in product form |
+| The updater installs the release archive, never a branch tarball | `src/Admin/UpdateService.php`, `docs/development.md` step 8 | A branch tarball lacks `vendor/`, so it can never satisfy the manifest and the update refuses itself |
+| `vendor/composer/installed.php` records the build's git reference | `config/manifest.json` entry for that file | Rebuilding an old archive from `git archive` (no `.git`) changes one hash; build releases from a checkout |
+| A manifest regenerated in the working tree lists dev vendor packages | `tools/build-manifest.php`, `composer.lock` | `--no-dev` and a dev install produce different `installed.php`; the release tree must be the one that is zipped |
 | PHPUnit fails on risky tests and on output | `phpunit.xml:7-9` | An `echo` in a test fails the suite even when the assertion is right |
 | `FileManager::write()` creates parent directories before validating the target | `src/Files/FileManager.php:131-137` | A rejected write can leave empty directories behind |
 | Atomic writers `@`-suppress their filesystem errors | `src/Files/FileManager.php:375-379` | Permission or quota failures surface as a generic message |

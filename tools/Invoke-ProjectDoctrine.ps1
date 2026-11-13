@@ -555,6 +555,149 @@ function Test-RenderCacheContract {
     return New-CheckResult -Name 'render cache key covers the document set' -Ok ($problems.Count -eq 0) -Examined $examined -Details $problems
 }
 
+function Test-ManifestContract {
+    <#
+    .SYNOPSIS
+        The web app manifest is served by the application, not as a static file.
+
+    .DESCRIPTION
+        `.webmanifest` is missing from most mime.types tables, so a static file
+        arrives as application/octet-stream. The usual server-side fix (`types { }`)
+        replaces the whole MIME table and turned every css/js on a real host into
+        octet-stream - the site rendered unstyled. Four things must stay true: the
+        route exists, the controller builds the document, the response declares the
+        media type, and the layout links the endpoint instead of the file.
+    #>
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $examined = 0
+
+    $examined++
+    $front = Get-ProjectText 'src/Http/FrontController.php'
+    if ($null -eq $front) {
+        $problems.Add('src/Http/FrontController.php: missing')
+    }
+    elseif (-not $front.Contains("'manifest' => ") -or -not $front.Contains('->manifest()')) {
+        $problems.Add('FrontController.php: ?api=manifest is not routed to ApiController::manifest()')
+    }
+
+    $examined++
+    $controller = Get-ProjectText 'src/Http/Controllers/ApiController.php'
+    if ($null -eq $controller) {
+        $problems.Add('src/Http/Controllers/ApiController.php: missing')
+    }
+    elseif (-not $controller.Contains('function manifest()') -or -not $controller.Contains('Manifest::build(')) {
+        $problems.Add('ApiController.php: manifest() is gone or no longer builds through Core\Manifest')
+    }
+
+    $examined++
+    $response = Get-ProjectText 'src/Core/Response.php'
+    if ($null -eq $response) {
+        $problems.Add('src/Core/Response.php: missing')
+    }
+    elseif (-not $response.Contains('application/manifest+json')) {
+        $problems.Add('Response.php: no application/manifest+json media type is emitted')
+    }
+
+    $examined++
+    $layout = Get-ProjectText 'templates/layout/app.php'
+    if ($null -eq $layout) {
+        $problems.Add('templates/layout/app.php: missing')
+    }
+    elseif (-not $layout.Contains('rel="manifest"')) {
+        $problems.Add('layout/app.php: the web app manifest is not linked any more')
+    }
+    elseif (-not $layout.Contains("['api' => 'manifest']")) {
+        $problems.Add('layout/app.php: <link rel="manifest"> does not point at ?api=manifest')
+    }
+    elseif ($layout.Contains('manifest.webmanifest')) {
+        $problems.Add('layout/app.php: links the static manifest.webmanifest, which brings the MIME problem back')
+    }
+
+    return New-CheckResult -Name 'manifest is served by the app with its own media type' -Ok ($problems.Count -eq 0) -Examined $examined -Details $problems
+}
+
+function Test-DocumentTableLayout {
+    <#
+    .SYNOPSIS
+        Document tables fit the reading column and wrap their text.
+
+    .DESCRIPTION
+        Tables drawn at their unwrapped width (`width: max-content`) with nowrap
+        header cells ran past the reading column and clipped the text mid-word:
+        measured on a real document, a 736px column held an 896px table. The build
+        copies src/css/typography.css onto public/assets/css/typography.css, so a
+        fix applied to one copy silently reverts on the next build.
+    #>
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $examined = 0
+
+    $source = Get-ProjectText 'tools/frontend/src/css/typography.css'
+    $built = Get-ProjectText 'public/assets/css/typography.css'
+    $examined += 2
+    if ($null -eq $source) { $problems.Add('tools/frontend/src/css/typography.css: missing') }
+    if ($null -eq $built) { $problems.Add('public/assets/css/typography.css: missing') }
+    if ($null -ne $source -and $null -ne $built -and $source -ne $built) {
+        $problems.Add('public/assets/css/typography.css is not a byte-identical copy of its source; the next build reverts the fix')
+    }
+
+    if ($null -ne $source) {
+        if ($source -match '\.md-body table \{[^}]*width: max-content') {
+            $problems.Add('typography.css: .md-body table is drawn at max-content again - wide tables will clip')
+        }
+        if ($source -notmatch '\.md-body table \{[^}]*width: 100%') {
+            $problems.Add('typography.css: .md-body table no longer takes the column width')
+        }
+        if ($source -notmatch '\.md-body thead th \{[^}]*white-space: normal') {
+            $problems.Add('typography.css: header cells no longer wrap (white-space: normal is required)')
+        }
+        if ($source -notmatch '\.md-body tbody td \{[^}]*overflow-wrap: break-word') {
+            $problems.Add('typography.css: body cells no longer break long tokens')
+        }
+        if ($source -notmatch '\.md-body \.md-table-wrap \{[^}]*overflow-x: auto') {
+            $problems.Add('typography.css: the scroll fallback for genuinely wide tables is gone')
+        }
+    }
+
+    return New-CheckResult -Name 'document tables fit the reading column' -Ok ($problems.Count -eq 0) -Examined $examined -Details $problems
+}
+
+function Test-MimeGuidance {
+    <#
+    .SYNOPSIS
+        The guides never hand out a paste-ready `types { }` block.
+
+    .DESCRIPTION
+        A `types` block replaces the inherited MIME table (Debian's mime.types is
+        itself wrapped in one, so re-including it there is a syntax error). Applied
+        on nginx 1.24 it served every css/js/svg as application/octet-stream and the
+        site rendered unstyled. Prose may name the trap; a config snippet that
+        someone would paste is not allowed.
+    #>
+    $problems = [System.Collections.Generic.List[string]]::new()
+    $examined = 0
+
+    foreach ($doc in @('docs/installation.md', 'docs/troubleshooting.md')) {
+        $examined++
+        $text = Get-ProjectText $doc
+        if ($null -eq $text) {
+            $problems.Add($doc + ': missing')
+            continue
+        }
+
+        # A paste-ready block: `types {` opening a line inside a fence.
+        if ($text -match '(?m)^\s*types\s*\{') {
+            $problems.Add($doc + ': contains a paste-ready types { } block - it replaces the whole MIME table')
+        }
+
+        $mentionsTrap = $text -match 'MIME table' -and $text -match 'replac'
+        if (-not $mentionsTrap) {
+            $problems.Add($doc + ': never explains that a types block replaces the whole MIME table')
+        }
+    }
+
+    return New-CheckResult -Name 'guides never recommend a types { } block' -Ok ($problems.Count -eq 0) -Examined $examined -Details $problems
+}
+
 function Test-ReleaseManifest {
     <#
     .SYNOPSIS
@@ -606,6 +749,9 @@ $script:CheckFunctions = @(
     'Test-SecretHygiene'
     'Test-WikilinkContract'
     'Test-RenderCacheContract'
+    'Test-ManifestContract'
+    'Test-DocumentTableLayout'
+    'Test-MimeGuidance'
     'Test-ReleaseManifest'
 )
 
