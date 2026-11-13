@@ -53,6 +53,39 @@ what readers get, Mermaid/KaTeX included):
 - Live word count + reading time; unsaved-changes badge and navigation guard.
 - Deep links: `admin.php?page=editor&file=docs/api.md`.
 
+## Revisions
+
+Every successful save in the editor keeps the written content under
+`storage/revisions/<sha256(path)>/`, newest first. Identical content is not
+stored twice, and only the newest `REVISIONS_MAX` (default 20, range 1–200)
+versions survive a save — older ones are pruned immediately.
+
+- **Revisions page** — documents with history, newest activity first.
+- **Per document** — revision id (`<timestamp>-<hash>`), save time, size, actor;
+  a read-only preview and a restore button.
+- **Restore** stores the current content as a `(pre-restore)` revision first,
+  then writes the old content through the normal editor path (audited as
+  `content.restore_revision`), so a restore is itself undoable.
+- `REVISIONS_ENABLED = false` stops new revisions; existing ones stay readable
+  and restorable.
+
+## Tags and backlinks
+
+The public `?page=tags` page lists every frontmatter `tags:` value with the
+documents that carry it (`?page=tags&tag=docs` narrows it). Tags are normalised
+(lower-case, spaces → dashes, leading `#` dropped, 40 characters max), and both
+inline (`tags: [a, b]`) and block lists work.
+
+Wikilinks (`[[Page]]`) are indexed in the opposite direction: each document
+shows a **“Linked from”** panel with the documents that mention it. Links to
+documents that do not exist yet are listed under the target they would create.
+
+**Index freshness.** Both indexes live in `storage/index/` and refresh lazily:
+a request compares the stored corpus stamp (paths + mtime + size) with the live
+one and rebuilds on a difference. **Tools → Rebuild backlinks / Rebuild tags**
+forces a rebuild, which is the reliable option after a bulk import that keeps
+sizes and timestamps unchanged.
+
 ## Search index
 
 Stats (documents, terms, size, built-at, freshness) and on-demand rebuild.
@@ -125,6 +158,14 @@ endpoint (`?action=health.run`) for monitoring.
   `.md` links, dead anchors (heading-level), missing media and orphaned
   documents (nothing links to them).
 - **Cache control** — clears the render cache and drops the search index.
+- **Document indexes** — rebuild the backlink and tag indexes on demand.
+- **Static export** — renders every document to a self-contained HTML file
+  (one embedded stylesheet, no scripts, no CDN), copies content assets
+  (bounded at 200 MB / 5000 files) and writes
+  `storage/exports/site-<timestamp>.zip`. The download is an authenticated
+  `export.download` request; the archive opens from a `file://` path.
+  Mermaid diagrams and math stay as source because rendering them needs
+  JavaScript.
 - **Feeds & discovery** — shortcuts to `sitemap.xml` and the RSS feed.
 
 ## Recommendations

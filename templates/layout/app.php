@@ -120,6 +120,11 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
         <?= Icons::svg('search', 'h-4 w-4') ?><span>Search</span>
       </a>
       <?php endif; ?>
+      <?php if ($app->config->bool('TAGS_ENABLED')): ?>
+      <a href="<?= e($req->url(['page' => 'tags'])) ?>" class="md-nav-link <?= ($bodyPage ?? '') === 'tags' ? 'md-nav-link-active' : '' ?>">
+        <?= Icons::svg('hash', 'h-4 w-4') ?><span>Tags</span>
+      </a>
+      <?php endif; ?>
       <a href="<?= e($req->url(['page' => 'themes'])) ?>" class="md-nav-link <?= ($bodyPage ?? '') === 'themes' ? 'md-nav-link-active' : '' ?>">
         <?= Icons::svg('palette', 'h-4 w-4') ?><span>Themes</span>
       </a>
@@ -176,6 +181,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
       <?php if ($app->config->bool('SITEMAP_ENABLED')): ?><a class="md-link" href="<?= e($req->url(['page' => 'sitemap'])) ?>">Sitemap</a><?php endif; ?>
       <?php if ($app->config->bool('RSS_ENABLED')): ?><a class="md-link" href="<?= e($req->url(['page' => 'feed'])) ?>">RSS</a><?php endif; ?>
       <a class="md-link" href="<?= e($req->url(['page' => 'themes'])) ?>">Themes</a>
+      <?php if ($app->config->bool('TAGS_ENABLED')): ?><a class="md-link" href="<?= e($req->url(['page' => 'tags'])) ?>">Tags</a><?php endif; ?>
     </p>
   </div>
 </footer>
@@ -210,6 +216,7 @@ if (isset($result) && $result instanceof MdViewer\Markdown\RenderResult && ($toc
       <a href="<?= e($req->url()) ?>" class="md-sheet-link"><?= Icons::svg('house', 'h-4 w-4') ?>Home</a>
       <a href="<?= e($req->url(['page' => 'browser'])) ?>" class="md-sheet-link"><?= Icons::svg('files', 'h-4 w-4') ?>Library</a>
       <?php if ($searchEnabled): ?><a href="<?= e($req->url(['page' => 'search'])) ?>" class="md-sheet-link"><?= Icons::svg('search', 'h-4 w-4') ?>Search</a><?php endif; ?>
+      <?php if ($app->config->bool('TAGS_ENABLED')): ?><a href="<?= e($req->url(['page' => 'tags'])) ?>" class="md-sheet-link"><?= Icons::svg('hash', 'h-4 w-4') ?>Tags</a><?php endif; ?>
       <a href="<?= e($req->url(['page' => 'themes'])) ?>" class="md-sheet-link"><?= Icons::svg('palette', 'h-4 w-4') ?>Themes</a>
       <a href="<?= e($req->url(['page' => 'settings'])) ?>" class="md-sheet-link"><?= Icons::svg('settings', 'h-4 w-4') ?>Settings</a>
       <?php if ($adminEnabled): ?><a href="<?= e(rtrim($req->assetBase(), '/') . '/admin.php') ?>" class="md-sheet-link"><?= Icons::svg('shield', 'h-4 w-4') ?>Admin</a><?php endif; ?>

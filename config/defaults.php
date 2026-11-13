@@ -95,6 +95,11 @@ return [
         'label' => 'Emoji shortcodes',
         'description' => 'Convert :shortcode: names (1900+ GitHub gemoji aliases) to unicode emoji.',
     ],
+    'FEATURE_WIKILINKS' => [
+        'type' => 'bool', 'default' => true, 'section' => 'features', 'feature' => true,
+        'label' => 'Wikilinks',
+        'description' => 'Render [[Page]], [[Page|Alias]] and [[Page#Heading]] as links to documents in the library.',
+    ],
     'FEATURE_HIGHLIGHT_MARK' => [
         'type' => 'bool', 'default' => true, 'section' => 'features', 'feature' => true,
         'label' => 'Highlight mark',
@@ -193,6 +198,26 @@ return [
         'type' => 'bool', 'default' => true, 'section' => 'content',
         'label' => 'Disable "save clipboard to file"',
         'description' => 'Hides and server-blocks saving pasted clipboard content as a new .md file.',
+    ],
+    'REVISIONS_ENABLED' => [
+        'type' => 'bool', 'default' => true, 'section' => 'content',
+        'label' => 'Keep document revisions',
+        'description' => 'Store the newest REVISIONS_MAX versions of every document on save, under storage/revisions.',
+    ],
+    'REVISIONS_MAX' => [
+        'type' => 'int', 'default' => 20, 'section' => 'content',
+        'label' => 'Revisions kept per document',
+        'description' => 'Newest N versions are kept; older ones are pruned on save. Allowed range 1–200.',
+    ],
+    'BACKLINKS_ENABLED' => [
+        'type' => 'bool', 'default' => true, 'section' => 'content',
+        'label' => 'Backlink index',
+        'description' => 'Build the wikilink backlink index and show "Linked from" under every document.',
+    ],
+    'TAGS_ENABLED' => [
+        'type' => 'bool', 'default' => true, 'section' => 'content',
+        'label' => 'Tag index',
+        'description' => 'Build the frontmatter tag index and expose the public tags page.',
     ],
     'MAX_UPLOAD_MB' => [
         'type' => 'int', 'default' => 8, 'section' => 'content',

@@ -143,4 +143,24 @@ final class HtmlSanitizerTest extends TestCase
         self::assertStringNotContainsString('<button', $out);
         self::assertStringContainsString('Click me', $out); // content kept, tag dropped
     }
+
+    public function testHeadingIdsSurviveUnicode(): void
+    {
+        $cyrillic = $this->sanitize('<h2 id="что-сначала-попробовал-не-сработало">x</h2>');
+        self::assertStringContainsString('id="что-сначала-попробовал-не-сработало"', $cyrillic);
+
+        $numericStart = $this->sanitize('<h3 id="1-введение">x</h3>');
+        self::assertStringContainsString('id="1-введение"', $numericStart);
+
+        $cjk = $this->sanitize('<h2 id="中文标题">x</h2>');
+        self::assertStringContainsString('id="中文标题"', $cjk);
+    }
+
+    public function testDangerousIdsAreStillDropped(): void
+    {
+        foreach (['bad id', '"quoted"', 'a<b', '-leading-dash', "tab\tid", str_repeat('a', 120)] as $value) {
+            $out = $this->sanitize('<h2 id="' . htmlspecialchars($value, ENT_QUOTES) . '">x</h2>');
+            self::assertStringNotContainsString('id=', $out, 'id should be dropped: ' . $value);
+        }
+    }
 }

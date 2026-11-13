@@ -24,3 +24,7 @@ composer.phar
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Agent scratch and runtime snapshots — never part of the project
+.work/
+.zwork/

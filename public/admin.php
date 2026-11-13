@@ -28,4 +28,11 @@ if (($_GET['action'] ?? '') === 'backup.download' && isset($_GET['id'])) {
     $response->send();
 }
 
+// Static export download: same reason (it streams a file body).
+if (($_GET['action'] ?? '') === 'export.download' && isset($_GET['file'])) {
+    $app->session->start();
+    $response = $kernel->downloadExport((string) $_GET['file']);
+    $response->send();
+}
+
 $kernel->handle()->send();

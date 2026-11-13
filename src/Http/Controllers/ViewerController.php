@@ -18,7 +18,10 @@ namespace MdViewer\Http\Controllers;
 
 use MdViewer\Core\App;
 use MdViewer\Core\Response;
+use MdViewer\Files\BacklinkIndex;
+use MdViewer\Files\CorpusStamp;
 use MdViewer\Files\MarkdownRepository;
+use MdViewer\Files\WikilinkResolver;
 use MdViewer\Markdown\RenderCache;
 use MdViewer\Markdown\RenderResult;
 
@@ -85,8 +88,20 @@ final class ViewerController
         $docDir = dirname($relative) === '.' ? '' : dirname($relative);
 
         // ── HTTP caching ────────────────────────────────────────────────────
+        // Wikilink existence depends on the whole corpus, so the link index
+        // hands us a corpus stamp; it joins the ETag and the cache key.
+        $backlinks = [];
+        $corpusStamp = '';
+        if ($config->bool('BACKLINKS_ENABLED')) {
+            $backlinkIndex = new BacklinkIndex($repo, new WikilinkResolver($repo), $this->app->logger);
+            $backlinks = $backlinkIndex->forDocument($relative);
+            $corpusStamp = $backlinkIndex->stamp();
+        } elseif ($this->app->flags->enabled('FEATURE_WIKILINKS')) {
+            $corpusStamp = CorpusStamp::of($repo);
+        }
+
         $fingerprint = $this->app->markdown()->fingerprint();
-        $etag = '"' . substr(hash('sha256', $relative . '|' . $mtime . '|' . $size . '|' . $fingerprint), 0, 32) . '"';
+        $etag = '"' . substr(hash('sha256', $relative . '|' . $mtime . '|' . $size . '|' . $fingerprint . '|' . $corpusStamp), 0, 32) . '"';
         $ifNoneMatch = $this->app->request->header('If-None-Match');
         if ($ifNoneMatch !== null && trim($ifNoneMatch) === $etag) {
             return new Response('', 304, [
@@ -97,7 +112,7 @@ final class ViewerController
 
         // ── Render (with cache) ─────────────────────────────────────────────
         $cache = new RenderCache($config->bool('CACHE_ENABLED'), $this->app->logger);
-        $cacheKey = $cache->key($relative, $mtime, $size, $fingerprint);
+        $cacheKey = $cache->key($relative, $mtime, $size, $fingerprint, $corpusStamp);
         $result = $cache->get($cacheKey);
         if ($result === null) {
             $result = $this->app->markdown()->render($source, [
@@ -148,6 +163,7 @@ final class ViewerController
             'result' => $result,
             'relative' => $relative,
             'docDir' => $docDir,
+            'backlinks' => $backlinks,
             'isHome' => $isHome,
             'breadcrumbs' => $this->breadcrumbs($relative),
             'neighbours' => $neighbourMeta,

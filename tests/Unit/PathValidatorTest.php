@@ -126,7 +126,9 @@ final class PathValidatorTest extends TestCase
     {
         $target = $this->validator->validateNewPath('docs/new-file.md', $this->base);
         self::assertNotNull($target);
-        self::assertStringEndsWith('docs/new-file.md', (string) $target);
+        // The validator returns a native path; the comparison normalises the
+        // separator so the test is portable (it used to fail on Windows only).
+        self::assertStringEndsWith('docs/new-file.md', str_replace('\\', '/', (string) $target));
 
         self::assertNull($this->validator->validateNewPath('../evil.md', $this->base));
         self::assertNull($this->validator->validateNewPath('docs/x.php', $this->base));

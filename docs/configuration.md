@@ -42,6 +42,7 @@ everyone (shown as <kbd>locked</kbd> in the UI).
 | `FEATURE_FOOTNOTES` | true | `[^1]` and inline `^[…]` footnotes |
 | `FEATURE_SUBSUP` | true | `^sup^` / `~sub~` |
 | `FEATURE_EMOJI` | true | `:shortcodes:` (gemoji, 1900+) |
+| `FEATURE_WIKILINKS` | true | `[[Page]]`, `[[Page\|Alias]]`, `[[Page#Heading]]` |
 | `FEATURE_HIGHLIGHT_MARK` | true | `==mark==` |
 | `FEATURE_MATH` | true | `$…$` / `$$…$$` via local KaTeX (+mhchem) |
 | `FEATURE_MERMAID` | true | ```mermaid blocks via local Mermaid |
@@ -72,6 +73,10 @@ everyone (shown as <kbd>locked</kbd> in the UI).
 | `DISABLE_CLIPBOARD` | false | Clipboard preview |
 | `DISABLE_SAVE_CLIPBOARD_TO_FILE` | **true** | Saving pasted content as a file |
 | `MAX_UPLOAD_MB` | 8 | Cap for reader/admin uploads (also bounded by PHP ini) |
+| `REVISIONS_ENABLED` | true | Keep the newest revisions of every document on save (`storage/revisions`) |
+| `REVISIONS_MAX` | 20 | Revisions kept per document (1–200); older ones are pruned on save |
+| `BACKLINKS_ENABLED` | true | Build the wikilink backlink index and show “Linked from” under documents |
+| `TAGS_ENABLED` | true | Build the frontmatter tag index and expose the public `?page=tags` page |
 
 ## Security & admin
 

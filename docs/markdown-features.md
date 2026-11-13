@@ -49,6 +49,30 @@ numbering: false            # disable heading numbers
 ---
 ```
 
+### Wikilinks
+
+```markdown
+See [[Getting started]] and [[getting-started|the guide]].
+Jump to [[Getting started#Quick start]] or [[#Links & media behaviour]].
+```
+
+- **Resolution order:** next to the current document first, then the browse
+  root. `.md` is optional — `[[Page]]` finds `Page.md`.
+- A link whose document does not exist yet is rendered with
+  `md-wikilink-missing` (wavy underline) and still points at the target, so
+  creating the page fixes it. Missing links are also visible as the target row
+  of the backlink index.
+- Absolute paths, `..` segments and URL schemes are refused:
+  `md-wikilink-refused` renders as plain text — a wikilink never leaves the
+  browse root.
+- Code spans and fenced blocks are never rewritten; `[[example]]` in a code
+  sample stays literal and creates no backlink.
+- Alias, anchor and target are independent: `[[Page#Heading|read this]]`.
+- Toggle: `FEATURE_WIKILINKS` (Settings → Features, or hard-lock it in
+  `.md.ini`).
+- Every link feeds the backlink index behind the “Linked from” panel under each
+  document; see `docs/admin-guide.md` for the index controls.
+
 ### Math (KaTeX, fully local)
 
 ```markdown

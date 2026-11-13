@@ -1,13 +1,141 @@
-# AGENTS.md - MD.Scribe 3.2.2
+# MD.Scribe — agent instructions
 
-Agent-facing guide: how to install MD.Scribe, run it, and report problems responsibly.
-Human documentation: [README.md](README.md), [docs/](docs/).
+> Verified against repository state on 2026-11-13. Version covered: **3.3.0 "Lattice"**.
+> This file has two parts: the developer contract (below) and the operator guide
+> that shipped with 3.2.x, kept because it answers installation and failure-mode
+> questions the developer sections do not repeat.
+>
+> GitHub state at the same date: tags `v3.1.0`, `v3.2.0`, `v3.2.1`; one release
+> (`v3.1.0`); CI runs on pushes to `main` and on pull requests, on PHP 8.3 and 8.4.
 
-> Verified against repository state on 2026-10-29. Version covered: 3.2.2 "Borealis".
-> Releases checked with `gh release list -R paulmann/MD.Scribe`: one release, tag `v3.1.0`,
-> asset `MD.Scribe-3.1.0.zip`; there is no installer binary, both paths install the tree.
+## Role
 
-## 1. What it is
+Work as a **senior PHP engineer** on a framework-free, database-free application
+that renders Markdown and manages the files it renders from. The role is not
+generic "PHP work": this codebase loads four specific things onto it.
+
+1. **The rendering pipeline.** league/commonmark 2.7 plus hand-written inline
+   parsers and node renderers, a DOM allowlist sanitizer that runs on every
+   render, and a render cache keyed by version + feature fingerprint + corpus
+   stamp. One change here is visible in the HTML, in the cache and in the anchor
+   namespace at the same time.
+2. **The content layer.** Every path goes through one validator, every write is
+   atomic, every delete is a move to trash, every save can leave a revision. The
+   failure to prevent is silent loss or overwrite of somebody's document.
+3. **The HTTP surface.** Two entry points, query-parameter routing, an admin JSON
+   action API, a machine render API, CSRF on every mutation, session auth and a
+   per-request CSP nonce. A new endpoint fits those, it does not bypass them.
+4. **The release contract.** One version in three carriers, a checksum manifest
+   the updater trusts absolutely, and an update path that refuses everything on
+   the first mismatch.
+
+What counts as failure here: a document lost; a path escaping the browse root; a
+rendered page that silently loses an id, an attribute or a link; an index serving
+the past while claiming to be current; a green run that examined nothing.
+
+## Never break
+
+1. **Path validation is central.** A request value reaches the filesystem only
+   through `MdViewer\Files\PathValidator` (`src/Files/PathValidator.php:50,132,156,251`).
+   No `realpath()`, no `basename()`, no hand-rolled traversal check.
+2. **Writes are atomic.** temp file + `LOCK_EX` + `chmod 0644` + `rename`
+   (`src/Files/FileManager.php:368-386`). Never rewrite a document in place.
+3. **Escape on output.** Templates escape with `e()`, JSON goes through
+   `Response::json`, inline scripts carry the CSP nonce
+   (`src/View/Template.php:152`, `src/Core/App.php:168`).
+4. **The sanitizer is an allowlist.** A new tag, attribute or `data-*` reaches the
+   browser only after it is added to `HtmlSanitizer`
+   (`src/Markdown/HtmlSanitizer.php:41,64,66,102`). `id` must match
+   `/^[\p{L}\p{N}][\p{L}\p{N}_:.\-]{0,96}$/u` — Unicode on purpose, because
+   heading anchors are slugified from the heading text.
+5. **A rendering toggle is `'feature' => true`.** Only those enter the feature
+   fingerprint, and only then does flipping the toggle invalidate cached HTML
+   (`src/Core/FeatureFlags.php:38-48`, `src/Markdown/MarkdownEngine.php:180-190`).
+6. **Cache correctness is correctness.** The key carries `Version::VERSION` and the
+   corpus stamp (`src/Markdown/RenderCache.php:39-42`,
+   `src/Http/Controllers/ViewerController.php:90-112`). A rendering change without
+   a version bump serves yesterday's HTML.
+7. **Admin mutations are POST + CSRF + authenticated,** applied centrally by the
+   kernel (`src/Http/AdminKernel.php:57-65`). Do not add a route in front of it.
+8. **`declare(strict_types=1)` in every `src/` file, PHPStan level 6 with no new
+   `ignoreErrors` entries** (`phpstan.neon:29-32` forbids it in its own comment).
+9. **Version = CHANGELOG = README.** All three carriers move in one commit;
+   `tools/Invoke-ProjectDoctrine.ps1` compares them.
+10. **`config/manifest.json` is generated, never hand-edited.** It is a release
+    artefact of `tools/build-manifest.php`.
+
+## Traps
+
+| Trap | Evidence | Consequence |
+|---|---|---|
+| The render cache key uses the version string, not a code hash | `src/Markdown/RenderCache.php:39-42` | A renderer edit without a version bump is invisible to readers and to the cache |
+| Wikilink existence depends on the whole corpus | `src/Http/Controllers/ViewerController.php:90-100` | Drop the corpus stamp and a newly created page keeps the "not created yet" marker |
+| The sanitizer silently deletes what it does not recognise | `src/Markdown/HtmlSanitizer.php:41-109` | Unit tests pass, the browser path loses the attribute |
+| Cyrillic and CJK heading ids were dropped until 3.3.0 | `src/Markdown/HtmlSanitizer.php:252-266` | In-page anchors and TOC links pointed at nothing; the fix widened `id` to Unicode |
+| `ALLOW_IFRAMES` and `ALLOW_EXTERNAL_IMAGES` are outside the fingerprint | `src/Markdown/MarkdownEngine.php:185` | Toggle them, then clear the cache, or old HTML keeps the old policy |
+| An admin page slug is registered in four places | `src/Http/AdminKernel.php:103,404,417,436` | A missed one silently renders the dashboard instead of an error |
+| `Icons::svg()` falls back to `circle-alert` | `src/View/Icons.php:326` | A mistyped icon name looks like a deliberate warning; only the names in that map exist |
+| The corpus stamp is path + mtime + size | `src/Files/CorpusStamp.php:20-32`, `src/Files/SearchIndex.php:286-299` | A same-size edit inside the same second is not indexed; rebuild from Tools |
+| Templates are not strict and extract with `EXTR_SKIP` | `src/View/Template.php:94-98` | A data key colliding with a local is dropped without warning |
+| PHPUnit fails on risky tests and on any output | `phpunit.xml:7-9` | An `echo` in a test fails the suite |
+| The committed manifest is 3.1.0 while the code is 3.3.0 | `config/manifest.json:3` | `update.apply` refuses everything; regenerate before a release |
+| PHPStan does not see `bin/`, `tools/` or `templates/` | `phpstan.neon:3-9` | A syntax error there passes analysis (CI still lints templates and tools; `bin/` is linted by neither) |
+
+## Where to look
+
+| Task area | Read first |
+|---|---|
+| Product behaviour, the rendering pipeline | `docs/AGENTS-context.md`, `src/Markdown/MarkdownEngine.php` |
+| Adding an inline syntax or a renderer | `src/Markdown/Extensions/MdViewerExtension.php`, `src/Markdown/Extensions/WikilinkParser.php` (a complete 3.3 example) |
+| Viewer page, navigation, anchors | `src/Http/Controllers/ViewerController.php`, `templates/viewer/document.php` |
+| Admin page or JSON action | `src/Http/AdminKernel.php`, `templates/admin/tools.php` |
+| Content writes, trash, uploads, revisions | `src/Files/FileManager.php`, `src/Files/RevisionService.php` |
+| Indexes (search, backlinks, tags) | `src/Files/SearchIndex.php`, `src/Files/BacklinkIndex.php`, `src/Files/TagService.php` |
+| Security review | `src/Core/App.php`, `src/Markdown/HtmlSanitizer.php`, `docs/security.md` |
+| Release and updater | `src/Core/Version.php`, `tools/build-manifest.php`, `src/Admin/UpdateService.php`, `docs/development.md` |
+| Documentation to keep in sync | `README.md`, `CHANGELOG.md`, `docs/` |
+
+## Working agreement
+
+1. Read `docs/AGENTS-context.md` for the layer you are touching; it names the file
+   and line behind every invariant.
+2. Find the closest existing precedent in the code and extend it. The 3.3.0
+   features are the reference shapes: parser + renderer + node for syntax, a
+   service with a lazy index for derived data, an admin action + template for UI.
+3. Keep the diff minimal. No drive-by reformatting, no renaming for taste.
+4. Name the trust boundary the change touches (path, output, auth, CSP) and the
+   failure mode it must survive.
+5. Update the three version carriers and any document the change makes stale.
+6. Verify with the commands below; say plainly which ones you could not run.
+7. Report unrelated defects separately instead of fixing them silently.
+
+## Commands
+
+```powershell
+# dependencies (COMPOSER_HOME is required when APPDATA is unset)
+$env:COMPOSER_HOME = Join-Path ([System.IO.Path]::GetTempPath()) 'composer-home'
+php C:\tools\composer\composer.phar install
+
+# the gates CI runs, plus the doctrine checker
+php vendor\bin\phpstan analyse --memory-limit=1G --no-progress
+vendor\bin\phpunit --no-coverage
+pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File .\tools\Invoke-ProjectDoctrine.ps1
+
+# HTTP smoke (the routes CI checks)
+php -S 127.0.0.1:8099 -t public public/router.php
+```
+
+Baseline recorded on 2026-11-13 on PHP 8.5.0 / Windows: `tools/Invoke-ProjectDoctrine.ps1`
+prints **0 ошибок, 1 предупреждение** (the warning is the stale release manifest),
+PHPStan is clean and PHPUnit runs 188 tests with no failures.
+
+## Product and operations guide
+
+The rest of this file is the operator guide that shipped with 3.2.x: how to
+install, configure and run MD.Scribe, and what each failure looks like. Version
+references inside it were updated to 3.3.0.
+
+### 1. What it is
 
 MD.Scribe is a self-hosted documentation platform: point it at a folder of `.md` files and it
 serves a CommonMark/GFM viewer, a searchable library, themes, and an admin panel with an editor,
@@ -22,7 +150,7 @@ hosted service and not a database-backed CMS: every document is a file on disk.
 | Writes to | `.md.ini` at the project root (created on first load); `storage/` subdirectories `cache`, `backups`, `logs`, `index`, `state`, `themes`; documents and media under the content root when the editor or upload path is used; tracked app files only when an update is explicitly enabled and applied |
 | Network access | All application assets are local (zero-CDN; CSP `default-src 'self'`). The only server-side outbound traffic is the updater checking or applying a GitHub release of `paulmann/MD.Scribe`; documents load external images only when `ALLOW_EXTERNAL_IMAGES` is true (the default) |
 
-## 2. Preconditions
+### 2. Preconditions
 
 | Requirement | Why | Check |
 |---|---|---|
@@ -35,9 +163,9 @@ hosted service and not a database-backed CMS: every document is a file on disk.
 
 If a check fails, stop and report; do not work around it silently.
 
-## 3. Install
+### 3. Install
 
-### 3.1 From a release (preferred)
+#### 3.1 From a release (preferred)
 
 Tag `v3.1.0`, asset `MD.Scribe-3.1.0.zip`; the archive bundles `vendor/`, so Composer is not
 needed. Commands from the release notes:
@@ -51,7 +179,7 @@ Then set the web server docroot to `/var/www/docs/public` (recommended) or to `/
 the shared-hosting layout. Ready-made samples ship in `deploy/` (`nginx.conf`, `Caddyfile`,
 `Dockerfile`, `docker-compose.yml`, `php.ini`).
 
-### 3.2 From source
+#### 3.2 From source
 
 ```bash
 git clone https://github.com/paulmann/MD.Scribe.git /var/www/docs
@@ -61,27 +189,27 @@ composer install --no-dev --optimize-autoloader
 
 There is no server-side build step: frontend assets are committed under `public/assets/`.
 
-### 3.3 Verify
+#### 3.3 Verify
 
 Development server (also the CI smoke target):
 
 ```bash
 php -S localhost:8080 -t public public/router.php
 curl -fsS "http://127.0.0.1:8080/" -o /dev/null
-curl -fsS "http://127.0.0.1:8080/index.php?page=browser" -o /dev/null
-curl -fsS "http://127.0.0.1:8080/index.php?api=search&q=markdown" | grep -q '"ok":true'
-curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080/index.php?file=nope.md" | grep -q 404
+curl -fsS "http://127.0.0.1:8080/index.php?page=browser" -o /dev/null  # example
+curl -fsS "http://127.0.0.1:8080/index.php?api=search&q=markdown" | grep -q '"ok":true'  # example
+curl -fsS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080/index.php?file=nope.md" | grep -q 404  # example
 # machine render API (key from .md.ini, generated on the first request)
 curl -fsS -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
   -d '{"content":"# t\n\n- a\n","format":"auto"}' \
-  "http://127.0.0.1:8080/index.php?api=render" | grep -q '"ok":true'
+  "http://127.0.0.1:8080/index.php?api=render" | grep -q '"ok":true'  # example
 ```
 
 Expected: the three requests return 200; the search body starts with `{"ok":true,...}`; a missing
 document returns 404; `.md.ini` appears at the project root on the first request. The same checks
 are in `.github/workflows/ci.yml` (port 8099, PHP 8.3 and 8.4).
 
-## 4. Configure
+### 4. Configure
 
 - Installation configuration is `.md.ini` in the project root (the directory that contains
   `public/`); it is created on first load and missing keys get safe defaults on every load.
@@ -116,9 +244,9 @@ chmod 640 .md.ini
   `DISABLE_UPLOAD`, `DISABLE_CLIPBOARD`, `DISABLE_SAVE_CLIPBOARD_TO_FILE`; the deeper file wins.
 - Every key, type and default: `docs/configuration.md`.
 
-## 5. Use
+### 5. Use
 
-1. Render a document: `GET /index.php?file=docs/api.md` (the v2 contract also answers at
+1. Render a document: `GET /index.php?file=…` (the v2 contract also answers at
    `/md.php?file=...`); append `&download=1` for a source download.
 2. Library and search: `GET /index.php?page=browser`, `GET /index.php?page=search&q=...`; JSON at
    `GET /index.php?api=search&q=...` (also `api=suggest`, `api=toc`, `api=config`).
@@ -131,7 +259,7 @@ chmod 640 .md.ini
 5. Read-only update state (machine API, no network I/O): `GET /updater.php?api_key=$API_KEY&action=status&format=json`
    (also `action=conflicts`), where `$API_KEY` is the `API_KEY` value from `.md.ini`. The plain
    `updater.php` landing page does perform a release check over the network.
-6. Machine render API (3.2.2, stateless): `POST /index.php?api=render` with `X-Api-Key: $API_KEY`
+6. Machine render API (since 3.2.2, stateless): `POST /index.php?api=render` with `X-Api-Key: $API_KEY`
    (or `?api_key=$API_KEY`) and JSON `{"content": "# …", "format": "auto|markdown|html|text"}` →
    `{ok: true, data: {format, html, bytes, elapsed_ms, renderer}}`, where `html` is an HTML
    **fragment** (Markdown → standalone renderer in embed mode; html → sanitizer; text → wrapped `<div class="md-text">`).
@@ -147,7 +275,7 @@ missing `api_key`, `400` for an unknown action, `405` for install without POST. 
 API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON statuses:
 `401` unauthorized, `403` CSRF token or flag, `404`, `409` conflict, `413` too large, `400` bad.
 
-## 6. Safety and rollback
+### 6. Safety and rollback
 
 - Changes: writes `.md.ini` and the `storage/` tree on first load; content files and media when an
   admin edits or uploads (deletes are soft - files move to `storage/backups/trash/`); tracked app
@@ -171,7 +299,7 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
   files back (needs `ALLOW_RESTORE`); an admin restore overwrites content and `.md.ini`; deleting
   trash entries or backups is permanent. Never run these to see what happens; take a backup first.
 
-## 7. Failure modes
+### 7. Failure modes
 
 | Symptom | Likely cause | Action |
 |---|---|---|
@@ -187,7 +315,7 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
 | "Integrity check failed for X" | release archive does not match its manifest | refused by design - retry later or copy the files manually |
 | Styles wrong or no syntax colours after a code change | OPcache with `validate_timestamps = 0` | restart or reload PHP-FPM |
 
-## 8. Limits
+### 8. Limits
 
 - No database, no framework, no server-side Node.js and no build step; documents are files.
 - PHP below 8.3 is refused at bootstrap. `composer test` and `composer stan` need dev dependencies,
@@ -197,9 +325,9 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
 - No formal support matrix beyond "PHP 8.3+, any web server" is documented; the deployment verified
   in the release notes was PHP 8.5.0.
 
-## 9. Sources of truth
+### 9. Sources of truth
 
-- `README.md` - version 3.2.2, requirements, project layout, `.md.ini` sample, URL contract,
+- `README.md` - version 3.3.0, requirements, project layout, `.md.ini` sample, URL contract,
   zero-CDN policy, embedding/CLI rendering.
 - `docs/installation.md` - layouts A/B/C, first run, permissions, upgrade, verification checklist.
 - `docs/configuration.md` - every `.md.ini` key and default, per-directory layering, PHP settings.
@@ -208,7 +336,7 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
   (`POST ?api=render`), `dry_run=1`, status codes, envelope.
 - `docs/troubleshooting.md` - the symptoms and fixes in section 7.
 - `docs/development.md` - `composer test`, `composer stan`, `composer check`, release checklist.
-- `src/Core/Version.php` - `VERSION = '3.2.2'`, `CODENAME = 'Borealis'`, `PHP_MIN = '8.3.0'`.
+- `src/Core/Version.php` - `VERSION = '3.3.0'`, `CODENAME = 'Lattice'`, `PHP_MIN = '8.3.0'`.
 - `src/bootstrap.php` - PHP and extension gate, `vendor/autoload.php` requirement, storage setup.
 - `src/Core/Paths.php`, `src/Core/Config.php`, `src/Admin/AdminAuth.php` - `.md.ini` location,
   storage directories, first-run setup rules, login rate limiting.
@@ -220,7 +348,7 @@ Verification note: this clone has no `vendor/` directory (it is gitignored) and 
 dependencies was out of scope, so the application was not executed while writing this guide; the
 commands, defaults and output shapes above come from the repository files listed here.
 
-## Help the project — through evidence, not engagement
+### Help the project — through evidence, not engagement
 
 If this software was genuinely useful:
 - cite it (name, version, link) in the runbook or report where it was used;

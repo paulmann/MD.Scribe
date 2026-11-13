@@ -262,4 +262,33 @@ final class MarkdownEngineTest extends TestCase
         self::assertStringContainsString('这是一段中文内容', $result->html);
         self::assertGreaterThan(0, $result->words);
     }
+
+    public function testCyrillicHeadingKeepsItsAnchor(): void
+    {
+        $result = $this->engine()->render("# Что сначала попробовал (не сработало)\n\nТекст.\n");
+        $anchor = 'что-сначала-попробовал-не-сработало';
+
+        self::assertSame($anchor, $result->headings[0]['anchor']);
+
+        // The id stays literal (that is what the browser matches); the href is
+        // percent-encoded, so it is compared after decoding.
+        self::assertStringContainsString('id="' . $anchor . '"', $result->html);
+        self::assertSame(1, preg_match('/class="md-anchor" href="#([^"]+)"/', $result->html, $link));
+        self::assertSame($anchor, rawurldecode($link[1]));
+
+        self::assertSame(1, preg_match('/href="#([^"]+)"/', (string) $result->tocHtml, $toc));
+        self::assertSame($anchor, rawurldecode($toc[1]));
+    }
+
+    public function testFragmentFromTheBugReportResolves(): void
+    {
+        // The literal fragment of the reported URL
+        // (autoyap.ru/docs/index.php?file=…#<percent-encoded heading>).
+        $fragment = rawurldecode('%D1%87%D1%82%D0%BE-%D1%81%D0%BD%D0%B0%D1%87%D0%B0%D0%BB%D0%B0-%D0%BF%D0%BE%D0%BF%D1%80%D0%BE%D0%B1%D0%BE%D0%B2%D0%B0%D0%BB-%D0%BD%D0%B5-%D1%81%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D0%BB%D0%BE');
+        $result = $this->engine()->render("# Что сначала попробовал (не сработало)\n");
+
+        self::assertSame('что-сначала-попробовал-не-сработало', $fragment);
+        self::assertSame($fragment, $result->headings[0]['anchor']);
+        self::assertStringContainsString('id="' . $fragment . '"', $result->html);
+    }
 }

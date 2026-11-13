@@ -3,6 +3,74 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.3.0 — “Lattice” (2026-11-13)
+
+A knowledge-base release: documents can link to each other by name, the
+library knows who links where, frontmatter tags get a real index, every save
+keeps history, and the whole site can be exported as static HTML.
+
+### Added
+
+- **Wikilinks** — `[[Page]]`, `[[Page|Alias]]`, `[[Page#Heading]]` and
+  `[[#Heading]]` render as links to documents in the library. Resolution is
+  relative to the source document first, then the browse root; `.md` is
+  optional. A link whose document does not exist is still clickable but
+  carries `md-wikilink-missing`; absolute paths, `..` segments and URL schemes
+  are refused (`md-wikilink-refused`). Inline code and fenced blocks are never
+  rewritten. Toggle: `FEATURE_WIKILINKS` (default on).
+- **Backlink index** (`MdViewer\Files\BacklinkIndex`) — target → sources map
+  in `storage/index/backlinks.json`, refreshed lazily from a corpus stamp and
+  rebuildable from Tools. The viewer renders a **“Linked from”** panel under
+  every document. Toggle: `BACKLINKS_ENABLED` (default on).
+- **Tag index** (`MdViewer\Files\TagService`) — reads `tags:` from frontmatter
+  (inline or block list), normalises them and serves the public
+  `?page=tags` page with a tag cloud and per-tag document lists. Toggle:
+  `TAGS_ENABLED` (default on).
+- **Document revisions** (`MdViewer\Files\RevisionService`) — every successful
+  editor save keeps the content under `storage/revisions/`, newest
+  `REVISIONS_MAX` (default 20) per document, identical content skipped. New
+  admin page **Revisions**: history per document, read-only preview and
+  restore. Restoring first stores the current content as a `(pre-restore)`
+  revision, so it is itself undoable. Toggle: `REVISIONS_ENABLED`.
+- **Static site export** (`MdViewer\Admin\StaticExportService`) — renders every
+  document to a self-contained HTML file with one embedded stylesheet, copies
+  content assets (bounded at 200 MB / 5000 files) and packs everything into
+  `storage/exports/site-<timestamp>.zip`. Admin action `export.static` plus an
+  authenticated `export.download` route; the archive opens from `file://`.
+  Mermaid and math stay as source: rendering them needs JavaScript.
+- Admin JSON actions `backlinks.rebuild`, `tags.rebuild`, `revision.list`,
+  `revision.read`, `revision.restore`, `export.static`.
+- Tests: wikilink parser/renderer/resolver, backlink and tag indexes, revision
+  retention and restore inputs, static export archive (184 tests total).
+
+### Changed
+
+- The render-cache key and the document ETag now include a **corpus stamp**
+  (paths + mtime + size of every document), so creating, deleting or renaming a
+  document invalidates cached wikilink states without invalidating every page
+  for an ordinary content edit.
+- `FileManager` accepts an optional `RevisionService` and stores a revision
+  after every successful write.
+- `RenderCache::key()` takes an optional corpus stamp (backwards compatible).
+
+### Fixed
+
+- **In-page anchors for non-Latin headings.** The sanitizer kept an `id` only
+  when it matched `^[A-Za-z]…`, so every Cyrillic or CJK heading id was silently
+  deleted and the TOC, the heading permalink and any `#fragment` link pointed at
+  a fragment that no longer existed. `id` now accepts Unicode letters and digits
+  (still bounded, still without spaces, quotes or angle brackets), and heading
+  anchors such as `#что-сначала-попробовал` survive sanitising.
+- `PathValidatorTest::testValidateNewPath` compared a native Windows path with a
+  `/`-separated literal and failed on Windows only; the assertion now normalises
+  the separator.
+
+### Notes
+
+- `config/manifest.json` is still the 3.1.0 release manifest; regenerate it
+  with `php tools/build-manifest.php` when cutting a release (see
+  `docs/development.md`).
+
 ## 3.2.3 — “Clarity” (2026-10-29)
 
 ### Changed

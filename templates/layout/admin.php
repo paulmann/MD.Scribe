@@ -26,6 +26,7 @@ $nav = [
     ],
     'System' => [
         ['page' => 'backups', 'label' => 'Backups & trash', 'icon' => 'history'],
+        ['page' => 'revisions', 'label' => 'Revisions', 'icon' => 'clock'],
         ['page' => 'updates', 'label' => 'Updates', 'icon' => 'cloud-download'],
         ['page' => 'settings', 'label' => 'Settings', 'icon' => 'settings'],
         ['page' => 'themes', 'label' => 'Custom themes', 'icon' => 'palette'],

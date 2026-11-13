@@ -60,5 +60,67 @@ $indexPhpExists = is_file(MdViewer\Core\Paths::root() . '/index.php');
       <p class="text-xs">The <code class="md-code-inline">ALLOW_CREATE_INDEX_PHP_LINK</code> flag is kept for compatibility but has no destructive action in v3 — restoring v2 behaviour would mean deleting the shipped file, which the panel refuses to do.</p>
     </div>
   </div>
+
+  <!-- Document indexes -->
+  <div class="md-card">
+    <div class="md-card-header"><h2 class="md-card-title"><?= Icons::svg('list', 'h-4 w-4 text-primary') ?>Document indexes</h2></div>
+    <div class="md-card-body flex flex-col gap-3 text-sm text-muted-foreground">
+      <p>Wikilink backlinks and frontmatter tags refresh automatically when the corpus changes. Rebuild by hand after a bulk import when you want the index files rewritten immediately.</p>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="md-btn md-btn-outline md-btn-sm" data-admin-quick="backlinks.rebuild"><?= Icons::svg('refresh-ccw', 'h-3.5 w-3.5') ?>Rebuild backlinks</button>
+        <button type="button" class="md-btn md-btn-outline md-btn-sm" data-admin-quick="tags.rebuild"><?= Icons::svg('hash', 'h-3.5 w-3.5') ?>Rebuild tags</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Static export -->
+  <div class="md-card">
+    <div class="md-card-header"><h2 class="md-card-title"><?= Icons::svg('download', 'h-4 w-4 text-primary') ?>Static export</h2></div>
+    <div class="md-card-body flex flex-col gap-3 text-sm text-muted-foreground">
+      <p>Renders every document to a self-contained HTML file and packs the library into a ZIP under <code class="md-code-inline">storage/exports/</code>. No scripts, no CDN — the archive opens from a file:// path.</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="md-btn md-btn-primary md-btn-sm" data-export-static><?= Icons::svg('download', 'h-3.5 w-3.5') ?>Export static site</button>
+        <span id="md-export-status" class="text-xs"></span>
+      </div>
+      <p class="text-xs">Mermaid diagrams and math stay as source in the export: rendering them needs JavaScript.</p>
+    </div>
+  </div>
 </div>
+
+<script nonce="<?= e($app->nonce()) ?>">
+document.addEventListener('DOMContentLoaded', function () {
+  var button = document.querySelector('[data-export-static]');
+  if (!button) return;
+  button.addEventListener('click', async function () {
+    var config = window.MDV_ADMIN || {};
+    var status = document.getElementById('md-export-status');
+    button.disabled = true;
+    if (status) status.textContent = 'Rendering…';
+    try {
+      var response = await fetch(config.scriptUrl + '?action=export.static', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRF-Token': config.csrf || '',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: '_token=' + encodeURIComponent(config.csrf || ''),
+        credentials: 'same-origin'
+      });
+      var data = await response.json().catch(function () { return null; });
+      if (!response.ok || !data || data.ok !== true) {
+        if (status) status.textContent = (data && data.error) || 'Export failed.';
+        button.disabled = false;
+        return;
+      }
+      if (status) status.textContent = data.documents + ' documents, ' + Math.round(data.bytes / 1024) + ' KB — downloading…';
+      window.location.href = data.url;
+    } catch (error) {
+      if (status) status.textContent = error.message;
+      button.disabled = false;
+    }
+  });
+});
+</script>
+
 <?php $this->end(); ?>

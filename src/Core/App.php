@@ -15,6 +15,7 @@ namespace MdViewer\Core;
 
 use MdViewer\Files\FileManager;
 use MdViewer\Files\MarkdownRepository;
+use MdViewer\Files\RevisionService;
 use MdViewer\Files\SearchIndex;
 use MdViewer\Files\Uploader;
 use MdViewer\Markdown\MarkdownEngine;
@@ -136,7 +137,13 @@ final class App
 
     public function fileManager(): FileManager
     {
-        return $this->fileManager ??= new FileManager($this->config, $this->repo(), $this->logger, $this->audit);
+        return $this->fileManager ??= new FileManager(
+            $this->config,
+            $this->repo(),
+            $this->logger,
+            $this->audit,
+            new RevisionService($this->config, $this->logger),
+        );
     }
 
     // ── Security headers ───────────────────────────────────────────────────

@@ -193,6 +193,27 @@ $tocHtmlForSheet = $tocEnabled ? $result->tocHtml : '';
 <?= $result->html ?>
       </article>
 
+      <!-- Backlinks: documents that mention this one via [[wikilinks]] -->
+      <?php $backlinkList = is_array($backlinks ?? null) ? $backlinks : []; ?>
+      <?php if ($backlinkList !== []): ?>
+      <section class="mt-12 rounded-lg border border-border/70 bg-muted/30 p-4" aria-labelledby="md-backlinks-title">
+        <h2 id="md-backlinks-title" class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <?= Icons::svg('list', 'h-3.5 w-3.5') ?>Linked from
+        </h2>
+        <ul class="flex flex-col gap-1.5 text-sm">
+          <?php foreach (array_slice($backlinkList, 0, 50) as $backlink): ?>
+          <li class="flex flex-wrap items-baseline gap-x-2">
+            <a class="md-link truncate" href="<?= e($req->url(['file' => $backlink['from']])) ?>"><?= e($backlink['title']) ?></a>
+            <span class="truncate font-mono text-[11px] text-muted-foreground"><?= e($backlink['from']) ?></span>
+          </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if (count($backlinkList) > 50): ?>
+        <p class="mt-2 text-xs text-muted-foreground">Showing 50 of <?= count($backlinkList) ?>.</p>
+        <?php endif; ?>
+      </section>
+      <?php endif; ?>
+
       <!-- Prev / next -->
       <?php if (!empty($neighbours['prev']) || !empty($neighbours['next'])): ?>
       <nav class="mt-14 grid gap-3 sm:grid-cols-2" aria-label="Document navigation">

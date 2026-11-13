@@ -11,6 +11,7 @@ namespace MdViewer\Http\Controllers;
 use MdViewer\Core\App;
 use MdViewer\Core\Config;
 use MdViewer\Core\Response;
+use MdViewer\Files\TagService;
 
 final class PageController
 {
@@ -95,6 +96,32 @@ final class PageController
             'jsConfig' => $this->jsConfig(),
             'q' => $q,
             'results' => $results,
+        ]);
+
+        return Response::html($html)->noStore();
+    }
+
+    /** Public tag index (frontmatter tags). */
+    public function tags(): Response
+    {
+        if (!$this->app->config->bool('TAGS_ENABLED')) {
+            return $this->notFound('Tags disabled', 'The tag index is disabled on this installation.');
+        }
+
+        $service = new TagService($this->app->repo(), $this->app->logger);
+        $tags = $service->all();
+        $selected = TagService::normalizeTag(trim((string) ($this->app->request->query('tag') ?? '')));
+        $documents = $selected !== null ? ($tags[$selected] ?? []) : [];
+
+        $html = $this->app->tpl->render('pages/tags', [
+            'app' => $this->app,
+            'bodyPage' => 'tags',
+            'pageTitle' => ($selected !== null ? '#' . $selected . ' — ' : '') . 'Tags — ' . $this->app->config->str('SITE_NAME'),
+            'pageDescription' => 'Every tag used in document frontmatter, with the documents that carry it.',
+            'jsConfig' => $this->jsConfig(),
+            'tags' => $tags,
+            'selected' => $selected,
+            'documents' => $documents,
         ]);
 
         return Response::html($html)->noStore();

@@ -36,9 +36,9 @@ final class RenderCache
         return $dir;
     }
 
-    public function key(string $identity, int $mtime, int $size, string $fingerprint): string
+    public function key(string $identity, int $mtime, int $size, string $fingerprint, string $corpusStamp = ''): string
     {
-        return hash('sha256', implode('|', [Version::VERSION, $identity, $mtime, $size, $fingerprint]));
+        return hash('sha256', implode('|', [Version::VERSION, $identity, $mtime, $size, $fingerprint, $corpusStamp]));
     }
 
     public function get(string $key): ?RenderResult

@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.2.2
+ * Version: 3.3.0
 -->
 
 # MD.Scribe 3
@@ -8,7 +8,7 @@
 > A secure, self-hosted **PHP 8.3 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-153%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-184%20passed-brightgreen)](tests)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
 [![CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
 
@@ -70,8 +70,9 @@ Requirements: **PHP ≥ 8.3** with `mbstring`, `dom`, `libxml`, `json`
 | --- | --- |
 | Typography | Fluid type scale, text size / page width / line-height controls, serif & system font options, print stylesheet |
 | Navigation | Auto TOC with scrollspy, heading numbers + hover anchors, `[TOC]` placeholder, breadcrumbs, prev/next pager, folder sidebar, skip links |
-| Discovery | Server-side **full-text search** (inverted index, CJK-aware), **Ctrl+K command palette** (documents, headings, actions), sitemap.xml, RSS feed |
+| Discovery | Server-side **full-text search** (inverted index, CJK-aware), **Ctrl+K command palette** (documents, headings, actions), **tag index** (`?page=tags`), sitemap.xml, RSS feed |
 | Rich content | Server-side **syntax highlighting** (~190 languages), **Mermaid** diagrams with auto-repair + diagnostics, **KaTeX** math (incl. mhchem), GitHub-style **alerts**, task lists, footnotes, definition lists, `==marks==`, ^super^/~sub~script, 1,900+ emoji shortcodes, image **lightbox** with captions, reading-time estimates |
+| Knowledge base | **Wikilinks** (`[[Page]]`, `[[Page\|Alias]]`, `[[Page#Heading]]`) with missing-page markers, **backlinks** (“Linked from”), frontmatter **tags** with a public index, per-document **revision history** with restore, **static site export** to a self-contained ZIP |
 | Glossary | Any two-column table becomes hover/tap **tooltips** with alias expansion (`Term (ABBR)`), live DOM content — zero duplication |
 | Themes | 12 presets + neutral × accent × radius × font mixer, light/dark/**system auto-detect**, per-visitor persistence, admin-managed **custom themes**, FOUC-free pre-paint bootstrap |
 
@@ -82,8 +83,9 @@ alignment, strikethrough, task lists, autolinks), footnotes (reference **and**
 inline), definition lists, attribute syntax `{#id .class}`, smart punctuation
 (opt-in), YAML frontmatter (`title`, `description`, `tags`, `author`, `date`,
 `draft`, `toc`, `numbering`), relative `.md` link rewriting with dead-link
-markers, and legacy MD.Viewer extras (universal pattern chains, glossary
-tables, `md.md` naming rule). Full matrix:
+markers, `[[wikilinks]]` with alias/anchor resolution, and legacy MD.Viewer
+extras (universal pattern chains, glossary tables, `md.md` naming rule). Full
+matrix:
 **[docs/markdown-features.md](docs/markdown-features.md)**.
 
 ### Admin panel
@@ -95,12 +97,13 @@ tables, `md.md` naming rule). Full matrix:
 | **Editor** | Split-pane live preview (the *real* engine), ⌘S save with **sha256 conflict detection**, word/reading-time counter, image upload at cursor, deep links `?page=editor&file=…` |
 | **Search index** | Stats, freshness, on-demand rebuild |
 | **Backups & trash** | One-click content snapshots (+ `.md.ini`), restore with automatic pre-restore safety copy, zip download, prune-ready listing, deleted-file restore |
+| **Revisions** | Per-document save history (newest `REVISIONS_MAX`, default 20), read-only preview, restore that keeps the current content as a `(pre-restore)` revision |
 | **Updates** | GitHub release check (15-min cache), release notes, **verified apply** (tarball + per-file sha256 manifest, backup-first), machine-API docs |
 | **Settings** | Every `.md.ini` key as a typed form (schema-driven), API-key regeneration, admin password change |
 | **Custom themes** | Save brand accents (light+dark primaries) — instantly selectable in the public catalog |
 | **Logs & audit** | Daily app logs + JSON audit trail (who did what, when, from where) |
 | **Security & health** | 20+ checks: PHP version/extensions, writability, permissions, secrets posture, OPcache, CSP; hardening checklist |
-| **Tools** | **Broken-link / dead-anchor / missing-media / orphan-document checker**, cache clearing, feed & sitemap shortcuts |
+| **Tools** | **Broken-link / dead-anchor / missing-media / orphan-document checker**, backlink and tag index rebuild, **static site export** (ZIP of self-contained HTML), cache clearing, feed & sitemap shortcuts |
 
 ### Zero-CDN policy
 

@@ -28,6 +28,7 @@ use MdViewer\Markdown\ContextHolder;
 use MdViewer\Markdown\Extensions\Node\MathInline;
 use MdViewer\Markdown\Extensions\Node\SubInline;
 use MdViewer\Markdown\Extensions\Node\SupInline;
+use MdViewer\Markdown\Extensions\Node\Wikilink;
 
 final class MdViewerExtension implements ExtensionInterface
 {
@@ -53,6 +54,9 @@ final class MdViewerExtension implements ExtensionInterface
         if ($this->on('FEATURE_EMOJI')) {
             $environment->addInlineParser(new EmojiInlineParser(), 50);
         }
+        if ($this->on('FEATURE_WIKILINKS')) {
+            $environment->addInlineParser(new WikilinkParser(), WikilinkParser::PRIORITY);
+        }
 
         // ── Renderers (priority 10 beats the core renderers) ───────────
         $environment->addRenderer(Heading::class, new HeadingRenderer(), 10);
@@ -67,6 +71,7 @@ final class MdViewerExtension implements ExtensionInterface
         $environment->addRenderer(MathInline::class, new MathInlineRenderer(), 10);
         $environment->addRenderer(SupInline::class, new SupInlineRenderer(), 10);
         $environment->addRenderer(SubInline::class, new SubInlineRenderer(), 10);
+        $environment->addRenderer(Wikilink::class, new WikilinkRenderer($this->holder), 10);
 
         // ── Listeners ───────────────────────────────────────────────────
         $environment->addEventListener(DocumentParsedEvent::class, new HeadingProcessor($this->holder), 100);

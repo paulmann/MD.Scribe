@@ -254,9 +254,16 @@ final class HtmlSanitizer
             }
 
             if ($name === 'id') {
+                // Unicode letters and digits are allowed on purpose: heading
+                // anchors are slugified from the heading text, and a Cyrillic or
+                // CJK heading produced an id this ASCII-only rule silently
+                // dropped — the TOC and every in-page link then pointed at a
+                // fragment that no longer existed. The pattern still forbids
+                // spaces, quotes, angle brackets and anything that could close
+                // an attribute, and it is bounded, so the value stays inert.
                 $keep = !$svg
                     && in_array($tag, self::ID_TAGS, true)
-                    && preg_match('/^[A-Za-z][A-Za-z0-9_:.\-]{0,96}$/', $value) === 1;
+                    && preg_match('/^[\p{L}\p{N}][\p{L}\p{N}_:.\-]{0,96}$/u', $value) === 1;
                 if (!$keep) {
                     $node->removeAttribute($attr->nodeName);
                 }

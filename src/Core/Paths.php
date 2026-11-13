@@ -82,6 +82,18 @@ final class Paths
         return self::storage() . '/state';
     }
 
+    /** Per-document revision history (see RevisionService). */
+    public static function revisions(): string
+    {
+        return self::storage() . '/revisions';
+    }
+
+    /** Generated static-site archives (see StaticExportService). */
+    public static function exports(): string
+    {
+        return self::storage() . '/exports';
+    }
+
     public static function customThemes(): string
     {
         return self::storage() . '/themes';
@@ -114,6 +126,8 @@ final class Paths
             self::logs(),
             self::index(),
             self::state(),
+            self::revisions(),
+            self::exports(),
             self::customThemes(),
         ] as $dir) {
             if (!is_dir($dir) && !@mkdir($dir, 0o755, true) && !is_dir($dir)) {

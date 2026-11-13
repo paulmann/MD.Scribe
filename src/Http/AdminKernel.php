@@ -17,14 +17,19 @@ use MdViewer\Admin\AdminAuth;
 use MdViewer\Admin\BackupService;
 use MdViewer\Admin\HealthCheck;
 use MdViewer\Admin\LinkChecker;
+use MdViewer\Admin\StaticExportService;
 use MdViewer\Admin\UpdateService;
 use MdViewer\Core\App;
 use MdViewer\Core\AuditLog;
 use MdViewer\Core\Paths;
 use MdViewer\Core\Response;
 use MdViewer\Core\Version;
+use MdViewer\Files\BacklinkIndex;
 use MdViewer\Files\FileManager;
 use MdViewer\Files\MarkdownRepository;
+use MdViewer\Files\RevisionService;
+use MdViewer\Files\TagService;
+use MdViewer\Files\WikilinkResolver;
 
 final class AdminKernel
 {
@@ -102,7 +107,7 @@ final class AdminKernel
 
         $pages = [
             'dashboard', 'files', 'editor', 'index', 'backups',
-            'updates', 'settings', 'themes', 'logs', 'security', 'tools',
+            'updates', 'settings', 'themes', 'logs', 'security', 'tools', 'revisions',
         ];
         if (!in_array($page, $pages, true)) {
             $page = 'dashboard';
@@ -195,6 +200,20 @@ final class AdminKernel
                 'index.rebuild' => $this->json(['ok' => true] + $this->app->search()->rebuild()),
                 'index.stats' => $this->json(['ok' => true] + $this->app->search()->stats()),
 
+                // Indexes derived from wikilinks and frontmatter
+                'backlinks.rebuild' => $this->json(['ok' => true] + (new BacklinkIndex($this->app->repo(), new WikilinkResolver($this->app->repo()), $this->app->logger))->rebuild()),
+                'tags.rebuild' => $this->json(['ok' => true] + (new TagService($this->app->repo(), $this->app->logger))->rebuild()),
+
+                // Document revisions
+                'revision.list' => $this->json([
+                    'ok' => true,
+                    'items' => (new RevisionService($this->app->config, $this->app->logger))->listRevisions((string) ($req->query('path') ?? $req->post('path') ?? '')),
+                ]),
+                'revision.read' => $this->revisionRead(),
+                'revision.restore' => $this->revisionRestore($actor),
+
+                // Static site export
+                'export.static' => $this->exportStatic($actor),
                 // Backups
                 'backup.create' => $this->json((new BackupService($this->app->repo(), $this->app->logger, $this->app->audit))->create($actor, (string) ($req->post('note') ?? ''))),
                 'backup.list' => $this->json(['ok' => true, 'items' => (new BackupService($this->app->repo(), $this->app->logger, $this->app->audit))->list()]),
@@ -283,6 +302,67 @@ final class AdminKernel
         }
 
         return $this->json($fm->uploadImage($file, (string) ($this->app->request->post('dir') ?? ''), $actor));
+    }
+
+    private function revisionRead(): Response
+    {
+        $req = $this->app->request;
+        $path = (string) ($req->query('path') ?? $req->post('path') ?? '');
+        $id = (string) ($req->query('id') ?? $req->post('id') ?? '');
+        $content = (new RevisionService($this->app->config, $this->app->logger))->read($path, $id);
+        if ($content === null) {
+            return Response::json(['ok' => false, 'error' => 'Revision not found.'], 404);
+        }
+
+        return Response::json(['ok' => true, 'path' => $path, 'id' => $id, 'content' => $content]);
+    }
+
+    private function revisionRestore(string $actor): Response
+    {
+        $req = $this->app->request;
+        $path = (string) ($req->post('path') ?? '');
+        $id = (string) ($req->post('id') ?? '');
+        $service = new RevisionService($this->app->config, $this->app->logger);
+        $content = $service->read($path, $id);
+        if ($content === null) {
+            return Response::json(['ok' => false, 'error' => 'Revision not found.'], 404);
+        }
+
+        // Keep what is about to be overwritten, then write the old content.
+        $current = $this->app->fileManager()->read($path);
+        if (($current['ok'] ?? false) === true) {
+            $service->save($path, (string) $current['content'], $actor . ' (pre-restore)');
+        }
+
+        $result = $this->app->fileManager()->write($path, $content, $actor);
+        if (($result['ok'] ?? false) === true) {
+            $this->app->audit->record('content.restore_revision', $actor, ['path' => $path, 'revision' => $id]);
+        }
+
+        return $this->json($result);
+    }
+
+    private function exportStatic(string $actor): Response
+    {
+        $service = new StaticExportService(
+            $this->app->repo(),
+            $this->app->markdown(),
+            $this->app->config,
+            $this->app->logger,
+        );
+        $result = $service->export();
+        if (($result['ok'] ?? false) === true) {
+            $this->app->audit->record('export.static', $actor, [
+                'file' => (string) ($result['file'] ?? ''),
+                'documents' => (int) ($result['documents'] ?? 0),
+            ]);
+            $result['url'] = $this->app->request->url([
+                'action' => 'export.download',
+                'file' => (string) ($result['file'] ?? ''),
+            ]);
+        }
+
+        return $this->json($result);
     }
 
     private function preview(string $markdown): Response
@@ -413,6 +493,7 @@ final class AdminKernel
             'logs' => 'Logs & audit',
             'security' => 'Security & health',
             'tools' => 'Tools',
+            'revisions' => 'Revisions',
         ];
         $data = match ($page) {
             'dashboard' => $this->dashboardData(),
@@ -430,10 +511,34 @@ final class AdminKernel
             'logs' => ['logs' => $this->app->logger->tail(3, 200), 'audit' => AuditLog::read(100)],
             'security' => ['health' => (new HealthCheck($this->app->config))->run()],
             'tools' => [],
+            'revisions' => $this->revisionPageData(),
             default => [],
         };
 
         return $this->page('admin/' . $page, $data + ['pageTitle' => $titles[$page] ?? 'Admin'], $page);
+    }
+
+    /** @return array<string, mixed> */
+    private function revisionPageData(): array
+    {
+        $service = new RevisionService($this->app->config, $this->app->logger);
+
+        $file = trim((string) ($this->app->request->query('file') ?? ''));
+        if ($file !== '' && $this->app->repo()->resolve($file) === null) {
+            $file = '';
+        }
+        $revision = trim((string) ($this->app->request->query('rev') ?? ''));
+        $preview = ($file !== '' && $revision !== '') ? $service->read($file, $revision) : null;
+
+        return [
+            'documents' => $service->documents(),
+            'file' => $file,
+            'revisions' => $file !== '' ? $service->listRevisions($file) : [],
+            'revision' => $preview !== null ? $revision : '',
+            'preview' => $preview,
+            'enabled' => $service->enabled(),
+            'max' => $service->maxRevisions(),
+        ];
     }
 
     private function dashboardData(): array
@@ -499,6 +604,26 @@ final class AdminKernel
         }
 
         return ($base === '' || $base === '/' ? '' : $base) . '/index.php';
+    }
+
+    /** Download a generated static export (GET, authenticated). */
+    public function downloadExport(string $file): Response
+    {
+        if (!$this->auth->isAuthenticated()) {
+            return Response::text('Unauthorized.', 401)->noStore();
+        }
+        $service = new StaticExportService(
+            $this->app->repo(),
+            $this->app->markdown(),
+            $this->app->config,
+            $this->app->logger,
+        );
+        $path = $service->archivePath($file);
+        if ($path === null) {
+            return Response::text('Export not found.', 404);
+        }
+
+        return Response::download($path, basename($path));
     }
 
     /** Direct file download for backups (GET, authenticated). */

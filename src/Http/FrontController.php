@@ -104,6 +104,7 @@ final class FrontController
                 'themes' => $pages->themes(),
                 'settings' => $pages->settings(),
                 'search' => $pages->search(),
+                'tags' => $pages->tags(),
                 'browser' => (new BrowserController($this->app))->show($req->query('dir') ?? ''),
                 'sitemap' => (new FeedController($this->app))->sitemap(),
                 'feed' => (new FeedController($this->app))->feed(),

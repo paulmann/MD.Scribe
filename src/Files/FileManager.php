@@ -27,6 +27,7 @@ final class FileManager
         private readonly MarkdownRepository $repo,
         private readonly Logger $logger = new Logger(),
         private readonly ?AuditLog $audit = null,
+        private readonly ?RevisionService $revisions = null,
     ) {
     }
 
@@ -153,6 +154,7 @@ final class FileManager
         }
 
         $this->audit?->record($isNew ? 'content.create' : 'content.update', $actor, ['path' => $relative, 'bytes' => strlen($content)]);
+        $this->revisions?->save($relative, $content, $actor);
 
         return ['ok' => true, 'path' => $relative, 'hash' => hash('sha256', $content)];
     }
