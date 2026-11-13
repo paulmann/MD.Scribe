@@ -8,9 +8,10 @@
 > A secure, self-hosted **PHP 8.5 Markdown documentation platform**: a CommonMark/GFM-complete viewer with full-text search, a command palette, a theme catalog, Mermaid diagrams, KaTeX math, glossary tooltips — plus a real **admin panel** with a content manager, editor, backups, self-updater, health checks and an audit trail. **Zero CDN dependencies. No database. No framework. No build step on the server.**
 
 [![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-201%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](phpstan.neon)
 [![CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
+[![Wiki](https://img.shields.io/badge/docs-wiki-181717?logo=github&logoColor=white)](https://github.com/paulmann/MD.Scribe/wiki)
 
 ---
 
@@ -28,6 +29,10 @@ Point it at a folder of `.md` files and you have a documentation site:
 - **`md.php` / `updater.php`** at the project root are compatibility shims —
   every v2 URL contract (`?file=`, `&download=1`, `?update=true`,
   `?restore=latest`, the machine API) keeps working after an upgrade.
+
+**New here?** Start with the [wiki](https://github.com/paulmann/MD.Scribe/wiki/Getting-Started)
+([Home](https://github.com/paulmann/MD.Scribe/wiki/Home)) — it takes you from the release
+archive to a verified install in four commands.
 
 Everything is styled by a **shadcn/ui-token design system on a local Tailwind
 CSS v4 build** with light/dark/system modes, 12 curated themes and a
@@ -299,8 +304,13 @@ MD.Scribe/
 
 ## Documentation
 
+Two layers: the **[wiki](https://github.com/paulmann/MD.Scribe/wiki)** is the task-oriented
+guide (get it running, configure it, operate it), while the files in `docs/` are the
+reference you check against the tag you run.
+
 | Document | Contents |
 | --- | --- |
+| **[Wiki](https://github.com/paulmann/MD.Scribe/wiki)** | Getting started, installation, configuration, Markdown features, search, admin guide, HTTP API, updates, troubleshooting, development, changelog — start at [Home](https://github.com/paulmann/MD.Scribe/wiki/Home) |
 | [docs/installation.md](docs/installation.md) | All deployment layouts, Apache/nginx/Caddy/Docker, shared hosting, permissions |
 | [docs/configuration.md](docs/configuration.md) | Complete `.md.ini` reference, per-directory files, feature toggles |
 | [docs/markdown-features.md](docs/markdown-features.md) | Full syntax matrix with examples |
