@@ -28,6 +28,12 @@ use MdViewer\Core\Config;
 use MdViewer\Core\Logger;
 use MdViewer\Core\Version;
 
+// The admin panel sits next to this file in layout B (docroot = project root)
+// and one level down in layout A (docroot = public/, reached through the
+// public/updater.php shim). Link to whichever exists, so the hint is never a
+// dead end.
+$adminLink = is_file(__DIR__ . '/admin.php') ? 'admin.php' : 'public/admin.php';
+
 $config = Config::instance();
 $logger = new Logger($config);
 $audit = new AuditLog();
@@ -219,4 +225,4 @@ $allowUpdateNote = $config->bool('ALLOW_UPDATE')
 
 $layout('MD.Scribe updater', '<h1>MD.Scribe updater</h1>' . $checkLine . $allowUpdateNote
     . '<table><thead><tr><th>Tracked file</th><th>Status</th><th>Version</th></tr></thead><tbody>' . ($rows !== '' ? $rows : '<tr><td colspan="3">No manifest — run <code>php tools/build-manifest.php</code>.</td></tr>') . '</tbody></table>'
-    . '<div class="note">Recommended: manage updates from the <a href="public/admin.php?page=updates">admin panel</a>. This page keeps the v2 URL contract (<code>?update=true</code>, <code>?restore=latest</code>, machine API with <code>api_key</code>).</div>');
+    . '<div class="note">Recommended: manage updates from the <a href="' . $adminLink . '?page=updates">admin panel</a>. This page keeps the v2 URL contract (<code>?update=true</code>, <code>?restore=latest</code>, machine API with <code>api_key</code>).</div>');

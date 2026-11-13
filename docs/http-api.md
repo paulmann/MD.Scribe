@@ -183,6 +183,11 @@ Credential: `API_KEY` from `.md.ini`, passed as `?api_key=`. JSON only —
 never HTML; PHP notices never leak into the body. `ALLOW_UPDATE` is **not**
 required for the API (the key is the credential), matching v2 semantics.
 
+`updater.php` lives at the project root, next to `src/`. On the recommended
+deployment (document root = `public/`) it is reached through the shipped
+`public/updater.php` shim, so the same URL works in both layouts:
+`https://host/updater.php?api_key=…&action=status&format=json`.
+
 ```
 GET  updater.php?api_key=<key>&action=status&format=json
 GET  updater.php?api_key=<key>&action=conflicts&format=json

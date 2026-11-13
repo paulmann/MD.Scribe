@@ -3,6 +3,20 @@
 All notable changes to MD.Scribe. Format inspired by Keep a Changelog;
 versions follow semver.
 
+## 3.4.1 — “Keystone” (2026-11-13)
+
+### Fixed
+
+- **The updater was unreachable on the recommended layout.** With docroot set to
+  `public/`, `updater.php` sits above the document root, so `GET /updater.php`
+  answered 404 and the machine API (`action=status|conflicts|install`) could not
+  be used at all. `public/updater.php` is now a one-line bridge to the root file;
+  the root file computes its paths from its own `__DIR__`, so both layouts behave
+  identically.
+- The updater landing page linked to `public/admin.php` unconditionally; on a
+  docroot-at-root install that path does not exist. It now points at whichever of
+  `admin.php` / `public/admin.php` is actually present.
+
 ## 3.4.0 — “Keystone” (2026-11-13)
 
 PHP 8.3 and 8.4 are dropped; the platform is **PHP 8.5** (verified on 8.5.12).
