@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.6.0
+ * Version: 3.6.1
 -->
 
 # MD.Scribe 3
@@ -19,7 +19,7 @@ gesamte Anwendung offline arbeitet.
 [![Veröffentlichung](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Lizenz: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-220%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-234%20passed-brightgreen)](tests)
 [![CDN-Anfragen](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-richtlinie)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"

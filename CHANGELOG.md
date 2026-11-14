@@ -4,7 +4,39 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 3.6.1 - 2026-11-14
+
+### Fixed
+
+- **The CSP header no longer repeats `img-src` sources.** With `ALLOW_EXTERNAL_IMAGES`
+  on, production served `img-src 'self' blob: data: https: data:`: the base of the
+  directive already ended in `data:` and the switch appended `' https: data:'`. A
+  browser ignores the repeat, so nothing broke — which is why it survived: the CSP
+  header is read by the browser and by no check in this repository. The policy is now
+  assembled in `src/Core/ContentSecurityPolicy.php`, which collects sources per
+  directive and de-duplicates them, so the class of defect is gone rather than the one
+  string. Five tests pin it, including the exact production value.
+
+- **`php tools/build-manifest.php` in a working tree no longer lists the local scratch
+  directories.** It walked the filesystem and knew nothing about `.work/`, `.wiki/`,
+  `.zwork/` or `.ragraf/`, so a manifest generated in a checkout came out at 5 139
+  entries and 1 122 MB — a gigabyte of this repository's own code index, listed as
+  shippable. Which files ship (`ReleaseBuilder::ships()`) and which the manifest
+  describes (`inManifest()`) are now two named predicates in one place:
+  `content/` and `tests/` travel in the archive but are never described, because an
+  update must not replace the owner's documents. After the change: 987 entries,
+  12.2 MB.
+
+### Changed
+
+- **The opcache window is measured, not assumed.** On the live pool (PHP 8.5.12
+  fpm-fcgi, `opcache.validate_timestamps=1`, `opcache.revalidate_freq=60`) a replaced
+  file keeps serving the old bytecode for **61 s** — polled once a second, flip at 61 s.
+  A token-scoped `opcache_reset()` closes it on the **first** request (0.06 s), which is
+  what `tools/deploy/mdscribe-deploy` does after the symlink switch. Also recorded: on
+  this host `php -i` describes the CLI (where `revalidate_freq` is 2), not the pool;
+  the effective values were read from inside a worker.
+
 
 ### Added
 

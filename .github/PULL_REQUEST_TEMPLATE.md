@@ -19,7 +19,7 @@ php -S localhost:8080 -t public public/router.php
 
 ## Checklist
 
-- [ ] `composer test` passes (220 tests, 702 assertions) and exits `0`
+- [ ] `composer test` passes (234 tests, 839 assertions) and exits `0`
 - [ ] `composer stan` is clean at PHPStan level 6 and exits `0`
 - [ ] The app boots with the `php -S` command above, and the changed page or endpoint was exercised
 - [ ] One logical change; no unrelated formatting churn in the diff

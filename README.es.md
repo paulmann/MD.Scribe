@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.6.0
+ * Version: 3.6.1
 -->
 
 # MD.Scribe 3
@@ -19,7 +19,7 @@ todos los recursos se distribuyen localmente, por lo que toda la aplicación fun
 [![Versión](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Licencia: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Pruebas](https://img.shields.io/badge/tests-220%20passed-brightgreen)](tests)
+[![Pruebas](https://img.shields.io/badge/tests-234%20passed-brightgreen)](tests)
 [![Peticiones CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#política-de-cero-cdn)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"

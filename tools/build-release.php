@@ -3,9 +3,9 @@
 /**
  * MD.Scribe — build the release artifact with one command.
  *
- *   php tools/build-release.php --version=3.6.0 --out=/tmp/release
- *   php tools/build-release.php --version=3.6.0 --out=/tmp/release --commit=<sha> --keep-clone
- *   php tools/build-release.php --version=3.6.0 --out=/tmp/release --dry-run
+ *   php tools/build-release.php --version=<version> --out=/tmp/release
+ *   php tools/build-release.php --version=<version> --out=/tmp/release --commit=<sha> --keep-clone
+ *   php tools/build-release.php --version=<version> --out=/tmp/release --dry-run
  *   php tools/build-release.php --verify-only=/tmp/mdscribe-release-xxxx
  *
  * What it does, and why each step exists:
