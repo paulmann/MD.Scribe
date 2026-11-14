@@ -63,8 +63,50 @@ final class ConfigTest extends TestCase
         Config::reset();
     }
 
-    /** A dangling link names a file that does not exist yet: write it there, keep the link. */
-    public function testWritingThroughADanglingSymlinkCreatesTheTarget(): void
+    /**
+     * An existing but unreadable config must not be regenerated.
+     *
+     * Measured in production on 2026-11-14: a config written by root with mode 0640 was
+     * unreadable for the pool user, and the next request replaced it with defaults —
+     * taking the site name and the home document with it. A file that cannot be read is a
+     * failure to report, not a blank page to fill in.
+     */
+    public function testAnUnreadableIniIsNotOverwrittenWithDefaults(): void
+    {
+        $path = $this->tmpRoot . '/locked.ini';
+        $original = "SITE_NAME = autoyap.ru - документация\nHOME_DOC = autoyap/index.md\n";
+        file_put_contents($path, $original);
+        @chmod($path, 0o000);
+        clearstatcache(true, $path);
+        if (is_readable($path)) {
+            @chmod($path, 0o640);
+            self::markTestSkipped('this user can read a 0000 file (root); CI covers the case');
+        }
+
+        $config = Config::loadFrom($path);
+
+        self::assertFalse($config->isWritable(), 'a config that cannot be read must not be written');
+        self::assertSame('MD.Scribe', $config->str('SITE_NAME'), 'the app runs on defaults, not on a rewrite');
+        self::assertSame($original, (string) file_get_contents($path), 'the file must be left exactly as it was');
+
+        @chmod($path, 0o640);
+        Config::reset();
+    }
+
+    /** A zero-byte file is not damage: it is a first run, and it gets filled in. */
+    public function testAnEmptyIniIsFilledWithDefaults(): void
+    {
+        $path = $this->tmpRoot . '/empty.ini';
+        file_put_contents($path, '');
+
+        $config = Config::loadFrom($path);
+
+        self::assertTrue($config->isWritable());
+        self::assertStringContainsString('SITE_NAME', (string) file_get_contents($path));
+        Config::reset();
+    }
+
+    /** A dangling link names a file that does not exist yet: write it there, keep the link. */    public function testWritingThroughADanglingSymlinkCreatesTheTarget(): void
     {
         $data = $this->tmpRoot . '/data2';
         $release = $this->tmpRoot . '/release2';

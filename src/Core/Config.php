@@ -212,7 +212,7 @@ final class Config
                 error_log("[MD.Scribe] refused directory ini outside browse root: {$ini}");
                 continue;
             }
-            foreach (self::readIniFile($real) as $key => $value) {
+            foreach (self::readIniFile($real) ?? [] as $key => $value) {
                 if (in_array($key, self::PER_DIR_KEYS, true)) {
                     $flags[$key] = self::parseBool($value);
                 } elseif (isset(self::schema()[$key])) {
@@ -240,6 +240,19 @@ final class Config
         }
 
         $parsed = self::readIniFile($this->iniPath);
+        if ($parsed === null) {
+            // The file exists and cannot be read (permissions, a truncated write, an
+            // unreadable owner after an edit made as another user). Regenerating it from
+            // defaults would destroy the settings it holds — measured in production on
+            // 2026-11-14: a config written by root with mode 0640 was unreadable for the
+            // pool user, and the next request replaced it with defaults, taking the site
+            // name and the home document with it. Run on defaults, read-only, say so.
+            $this->values = [];
+            $this->writable = false;
+            error_log('[MD.Scribe] cannot read ' . $this->iniPath . ' — running on defaults, refusing to write');
+
+            return;
+        }
         $this->values = $parsed;
         $this->explicit = array_fill_keys(array_keys($parsed), true);
 
@@ -451,11 +464,15 @@ final class Config
      *
      * @return array<string, string>
      */
-    public static function readIniFile(string $path): array
+    /**
+     * @return array<string, string>|null parsed keys, [] for an empty or absent file, null
+     *                                  when the file exists but cannot be read
+     */
+    public static function readIniFile(string $path): ?array
     {
         $content = @file_get_contents($path);
         if ($content === false) {
-            return [];
+            return is_file($path) ? null : [];
         }
 
         $out = [];
