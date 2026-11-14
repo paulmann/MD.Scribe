@@ -19,7 +19,7 @@ Release `v3.4.4`; tags `v3.1.0`, `v3.2.0`, `v3.2.1`, `v3.4.4`.
 $env:COMPOSER_HOME = Join-Path ([System.IO.Path]::GetTempPath()) 'composer-home'
 composer install
 # the gates CI runs
-composer test        # PHPUnit: 214 tests, 679 assertions, 1 skipped
+composer test        # PHPUnit: 217 tests, 684 assertions, 1 skipped
 composer stan        # PHPStan level 6
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 php -l md.php; php -l index.php; php -l updater.php
@@ -86,7 +86,7 @@ and a 404). The `assets` job rebuilds the frontend and warns, non-blocking, on d
 ## Verify before claiming done
 
 ```powershell
-composer test                                # 214 tests, 679 assertions, 1 skipped, exit 0
+composer test                                # 217 tests, 684 assertions, 1 skipped, exit 0
 composer stan                                # no errors at level 6
 pwsh -File tools/Invoke-ProjectDoctrine.ps1  # checks: 12, errors: 0, warnings: 0, PASS
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
