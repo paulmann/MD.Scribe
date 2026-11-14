@@ -26,6 +26,8 @@ php -l md.php; php -l index.php; php -l updater.php
 cd tools/frontend; npm ci; node build.mjs --vendor   # outputs incl. vendor bundles are committed
 # browser gate: diagrams, KaTeX, icons, CSP, table layout (needs the dev server above)
 node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099
+# release artifact: digest, manifest, a booted copy, six routes, browser gate
+php tools/verify-release.php --version=<version>
 # local dev server and the read-only doctrine checker (12 checks)
 php -S 127.0.0.1:8099 -t public public/router.php
 pwsh -File tools/Invoke-ProjectDoctrine.ps1
@@ -79,6 +81,9 @@ invisible to PHPUnit.
 | The updater needs the release archive, not a branch tarball | `src/Admin/UpdateService.php`, `docs/development.md` step 8 | A branch tarball never contains `vendor/`, so it can never satisfy the manifest |
 | PHPStan does not see `bin/`, `tools/` or `templates/` | `phpstan.neon:3-9` | A syntax error there passes analysis; `bin/` is not linted by CI either |
 | The browser half of the pipeline is only checked by hand | `tools/frontend/check-render.mjs` (CI job `render`) | A repair, an icon or a CSP regression passes every PHP test and reaches main |
+| A deploy from `git archive` has no `vendor/` | `tools/deploy/mdscribe-deploy` (staged check) | `rsync --delete` removes 731 files and every page is a PHP fatal |
+| opcache caches by the path it was given, not the symlink target | measured on the host: `…/mdscribe/public/index.php` cached with `ts=0` | The symlink points at the new release and the old code keeps running; `systemctl reload` does not clear it |
+| A `zipfile` archive carries no POSIX modes | measured: `0666` on every deployed file | Application code writable by any local account |
 | Tailwind v4 scans the whole repository unless told otherwise | `tools/frontend/src/css/app.css` (`source(none)`) | A word like "invisible" in a changelog entry added a utility to the committed CSS, so a prose edit changed the bundle |
 
 ## Machine APIs
@@ -100,6 +105,8 @@ pwsh -File tools/Invoke-ProjectDoctrine.ps1  # checks: 12, errors: 0, warnings: 
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 # with the dev server running: diagrams, KaTeX, icons, CSP, table layout in a real browser
 node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099   # 21 checks, exit 0
+# after publishing: the artifact and a booted copy of it
+php tools/verify-release.php --version=<version>                    # 17 checks, exit 0
 ```
 
 For a request-path change, also start the dev server and check `/`, `?page=browser`, `?page=themes`,

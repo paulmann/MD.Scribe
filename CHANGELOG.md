@@ -20,6 +20,25 @@ All notable changes to this project are documented here. The format is
   Proven by reverting the loader — the gate fails with `repair: the repaired
   source reaches the renderer`, exit 1.
 
+- **`tools/verify-release.php` — the published artifact is verified, not assumed.**
+  One command downloads the release asset, compares the digest the release
+  publishes, extracts it, checks every manifest entry, refuses unexpected files,
+  boots the extracted tree on a free port, runs the six routes CI smokes, and
+  hands the base URL to the browser gate with `--root`, so the gate's fixture
+  lands in the extracted copy instead of the working tree. Proven negative: one
+  changed byte in a copy of the archive fails `integrity` and the page-version
+  check, exit 1.
+- **`tools/deploy/mdscribe-deploy` — placement that proves itself.** Verifies
+  the digest, refuses an archive without `config/manifest.json` or
+  `vendor/autoload.php`, checks the staged tree against its own manifest, swaps
+  one symlink (`mv -T`), resets opcache, then verifies the live URL (manifest,
+  six routes, version, PWA media type) and rolls back by itself when anything
+  fails. `--dry-run` prints every step and writes nothing; `--status` and
+  `--rollback` are read-only and reversible respectively.
+- **`tools/deploy/verify-tree.php` — one tree against its own manifest**, used
+  after the switch and available on demand; it reports missing, modified and
+  unexpected files separately.
+
 ### Changed
 
 - **Asset drift is blocking, and it covers the vendored bundles.** The CI job
@@ -33,6 +52,24 @@ All notable changes to this project are documented here. The format is
   changelog entry added `.invisible` to the shipped CSS (60 918 → 60 602 bytes),
   so editing prose changed the bundle; now a prose edit leaves it alone, which
   is what makes the blocking drift check stable.
+
+### Fixed
+
+- **A deploy could remove `vendor/` and still look successful.** Running
+  `rsync -a --delete` from a `git archive` (which never contains `vendor/`)
+  deleted 731 files and every page served a PHP fatal. The deploy path now
+  installs the release archive only, refuses a tree without
+  `vendor/autoload.php`, and verifies the result on the live URL.
+- **A switch did not change the code that ran.** opcache keys scripts by the
+  path it was given rather than the resolved target, so after pointing the
+  symlink at another release the site kept reporting the previous version for
+  minutes, with `ts=0` on the cached entry; `systemctl reload php8.5-fpm` does
+  not clear the shared segment. The deploy resets opcache through a one-shot
+  token-scoped endpoint in the site docroot and removes it immediately.
+- **Deployed files were world-writable.** An archive built by `zipfile` carries
+  no POSIX modes and `unzip` produced `0666` on every file. `/opt/php85` runs
+  the pool as a normal user, so any local account could rewrite the application.
+  The deploy normalises directories to 0755 and files to 0644.
 
 ## 3.5.0 - 2026-11-14
 

@@ -174,13 +174,64 @@ flags) have dedicated regression tests, including the historic v2 bugs
 8. Tag `v<version>`, create the GitHub **release** and attach the archive — the
    updater downloads the release asset, not the branch tarball, because a branch
    tarball never contains `vendor/`.
-9. **Deploy that archive to a real host and re-run the checks before announcing
-   anything**: the six requests in `docs/installation.md` "Verification
-   checklist", the admin health check, and the updater dry run
-   (`POST updater.php?api_key=…&action=install&format=json&dry_run=1`, which must
-   report the files it would replace — or none, with `verified` equal to the
-   manifest size). A release published before this step is a hypothesis, not a
-   release; three defects in the 3.4.x line were found only here.
+9. `php tools/verify-release.php --version=<version>` — verifies the published
+   artifact end to end (digest, manifest, a booted copy, the six routes, the
+   browser gate). Run it **after** step 8, because it downloads the release
+   asset: this is the check that tells a release from a hypothesis.
+10. **Deploy that archive and re-run the checks before announcing anything**:
+   `mdscribe-deploy <version> --dry-run`, then `mdscribe-deploy <version>`.
+   The script verifies its own result on the live URL and rolls back by itself.
+   A release published before this step is a hypothesis, not a release; three
+   defects in the 3.4.x line were found only here, and the 3.5.0 deploy lost
+   `vendor/` to a manual `rsync --delete`.
+
+## Verified deployment
+
+Three tools exist so a deploy cannot quietly succeed at the wrong thing:
+
+| Tool | Where | What it proves |
+|---|---|---|
+| `tools/verify-release.php` | any machine with PHP 8.5 + Node | the published archive is the manifest's tree, and that tree serves pages: the digest the release publishes, every entry's sha256, nothing unexpected, `php -S` on a free port, six routes, the browser gate pointed at it with `--root` |
+| `tools/deploy/mdscribe-deploy` | the host | the switch happened and the live site reflects it: staged manifest check, atomic symlink swap, opcache reset, manifest + six routes + version on the live URL, automatic rollback |
+| `tools/deploy/verify-tree.php` | the host (`/usr/local/lib/mdscribe/`) | one tree against its own manifest — used after the switch and on demand |
+
+```bash
+php tools/verify-release.php --version=3.5.0    # artifact level, anywhere
+mdscribe-deploy 3.5.0 --dry-run                  # placement level, on the host
+mdscribe-deploy 3.5.0                            # install, verify, roll back on failure
+mdscribe-deploy --status | --rollback | --install-tools
+```
+
+The layout it creates once, after a `tar` backup of the old tree:
+
+```
+<site>/mdscribe                -> mdscribe.releases/<version>   (symlink, swapped with mv -T)
+<site>/mdscribe.releases/<v>/  the tree exactly as published
+<site>/mdscribe-data/          content/ storage/ .md.ini — the only runtime state
+```
+
+Runtime state lives outside the release so a new version never copies it and a
+rollback never loses a page written after the switch. Releases up to 3.4.x wrap
+the tree in `MD.Scribe-<version>/`; 3.5.0 is flat, and the script accepts both.
+
+### Three things this host taught us
+
+1. **A git archive has no `vendor/`.** The 2026-11-14 deploy ran
+   `rsync -a --delete` from `git archive` without excluding `vendor`: 731 files
+   disappeared and every page served a PHP fatal. The script installs only the
+   release archive and refuses a tree without `vendor/autoload.php`.
+2. **opcache keys scripts by the path it was given, not by the resolved target.**
+   `public/mdscribe/index.php` stayed cached under that name with `ts=0`, so
+   pointing the symlink at another release kept serving the old bytecode: the
+   site reported 3.4.4 for minutes while the link was already on 3.5.0, and
+   `systemctl reload php8.5-fpm` does not clear the shared segment. The script
+   calls `opcache_reset()` through a one-shot endpoint in the site docroot
+   (random name, token, removed immediately) instead of restarting a pool it
+   shares with 25 other sites.
+3. **An archive built by `zipfile` carries no POSIX modes.** `unzip` applied the
+   host umask and produced `0666` on every file — PHP code writable by any local
+   account. The script normalises directories to 0755, files to 0644, and keeps
+   shebang files executable.
 
 ### Code outside static analysis
 
