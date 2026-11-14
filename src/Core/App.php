@@ -165,26 +165,14 @@ final class App
         }
 
         if ($this->config->bool('SECURITY_CSP')) {
-            $nonce = $this->nonce;
-            $imgExternal = $this->config->bool('ALLOW_EXTERNAL_IMAGES') ? ' https: data:' : '';
-            $embedSrc = $this->config->bool('ALLOW_IFRAMES') ? ' https:' : '';
-            // Mermaid injects inline styles into generated SVG, hence
-            // 'unsafe-inline' for styles — documented trade-off, configurable.
-            $csp = implode('; ', [
-                "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}'",
-                "style-src 'self' 'unsafe-inline'",
-                "img-src 'self' blob: data:" . $imgExternal,
-                "font-src 'self' data:",
-                "connect-src 'self'",
-                "media-src 'self'" . $embedSrc,
-                "frame-src 'self'" . $embedSrc,
-                "object-src 'none'",
-                "frame-ancestors 'self'",
-                "base-uri 'self'",
-                "form-action 'self'",
-            ]);
-            header('Content-Security-Policy: ' . $csp);
+            // Built from directives, not from concatenated strings: the previous form
+            // appended ' https: data:' to a base that already ended in 'data:', so a
+            // host with external images on served `data:` twice.
+            header('Content-Security-Policy: ' . ContentSecurityPolicy::header(
+                $this->nonce,
+                $this->config->bool('ALLOW_EXTERNAL_IMAGES'),
+                $this->config->bool('ALLOW_IFRAMES'),
+            ));
         }
     }
 
