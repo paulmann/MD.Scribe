@@ -86,7 +86,16 @@ final class ConfigTest extends TestCase
         $inodeBefore = fileinode($path);
         $sizeBefore = filesize($path);
 
-        $config = Config::loadFrom($path);
+        // Capture the complaint instead of letting it land in the test output: a config
+        // that cannot be read must be reported, so the message is part of the contract.
+        $errorLog = $this->tmpRoot . '/config-errors.log';
+        @unlink($errorLog);
+        $previousLog = ini_set('error_log', $errorLog);
+        try {
+            $config = Config::loadFrom($path);
+        } finally {
+            ini_set('error_log', $previousLog === false ? '' : $previousLog);
+        }
 
         self::assertFalse($config->isWritable(), 'a config that cannot be read must not be written');
         self::assertSame('MD.Scribe', $config->str('SITE_NAME'), 'the app runs on defaults, not on a rewrite');
@@ -97,6 +106,11 @@ final class ConfigTest extends TestCase
 
         @chmod($path, 0o640);
         self::assertSame($original, (string) file_get_contents($path), 'and it must still hold them');
+        self::assertStringContainsString(
+            'cannot read',
+            (string) @file_get_contents($errorLog),
+            'the failure must be logged, not swallowed',
+        );
         Config::reset();
     }
 
