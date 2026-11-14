@@ -18,18 +18,22 @@
  * Exit code 0 = every check passed. Any failure prints FAIL and exits 1.
  */
 
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, '../..');
 
 const arg = (name, fallback = '') => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
   return hit ? hit.slice(name.length + 3) : fallback;
 };
+
+// --root lets the gate face a tree other than this checkout: tools/verify-release.php
+// points it at the extracted release archive, so the fixture lands there and the
+// bundled-mermaid check reads that tree's own package.json.
+const root = resolve(arg('root', resolve(here, '../..')));
 
 const BASE = arg('base', 'http://127.0.0.1:8099').replace(/\/$/, '');
 const isLocal = /^(127\.0\.0\.1|localhost|\[::1\])/i.test(new URL(BASE).hostname);
@@ -237,9 +241,10 @@ if (!chrome) {
   process.stdout.write('FAIL  no Chrome/Chromium found — set CHROME_PATH or pass --chrome=\n');
   process.exit(1);
 }
-process.stdout.write(`browser: ${chrome}\nbase:    ${BASE}\n`);
+process.stdout.write(`browser: ${chrome}\nbranch:  ${root}\nbase:    ${BASE}\n`);
 
-const fixtureFile = join(root, 'content', FIXTURE);
+const fixtureDir = join(root, 'content');
+const fixtureFile = join(fixtureDir, FIXTURE);
 let wroteFixture = false;
 
 const browser = await puppeteer.launch({
@@ -265,6 +270,7 @@ try {
   await checkThemeSwitch(browser);
 
   if (isLocal) {
+    mkdirSync(fixtureDir, { recursive: true });
     writeFileSync(fixtureFile, FIXTURE_BODY, 'utf8');
     wroteFixture = true;
     await checkRepairFixture(browser, FIXTURE);

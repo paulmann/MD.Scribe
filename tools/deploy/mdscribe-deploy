@@ -1,0 +1,559 @@
+#!/usr/bin/env bash
+#
+# mdscribe-deploy — place a MD.Scribe release on this host and prove it works.
+#
+#   mdscribe-deploy <version> [--dry-run] [--sha256=<hex>] [--keep=<n>]
+#   mdscribe-deploy --rollback [--dry-run]
+#   mdscribe-deploy --status
+#
+# Why this exists. A manual deploy on 2026-11-14 ran `rsync --delete` from a git
+# archive that never contains vendor/, removed 731 vendor files and served a PHP
+# fatal on every page. Nothing in that procedure checked its own result. This
+# script cannot fail that way: it installs from the release archive (which ships
+# vendor/), verifies the archive digest, verifies every manifest entry of the
+# staged tree, switches by one atomic symlink replacement, then verifies the live
+# site and rolls back by itself when any post-check fails.
+#
+# Layout it creates (once, with a backup first):
+#
+#   $BASE/mdscribe            -> mdscribe.releases/<version>      (symlink)
+#   $BASE/mdscribe.releases/  every installed version, untouched
+#   $BASE/mdscribe-data/      content/ storage/ .md.ini — the only runtime state
+#
+# Runtime state lives outside the release on purpose: a new version must not
+# copy it, and a rollback must not lose a page someone wrote after the switch.
+#
+set -Eeuo pipefail
+
+BASE=/var/www/ozon/data/www/autoyap.ru
+APP="$BASE/mdscribe"
+REL="$BASE/mdscribe.releases"
+DATA="$BASE/mdscribe-data"
+MARKER="$BASE/.mdscribe-layout"
+PREV_FILE="$BASE/.mdscribe-previous"
+OWNER=ozon:ozon
+VERIFY=/usr/local/lib/mdscribe/verify-tree.php
+CACHE=/var/cache/mdscribe
+LOG=/var/log/mdscribe-deploy.log
+PUBLIC_URL=https://autoyap.ru/mdscribe
+REPO=paulmann/MD.Scribe
+FPM_UNIT=php8.5-fpm
+
+VERSION=""
+DRY_RUN=0
+EXPECTED_SHA=""
+KEEP=3
+MODE=deploy
+
+usage() {
+    sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'
+    exit "${1:-0}"
+}
+
+log() {
+    local line
+    line="$(date -Is) $*"
+    printf '%s\n' "$line"
+    [ "$DRY_RUN" = 1 ] || printf '%s\n' "$line" >>"$LOG"
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# Run a command, or print it when dry-running.
+run() {
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would run: $*"
+        return 0
+    fi
+    "$@"
+}
+
+need_root() {
+    [ "$(id -u)" = 0 ] || die "run as root"
+    command -v php >/dev/null || die "php is not installed"
+    command -v curl >/dev/null || die "curl is not installed"
+    command -v unzip >/dev/null || die "unzip is not installed"
+}
+
+current_release() {
+    if [ ! -L "$APP" ]; then
+        printf '(plain directory)'
+        return 0
+    fi
+    readlink -f "$APP" | sed 's#.*/##'
+}
+
+# ── One-time layout migration ────────────────────────────────────────────────
+# The site started as a plain directory. Moving to release directories must not
+# touch the running tree until the replacement is ready: the copy is hardlinked
+# (instant, no extra space), the runtime state is moved out of the copy only,
+# and the switch is one `mv -T` of a symlink.
+ensure_layout() {
+    if [ -f "$MARKER" ]; then
+        return 0
+    fi
+    if [ -L "$APP" ]; then
+        log "layout: $APP is already a symlink; writing the marker"
+        run touch "$MARKER"
+        return 0
+    fi
+    [ -d "$APP" ] || die "neither $APP nor a marker: refusing to guess"
+
+    local stamp legacy backup
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    legacy="legacy-$stamp"
+    backup="/root/backup-mdscribe-$stamp.tgz"
+
+    log "layout: migrating a plain directory into release directories"
+    log "backup: $backup"
+    run tar czf "$backup" -C "$BASE" mdscribe
+
+    run mkdir -p "$REL" "$DATA"
+    # The data directory is created by root; the application runs as $OWNER.
+    run chown "$OWNER" "$DATA"
+    # Hardlink copy: same inodes, no copying of 4 MB of release files.
+    run cp -al "$APP" "$REL/$legacy"
+
+    # Runtime state leaves the release and becomes the single copy. The live
+    # directory keeps its own directory entries until the switch below, so the
+    # site keeps serving during this step.
+    local item
+    for item in content storage .md.ini; do
+        if [ -e "$REL/$legacy/$item" ] || { [ "$DRY_RUN" = 1 ] && [ -e "$APP/$item" ]; }; then
+            run mv "$REL/$legacy/$item" "$DATA/$item"
+            run ln -s "$DATA/$item" "$REL/$legacy/$item"
+            log "layout: $item -> $DATA/$item"
+        fi
+    done
+
+    if [ -e "$APP/.md.ini" ] && [ -e "$DATA/.md.ini" ]; then
+        local a b
+        a=$(sha256sum "$APP/.md.ini" | cut -d' ' -f1)
+        b=$(sha256sum "$DATA/.md.ini" | cut -d' ' -f1)
+        [ "$a" = "$b" ] || die "runtime .md.ini changed during migration; stopped before switching"
+        log "layout: .md.ini sha256 unchanged ($a)"
+    fi
+
+    run chown -h "$OWNER" "$REL/$legacy"
+    # The switch: a symlink appears where the directory was.
+    run ln -sfn "mdscribe.releases/$legacy" "$BASE/.mdscribe.link"
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would switch: $APP (directory) -> mdscribe.releases/$legacy"
+    else
+        mv "$APP" "$BASE/.mdscribe-old-$stamp"
+        mv -T "$BASE/.mdscribe.link" "$APP"
+        log "layout: switched to mdscribe.releases/$legacy"
+        # The old directory holds the same inodes as the new release, so removing
+        # it drops only its own directory entries.
+        rm -rf "$BASE/.mdscribe-old-$stamp"
+        # The migration is a change to the live site like any other: prove the
+        # site still answers before a release is layered on top of it.
+        local code
+        code="$(http_code /)"
+        if [ "$code" != "200" ]; then
+            die "the site answered $code after the layout migration (expected 200); restore with: tar xzf $backup -C $BASE"
+        fi
+        log "layout: site answers 200 after the switch"
+    fi
+    run touch "$MARKER"
+}
+
+# ── Release metadata ─────────────────────────────────────────────────────────
+# shellcheck disable=SC2016
+read_release() {
+    local meta asset_url asset_sha
+    meta="$(mktemp)"
+    if ! curl -fsSL -m 60 -H 'Accept: application/vnd.github+json' \
+        "https://api.github.com/repos/$REPO/releases/tags/v$VERSION" -o "$meta"; then
+        rm -f "$meta"
+        die "cannot read release v$VERSION from GitHub"
+    fi
+    asset_url="$(php -r '$d=json_decode((string)file_get_contents($argv[1]),true); foreach((array)($d["assets"]??[]) as $a){ $n=(string)($a["name"]??""); if(str_starts_with($n,"MD.Scribe-") && str_ends_with($n,".zip")){ echo $a["browser_download_url"]; break; } }' "$meta")"
+    asset_sha="$(php -r '$d=json_decode((string)file_get_contents($argv[1]),true); foreach((array)($d["assets"]??[]) as $a){ $n=(string)($a["name"]??""); if(str_starts_with($n,"MD.Scribe-") && str_ends_with($n,".zip")){ echo str_replace("sha256:","",(string)($a["digest"]??"")); break; } }' "$meta")"
+    rm -f "$meta"
+    [ -n "$asset_url" ] || die "release v$VERSION has no MD.Scribe-<version>.zip asset"
+    ASSET_URL="$asset_url"
+    ASSET_SHA="$asset_sha"
+    log "release: v$VERSION asset $(basename "$asset_url") digest ${ASSET_SHA:-<none>}"
+}
+
+# Archives built by zipfile often carry no POSIX modes, and unzip then applies
+# the host umask — on this host that produced 0666 on every file, i.e. PHP code
+# writable by any local account. Normalise after extraction: directories 0755,
+# files 0644, and 0755 for anything that starts with a shebang.
+normalize_perms() {
+    local root="$1"
+    find "$root" -type d -exec chmod 0755 {} +
+    find "$root" -type f -exec chmod 0644 {} +
+    local file
+    while IFS= read -r file; do
+        chmod 0755 "$file"
+    done < <(grep -rl -m1 '^#!' "$root" --include='*.sh' --include='*.php' --include='*.mjs' --include='*.js' 2>/dev/null | head -n 50 || true)
+}
+
+# ── Post-deploy verification ─────────────────────────────────────────────────
+http_code() {
+    curl -s -o /dev/null -m 25 -w '%{http_code}' "$PUBLIC_URL$1" || printf '000'
+}
+
+verify_live() {
+    # $1 = strict | lenient: a rollback target may be a pre-migration copy that
+    # never was a release, so a manifest difference is reported but does not
+    # veto the rollback — the site answering is what matters there.
+    local strictness="${1:-strict}"
+    local failures=0 code body
+    if [ ! -f "$VERIFY" ]; then
+        log "FAIL  tree manifest — $VERIFY is missing (install it with mdscribe-deploy --install-tools)"
+        return 1
+    fi
+    if php "$VERIFY" "$APP" --quiet-summary >/tmp/mdscribe-verify.out 2>&1; then
+        log "PASS  tree manifest — $(sed -n '1p' /tmp/mdscribe-verify.out)"
+    else
+        local summary
+        summary="$(tr '\n' ' ' </tmp/mdscribe-verify.out | cut -c1-300)"
+        if [ "$strictness" = lenient ]; then
+            log "WARN  tree manifest — $summary"
+        else
+            log "FAIL  tree manifest — $summary"
+            failures=$((failures + 1))
+        fi
+    fi
+
+    for spec in "/:200" "/?page=browser:200" "/?page=themes:200" "/?api=search&q=markdown:200" "/?file=nope.md:404" "/?api=manifest:200"; do
+        local path="${spec%:*}" want="${spec##*:}"
+        code="$(http_code "$path")"
+        if [ "$code" = "$want" ]; then
+            log "PASS  GET $path — $code"
+        else
+            log "FAIL  GET $path — $code, expected $want"
+            failures=$((failures + 1))
+        fi
+    done
+
+    body="$(curl -s -m 25 "$PUBLIC_URL/" || true)"
+    if [ -z "$VERSION" ]; then
+        log "SKIP  live page version — no version to expect"
+    elif printf '%s' "$body" | grep -q "\"version\":\"$VERSION\""; then
+        log "PASS  live page names $VERSION"
+    else
+        log "FAIL  live page does not name $VERSION"
+        failures=$((failures + 1))
+    fi
+
+    local type
+    type="$(curl -s -o /dev/null -m 25 -w '%{content_type}' "$PUBLIC_URL/?api=manifest" || true)"
+    case "$type" in
+        application/manifest+json*) log "PASS  ?api=manifest type — $type" ;;
+        *) log "FAIL  ?api=manifest type — ${type:-none}"; failures=$((failures + 1)) ;;
+    esac
+
+    [ "$failures" = 0 ]
+}
+
+SITE_URL=https://autoyap.ru
+
+# ── PHP bytecode cache ──────────────────────────────────────────────────────
+# opcache keys scripts by the path it was given, not by the resolved target: a
+# request for public/mdscribe/index.php stays cached under that name with ts=0,
+# so pointing the symlink at another release keeps serving the old bytecode.
+# Measured on this host: after switching 3.4.4 -> 3.5.0 the page kept reporting
+# 3.4.4 for minutes, and `systemctl reload` does not clear the shared segment.
+# The only precise fix is opcache_reset() inside a worker, which this one-shot
+# endpoint does — scoped to this site, not to every pool on the machine.
+reset_opcache() {
+    local nonce file out
+    nonce="$(php -r 'echo bin2hex(random_bytes(16));')"
+    file="$BASE/public/.opcache-reset-$nonce.php"
+    cat >"$file" <<'PHP'
+<?php
+$expected = '__MARK__';
+if ((isset($_GET['k']) ? (string) $_GET['k'] : '') !== $expected) {
+    http_response_code(403);
+    exit;
+}
+header('Content-Type: application/json');
+echo json_encode(['reset' => function_exists('opcache_reset') ? opcache_reset() : null]);
+PHP
+    sed -i "s/__MARK__/$nonce/" "$file"
+    chown "$OWNER" "$file"
+    chmod 0644 "$file"
+    out="$(curl -s -m 15 "$SITE_URL/.opcache-reset-$nonce.php?k=$nonce" || true)"
+    rm -f "$file"
+    case "$out" in
+        *'"reset":true'*)
+            log "php: opcache reset"
+            return 0
+            ;;
+        *)
+            log "WARN  php: opcache reset returned '${out:-nothing}'"
+            return 1
+            ;;
+    esac
+}
+
+reload_php() {
+    if systemctl list-unit-files "$FPM_UNIT.service" >/dev/null 2>&1 \
+        && systemctl is-active --quiet "$FPM_UNIT"; then
+        run systemctl reload "$FPM_UNIT"
+        log "php: reloaded $FPM_UNIT (opcache)"
+    else
+        log "php: no active $FPM_UNIT unit; skipped reload"
+    fi
+}
+
+switch_to() {
+    local target="mdscribe.releases/$1"
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would switch: $APP -> $target"
+        return 0
+    fi
+    ln -sfn "$target" "$BASE/.mdscribe.link"
+    mv -T "$BASE/.mdscribe.link" "$APP"
+    chown -h "$OWNER" "$APP"
+    log "switched: $APP -> $target"
+}
+
+prune() {
+    local current dir index=0
+    current="$(current_release)"
+    local -a all=()
+    # Newest first, staging directories excluded.
+    while IFS= read -r dir; do
+        [ -n "$dir" ] || continue
+        all+=("$dir")
+    done < <(find "$REL" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %f\n' 2>/dev/null | sort -rn | cut -d' ' -f2-)
+    local keep_count=$((KEEP + 1))
+    for dir in "${all[@]}"; do
+        index=$((index + 1))
+        case "$dir" in
+            # Never remove the current release, the migration source, or a
+            # staging tree that another run is still filling.
+            "$current"|legacy-*|.staging*) continue ;;
+        esac
+        if [ "$index" -le "$keep_count" ]; then
+            continue
+        fi
+        log "prune: removing $REL/$dir"
+        run rm -rf "${REL:?}/$dir"
+    done
+}
+
+# ── Commands ─────────────────────────────────────────────────────────────────
+cmd_deploy() {
+    need_root
+    [ -n "$VERSION" ] || die "usage: mdscribe-deploy <version>"
+    log "=== deploy $VERSION on $(hostname) (dry-run=$DRY_RUN) ==="
+    # A previous run killed mid-flight could leave its one-shot reset endpoint
+    # behind; it is scoped to this site and must not survive.
+    rm -f "$BASE"/public/.opcache-reset-*.php 2>/dev/null || true
+
+    read_release
+    [ -n "$EXPECTED_SHA" ] || EXPECTED_SHA="$ASSET_SHA"
+    run mkdir -p "$CACHE"
+    local zip="$CACHE/MD.Scribe-$VERSION.zip"
+
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would download: $ASSET_URL -> $zip"
+    else
+        curl -fsSL -m 300 --retry 3 "$ASSET_URL" -o "$zip" || die "download failed"
+        local actual
+        actual="$(sha256sum "$zip" | cut -d' ' -f1)"
+        if [ -n "$EXPECTED_SHA" ]; then
+            [ "$actual" = "$EXPECTED_SHA" ] || {
+                rm -f "$zip"
+                die "digest mismatch: archive $actual, release $EXPECTED_SHA; nothing was installed"
+            }
+            log "PASS  digest — sha256 $actual"
+        else
+            log "WARN  digest — the release publishes none and --sha256 was not given; archive sha256 $actual"
+        fi
+    fi
+
+    ensure_layout
+
+    local stage="$REL/.staging-$VERSION-$$"
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would extract into $stage"
+    else
+        [ -d "$stage" ] && rm -rf "$stage"
+        mkdir -p "$stage"
+        unzip -q "$zip" -d "$stage" || { rm -rf "$stage"; die "extraction failed"; }
+        # Releases up to 3.4.x wrap the tree in MD.Scribe-<version>/; 3.5.0 is flat.
+        # Accept both rather than refuse an older archive.
+        if [ ! -f "$stage/config/manifest.json" ]; then
+            local inner
+            inner="$(find "$stage" -mindepth 2 -maxdepth 3 -name manifest.json -path '*/config/manifest.json' -print -quit 2>/dev/null || true)"
+            if [ -n "$inner" ]; then
+                local wrapped
+                wrapped="$(dirname "$(dirname "$inner")")"
+                log "archive is wrapped in $(basename "$wrapped")/; collapsing it"
+                shopt -s dotglob
+                mv "$wrapped"/* "$stage"/
+                shopt -u dotglob
+                rmdir "$wrapped"
+            fi
+        fi
+        [ -f "$stage/config/manifest.json" ] || { rm -rf "$stage"; die "archive has no config/manifest.json"; }
+        [ -f "$stage/vendor/autoload.php" ] || {
+            # The failure mode that broke this site: a tree with no vendor/.
+            rm -rf "$stage"
+            die "archive has no vendor/autoload.php — it is a branch tarball, not a release"
+        }
+        local manifest_version
+        manifest_version="$(php -r '$d=json_decode((string)file_get_contents($argv[1]),true); echo (string)($d["version"]??"");' "$stage/config/manifest.json")"
+        [ "$manifest_version" = "$VERSION" ] || { rm -rf "$stage"; die "archive says version $manifest_version, not $VERSION"; }
+        log "PASS  archive — version $VERSION, vendor/autoload.php present"
+
+        if [ -f "$VERIFY" ]; then
+            if php "$VERIFY" "$stage" --quiet-summary >/tmp/mdscribe-stage.out 2>&1; then
+                log "PASS  staged manifest — $(sed -n '1p' /tmp/mdscribe-stage.out)"
+            else
+                rm -rf "$stage"
+                die "staged tree failed the manifest check: $(tr '\n' ' ' </tmp/mdscribe-stage.out | cut -c1-300)"
+            fi
+        else
+            log "WARN  staged manifest — $VERIFY is missing"
+        fi
+
+        local item
+        for item in content storage .md.ini; do
+            if [ -e "$DATA/$item" ]; then
+                rm -rf "${stage:?}/$item"
+                ln -s "$DATA/$item" "$stage/$item"
+            fi
+        done
+        chown -R -h "$OWNER" "$stage"
+        normalize_perms "$stage"
+        chmod 0640 "$DATA/.md.ini" 2>/dev/null || true
+    fi
+
+    local target="$VERSION"
+    if [ "$DRY_RUN" = 0 ] && [ -d "$REL/$target" ] && [ -f "$REL/$target/config/manifest.json" ] \
+        && cmp -s "$stage/config/manifest.json" "$REL/$target/config/manifest.json"; then
+        # Re-deploying the same version must not pile up identical directories:
+        # the installed one already carries this exact manifest.
+        log "release $VERSION is already installed with an identical manifest; reusing it"
+        rm -rf "${stage:?}"
+        stage=""
+    elif [ -e "$REL/$target" ] && [ "$DRY_RUN" = 0 ]; then
+        target="$VERSION-$(date +%Y%m%d-%H%M%S)"
+        log "release directory $VERSION exists with a different manifest; installing as $target"
+    fi
+    [ -z "$stage" ] || run mv "$stage" "$REL/$target"
+
+    local previous
+    previous="$(current_release)"
+    if [ "$previous" = '(plain directory)' ] && [ "$DRY_RUN" = 0 ]; then
+        die "$APP is still a plain directory after migration — refusing to switch"
+    fi
+    log "current: $previous"
+
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would switch and verify; nothing was written"
+        return 0
+    fi
+
+    printf '%s\n' "$previous" >"$PREV_FILE"
+    switch_to "$target"
+    reset_opcache || log "WARN  opcache was not reset; the new code may not be live yet"
+
+    if verify_live; then
+        log "=== deploy $VERSION OK (previous: $previous) ==="
+        prune
+        return 0
+    fi
+
+    log "post-check failed; rolling back to $previous"
+    switch_to "$previous"
+    # The rollback needs the previous bytecode live, not just the previous tree.
+    VERSION="$(php -r '$d=json_decode((string)file_get_contents($argv[1]),true); echo (string)($d["version"]??"");' "$REL/$previous/config/manifest.json" 2>/dev/null || true)"
+    reset_opcache || log "WARN  opcache was not reset during the rollback"
+    if verify_live; then
+        log "=== rolled back to $previous; the site is serving the previous release ==="
+    else
+        log "=== ROLLBACK ALSO FAILED; the site needs attention — backup: $BACKUP_HINT ==="
+    fi
+    exit 1
+}
+
+cmd_rollback() {
+    need_root
+    [ -f "$PREV_FILE" ] || die "no $PREV_FILE: nothing recorded to roll back to"
+    local previous
+    previous="$(tr -d '[:space:]' <"$PREV_FILE")"
+    [ -d "$REL/$previous" ] || die "previous release $previous is gone from $REL"
+    # The version to expect on the page comes from the target's own manifest: a
+    # rollback to a pre-release copy would otherwise compare against an empty
+    # string and report a failure that is not one.
+    if [ -f "$REL/$previous/config/manifest.json" ]; then
+        VERSION="$(php -r '$d=json_decode((string)file_get_contents($argv[1]),true); echo (string)($d["version"]??"");' "$REL/$previous/config/manifest.json")"
+    fi
+    log "=== rollback to $previous (from $(current_release)), expecting version ${VERSION:-unknown} ==="
+    switch_to "$previous"
+    reset_opcache || log "WARN  opcache was not reset; the site may serve the newer code"
+    if [ "$DRY_RUN" = 1 ]; then
+        log "would verify; nothing was written"
+        return 0
+    fi
+    verify_live lenient && log "=== rollback OK ===" || { log "=== rollback left the site broken ==="; exit 1; }
+}
+
+cmd_status() {
+    echo "app:      $APP"
+    if [ -L "$APP" ]; then
+        echo "target:   $(readlink "$APP")"
+    else
+        echo "target:   (plain directory, layout not migrated)"
+    fi
+    echo "current:  $(current_release)"
+    echo "previous: $(cat "$PREV_FILE" 2>/dev/null || echo none)"
+    echo "releases:"
+    ls -1t "$REL" 2>/dev/null | sed 's/^/  /'
+    echo "runtime:"
+    du -sh "$DATA"/* 2>/dev/null | sed 's/^/  /'
+    echo "live:     HTTP $(http_code /)"
+}
+
+cmd_install_tools() {
+    need_root
+    local self source
+    self="$(readlink -f "$0")"
+    source="$(dirname "$self")/verify-tree.php"
+    [ -f "$source" ] || die "verify-tree.php not found next to $0"
+    run mkdir -p "$(dirname "$VERIFY")"
+    run install -m 0644 "$source" "$VERIFY"
+    log "installed $VERIFY"
+    if [ "$self" != "/usr/local/bin/mdscribe-deploy" ]; then
+        run install -m 0755 "$self" /usr/local/bin/mdscribe-deploy
+        log "installed /usr/local/bin/mdscribe-deploy"
+    fi
+}
+
+# ── Argument parsing ─────────────────────────────────────────────────────────
+ARGS=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --dry-run) DRY_RUN=1 ;;
+        --sha256=*) EXPECTED_SHA="${1#*=}" ;;
+        --keep=*) KEEP="${1#*=}" ;;
+        --status) MODE=status ;;
+        --rollback) MODE=rollback ;;
+        --install-tools) MODE=install-tools ;;
+        -h|--help) usage 0 ;;
+        --*) usage 2 ;;
+        *) ARGS+=("$1") ;;
+    esac
+    shift
+done
+VERSION="${ARGS[0]:-}"
+BACKUP_HINT="a tarball named /root/backup-mdscribe-*.tgz"
+
+case "$MODE" in
+    deploy) cmd_deploy ;;
+    rollback) cmd_rollback ;;
+    status) cmd_status ;;
+    install-tools) cmd_install_tools ;;
+esac
