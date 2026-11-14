@@ -186,9 +186,10 @@ flags) have dedicated regression tests, including the historic v2 bugs
    written and writes nothing; `--verify-only=<dir>` re-checks a tree against its own
    manifest.
 
-   The committed `config/manifest.json` is therefore a description of the working
-   tree, not of the release: the artifact always carries the one generated at build
-   time.
+   The committed `config/manifest.json` therefore describes the tree that was
+   released, and does not have to be regenerated as the tree moves on: every build
+   carries the manifest generated inside its own clone. Regenerate it in the working
+   tree only when you want `status()` of this checkout to be meaningful.
 5. Update `CHANGELOG.md` and the README badges; commit.
 6. Tag `v<version>`, create the GitHub **release** and attach the archive — the
    updater downloads the release asset, not the branch tarball, because a branch
