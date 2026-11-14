@@ -74,6 +74,21 @@ final class MarkdownEngineTest extends TestCase
         self::assertStringContainsString('data-mermaid-fixes="1"', $result->html);
     }
 
+    public function testMermaidKeepsTheRepairedSourceInTheBody(): void
+    {
+        $html = $this->engine()->render("```mermaid\ngraph TD\n    A(Start) --> B(End (x))\n```\n")->html;
+
+        // data-mermaid-source is the author's text: the copy control hands it
+        // back unchanged. The repaired variant lives in the <pre> body, and the
+        // client renders the body — that is what makes a repair reach the page.
+        self::assertSame(1, preg_match('/data-mermaid-source="([^"]*)"/', $html, $attribute));
+        $original = html_entity_decode($attribute[1], ENT_QUOTES, 'UTF-8');
+        self::assertStringContainsString('B(End (x))', $original);
+
+        self::assertSame(1, preg_match('/<pre class="mermaid"[^>]*>(.*?)<\/pre>/s', $html, $body));
+        self::assertStringContainsString('B("End (x)")', $body[1]);
+    }
+
     public function testGithubAlerts(): void
     {
         $html = $this->engine()->render("> [!WARNING]\n> Careful here.\n")->html;

@@ -65,13 +65,32 @@ export async function initMermaid(root = document) {
     securityLevel: 'strict',
     suppressErrorRendering: true,
     fontFamily: 'var(--md-font-sans), sans-serif',
-    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+    // Mermaid 12 reads htmlLabels at the root and marks the per-diagram key
+    // (flowchart.htmlLabels) deprecated: "The root-level htmlLabels takes
+    // precedence" (dist/config.type.d.ts). Set only the root key.
+    htmlLabels: true,
+    // Mermaid 12 renders flowcharts in the new "neo" look on an ELK layout by
+    // default. That silently restyles every diagram in every existing document,
+    // so the previous appearance is pinned instead; dropping these two keys is
+    // all it takes to adopt the 12.x defaults. Measured on content/index.md: the
+    // sequence diagram keeps its 11.x geometry (viewBox -50 -10 514 451) with
+    // `classic`, and grows to 514 503 under the new defaults.
+    look: 'classic',
+    layout: 'dagre',
+    flowchart: { useMaxWidth: true, curve: 'basis' },
     sequence: { useMaxWidth: true },
   });
 
   for (const [index, block] of blocks.entries()) {
     const wrap = block.closest('.md-mermaid') || block.parentElement;
-    const source = block.getAttribute('data-mermaid-source') || block.textContent || '';
+    const authored = block.getAttribute('data-mermaid-source') || block.textContent || '';
+    // The server writes the repaired source into the <pre> body and keeps the
+    // author's text in data-mermaid-source for the copy control. Rendering the
+    // attribute would throw away every repair, so the body wins; the chosen
+    // text is remembered on the wrapper because a successful render replaces
+    // the <pre> content with the SVG.
+    const source = wrap?.dataset.renderSource ?? (block.textContent || authored);
+    if (wrap) wrap.dataset.renderSource = source;
     const fixesCount = Number(block.getAttribute('data-mermaid-fixes') || 0);
 
     // Repair diagnostics badge
@@ -107,8 +126,9 @@ export async function initMermaid(root = document) {
         span.title = 'The diagram source is kept below so it can be fixed and copied.';
         bar.appendChild(span);
       }
-      // Keep the source visible for repair
-      block.textContent = source;
+      // Keep the author's own text visible for repair (the repaired variant,
+      // if any, is what just failed).
+      block.textContent = authored;
       console.info('[MD.Scribe] Mermaid parse error:', msg);
     }
   }
@@ -125,7 +145,7 @@ export function watchModeForMermaid() {
     lastMode = mode;
     if (!renderedOnce) return;
     document.querySelectorAll('.md-mermaid[data-rendered="1"]').forEach((wrap) => {
-      const source = wrap.querySelector('[data-mermaid-source]')?.getAttribute('data-mermaid-source');
+      const source = wrap.dataset.renderSource;
       if (!source) return;
       wrap.removeAttribute('data-rendered');
       const pre = wrap.querySelector('pre.mermaid');
