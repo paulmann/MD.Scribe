@@ -222,7 +222,7 @@ try {
     }
 
     $target = rtrim($out, '/\\') . '/MD.Scribe-' . $version . '.zip';
-    $archive = ReleaseBuilder::writeArchive($clone, $files, $target);
+    $archive = ReleaseBuilder::writeArchive($clone, $files, $target, $commitTime);
 
     // Read the archive back: the manifest inside it must be the one just verified,
     // and no entry may be unsafe. A zip that cannot be reopened is not an artifact.

@@ -227,39 +227,110 @@ final class ReleaseBuilder
     }
 
     /**
-     * Build the archive. Files are added in sorted order with their own mtime, so
-     * two runs from the same commit produce the same sha256.
+     * Build the archive as a deterministic zip.
      *
-     * @param list<string> $files relative paths, already verified
+     * ZipArchive was used first and it made the digest platform-specific: the ZIP it
+     * writes carries the host system, the file modes it can represent and its own
+     * choice of extra fields. Measured on 2026-11-14 with the same commit, the same
+     * manifest (987/987 identical hashes) and the same size: Windows produced
+     * 1259cc70…, Linux ab6c1f2d….
+     *
+     * This writer fixes every field that carries a choice: Unix "version made by",
+     * mode 0644 for every file (the archive has no executables), the commit time in
+     * DOS format, no extra fields, no comment, entries in sorted order. Compression is
+     * deflate level 9, which is a function of the input and the zlib the PHP build
+     * links — the one remaining variable, and it is measured rather than assumed.
+     *
+     * @param list<string> $files relative paths, already verified, sorted
+     * @param int $timestamp seconds since the epoch, pinned to the commit time
      * @return array{path: string, bytes: int, sha256: string, entries: int}
      */
-    public static function writeArchive(string $tree, array $files, string $target): array
+    public static function writeArchive(string $tree, array $files, string $target, int $timestamp = 0): array
     {
         $tree = rtrim($tree, '/\\');
         $directory = dirname($target);
         if (!is_dir($directory) && !mkdir($directory, 0o777, true) && !is_dir($directory)) {
             throw new \RuntimeException('cannot create the output directory: ' . $directory);
         }
-        $zip = new \ZipArchive();
-        if ($zip->open($target, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+        $timestamp = $timestamp > 0 ? $timestamp : time();
+        [$dosTime, $dosDate] = self::dosDateTime($timestamp);
+
+        $handle = fopen($target, 'wb');
+        if ($handle === false) {
             throw new \RuntimeException('cannot create ' . $target);
         }
+
+        $central = '';
+        $offset = 0;
+        $count = 0;
         foreach ($files as $rel) {
-            if (!$zip->addFile($tree . '/' . $rel, $rel)) {
-                $zip->close();
-                throw new \RuntimeException('cannot add ' . $rel . ' to the archive');
+            $full = $tree . '/' . $rel;
+            $data = file_get_contents($full);
+            if ($data === false) {
+                fclose($handle);
+                throw new \RuntimeException('cannot read ' . $rel);
             }
+            $compressed = gzdeflate($data, 9);
+            if ($compressed === false) {
+                fclose($handle);
+                throw new \RuntimeException('cannot compress ' . $rel);
+            }
+            $crc = crc32($data);
+            $name = str_replace('\\', '/', $rel);
+
+            $local = pack('VvvvvvVVVvv', 0x04034b50, 20, 0, 8, $dosTime, $dosDate,
+                $crc, strlen($compressed), strlen($data), strlen($name), 0) . $name;
+            fwrite($handle, $local);
+            fwrite($handle, $compressed);
+
+            $central .= pack('VvvvvvvVVVvvvvvVV', 0x02014b50, 0x031E, 20, 0, 8, $dosTime, $dosDate,
+                $crc, strlen($compressed), strlen($data), strlen($name), 0, 0, 0, 0,
+                (0100644 << 16), $offset) . $name;
+
+            $offset += strlen($local) + strlen($compressed);
+            $count++;
         }
-        if (!$zip->close()) {
-            throw new \RuntimeException('cannot finalise ' . $target);
+        // zip64 is not needed: prove it instead of hoping.
+        if ($offset > 0xFFFFFFFF || $count > 0xFFFF || strlen($central) > 0xFFFFFFFF) {
+            fclose($handle);
+            @unlink($target);
+            throw new \RuntimeException('archive exceeds the non-zip64 limits; this writer does not emit zip64');
         }
+        fwrite($handle, $central);
+        fwrite($handle, pack('VvvvvVVv', 0x06054b50, 0, 0, $count, $count,
+            strlen($central), $offset, 0));
+        fclose($handle);
 
         return [
             'path' => $target,
             'bytes' => (int) filesize($target),
             'sha256' => (string) hash_file('sha256', $target),
-            'entries' => count($files),
+            'entries' => $count,
         ];
+    }
+
+    /**
+     * DOS time and date for a timestamp, in UTC.
+     *
+     * gmdate(), not getdate(): the latter follows the process timezone, so the same
+     * commit built on a host at UTC+3 would stamp different bytes into every entry — the
+     * platform-independent archive would still have been timezone-dependent.
+     *
+     * @return array{int, int}
+     */
+    private static function dosDateTime(int $timestamp): array
+    {
+        $hours = (int) gmdate('G', $timestamp);
+        $minutes = (int) gmdate('i', $timestamp);
+        $seconds = (int) gmdate('s', $timestamp);
+        $year = (int) gmdate('Y', $timestamp);
+        $month = (int) gmdate('n', $timestamp);
+        $day = (int) gmdate('j', $timestamp);
+
+        $time = (($hours & 0x1F) << 11) | (($minutes & 0x3F) << 5) | ((intdiv($seconds, 2)) & 0x1F);
+        $date = ((($year - 1980) & 0x7F) << 9) | (($month & 0x0F) << 5) | ($day & 0x1F);
+
+        return [$time, $date];
     }
 
     public function isWorkingTreeClean(): bool

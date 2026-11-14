@@ -181,15 +181,27 @@ final class ReleaseBuilderTest extends TestCase
         $root = $this->tree();
         ReleaseBuilder::verifyAgainstManifest($root, (array) ReleaseBuilder::readManifest($root));
         $files = ReleaseBuilder::collectShippedFiles($root);
+        $pinned = 1794658140;
 
-        $first = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/one.zip');
-        $second = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/two.zip');
+        $first = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/one.zip', $pinned);
+        $second = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/two.zip', $pinned);
 
-        self::assertSame($first['sha256'], $second['sha256'], 'same tree, same bytes');
+        self::assertSame($first['sha256'], $second['sha256'], 'same tree and timestamp, same bytes');
         self::assertSame(count($files), $first['entries']);
 
+        // The timestamp is part of the artifact on purpose: it is pinned to the commit,
+        // so a different pin must produce a different archive rather than silently the
+        // same one. DOS timestamps have two-second resolution, so step by two.
+        $other = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/three.zip', $pinned + 2);
+        self::assertNotSame($first['sha256'], $other['sha256']);
+
+        // ... and one second is inside the same DOS tick, which is why the pin is the
+        // commit time rather than anything finer.
+        $sameTick = ReleaseBuilder::writeArchive($root, $files, $this->tmpRoot . '/out/four.zip', $pinned + 1);
+        self::assertSame($first['sha256'], $sameTick['sha256']);
+
         $zip = new \ZipArchive();
-        self::assertTrue($zip->open($first['path']));
+        self::assertTrue($zip->open($first['path']), 'the archive is a readable zip');
         $names = [];
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $names[] = (string) $zip->getNameIndex($i);
