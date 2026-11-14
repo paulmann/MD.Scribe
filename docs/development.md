@@ -161,24 +161,43 @@ flags) have dedicated regression tests, including the historic v2 bugs
    0 warnings) and the browser gate
    `node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099`
    (21 checks) against a running `php -S`.
-4. Build the release tree in a clean copy of the tag: `composer install --no-dev
-   --optimize-autoloader` — the archive ships `vendor/` so an install needs no
-   Composer on the host.
-5. `php tools/build-manifest.php` **in that same tree** and copy the resulting
-   `config/manifest.json` back into the repository: the updater verifies every
-   file in the archive against the manifest embedded in it, and refuses the whole
-   update on the first mismatch.
-6. Zip the tree (everything except `storage/*` contents,
-   `tools/frontend/node_modules` and `.md.ini`) as `MD.Scribe-<version>.zip`.
-7. Update `CHANGELOG.md` and the README badges; commit.
-8. Tag `v<version>`, create the GitHub **release** and attach the archive — the
+4. Build the artifact with one command:
+
+   ```powershell
+   php tools/build-release.php --version=<version> --out=<dir outside the repository>
+   ```
+
+   It clones the release commit (`--no-hardlinks`), installs runtime dependencies
+   only (`composer install --no-dev --optimize-autoloader`), so the archive ships
+   `vendor/` and an install needs no Composer on the host; regenerates
+   `config/manifest.json` **inside that clone**, because the manifest must describe
+   the tree it travels with; checks that `src/Core/Version.php`, the manifest and
+   `--version` agree; re-verifies every manifest entry against its file; and writes
+   a flat `MD.Scribe-<version>.zip` plus `MD.Scribe-<version>.sha256`.
+
+   It refuses to build and names the file when anything is off: a dirty working
+   tree without `--commit`, a file changed after the manifest was built, a manifest
+   entry whose file is missing, or a shipped file the manifest never mentions.
+
+   Two wall-clock dependencies are pinned to the commit time (the manifest's
+   `generated` field through `SOURCE_DATE_EPOCH`, and every file's mtime, which the
+   zip records), so **two builds of one commit are byte-identical** — measured
+   before the pin: same size, different sha256. `--dry-run` reports what would be
+   written and writes nothing; `--verify-only=<dir>` re-checks a tree against its own
+   manifest.
+
+   The committed `config/manifest.json` is therefore a description of the working
+   tree, not of the release: the artifact always carries the one generated at build
+   time.
+5. Update `CHANGELOG.md` and the README badges; commit.
+6. Tag `v<version>`, create the GitHub **release** and attach the archive — the
    updater downloads the release asset, not the branch tarball, because a branch
    tarball never contains `vendor/`.
-9. `php tools/verify-release.php --version=<version>` — verifies the published
+7. `php tools/verify-release.php --version=<version>` — verifies the published
    artifact end to end (digest, manifest, a booted copy, the six routes, the
-   browser gate). Run it **after** step 8, because it downloads the release
+   browser gate). Run it **after** step 6, because it downloads the release
    asset: this is the check that tells a release from a hypothesis.
-10. **Deploy that archive and re-run the checks before announcing anything**:
+8. **Deploy that archive and re-run the checks before announcing anything**:
    `mdscribe-deploy <version> --dry-run`, then `mdscribe-deploy <version>`.
    The script verifies its own result on the live URL and rolls back by itself.
    A release published before this step is a hypothesis, not a release; three

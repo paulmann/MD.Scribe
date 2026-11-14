@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **`tools/build-release.php` — the release artifact in one command.**
+  The checklist had nine manual steps, and both ways of getting them wrong happened
+  for real: an archive assembled from a git snapshot without `vendor/` (every page
+  served a fatal once deployed) and an archive wrapped in `MD.Scribe-<version>/`
+  while the previous release was flat (correctly refused by the deploy, but only
+  after the tag was published). The tool clones the release commit
+  (`--no-hardlinks`), installs runtime dependencies only, regenerates
+  `config/manifest.json` inside that clone, checks that the code version, the
+  manifest and `--version` agree, re-verifies every manifest entry against its file,
+  and writes a flat archive plus its `.sha256`. It refuses a dirty tree without
+  `--commit`, a file changed after the manifest was built, a missing manifest entry
+  and a shipped file the manifest never mentions — naming the file each time.
+
+- **Reproducible archives.** Two builds of one commit produced the same size and a
+  different `sha256`. Both wall-clock dependencies were found and pinned to the
+  commit time: the manifest's `generated` field (`tools/build-manifest.php` now
+  honours `SOURCE_DATE_EPOCH`; unchanged behaviour when it is unset) and every
+  file's mtime, which the zip records. Two builds of one commit are now
+  byte-identical, so a published digest describes a build rather than a moment.
+
+### Changed
+
+- `tests/Unit/ReleaseBuilderTest.php` covers the checks that catch the two real
+  failures: a changed file, a missing file and an unlisted file are each refused by
+  name, the exclusion rules are pinned, and the archive is asserted flat,
+  forward-slashed and reproducible.
+
 ## 3.6.0 - 2026-11-14
 
 ### Added
