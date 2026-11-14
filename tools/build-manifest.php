@@ -18,16 +18,17 @@ use MdViewer\Core\Version;
 
 $root = dirname(__DIR__);
 
-/** Directories excluded from the manifest (runtime data, dev tooling). */
-$excludeDirs = [
-    $root . '/storage',
-    $root . '/content',
-    $root . '/.git',
-    $root . '/tools/frontend/node_modules',
-    $root . '/tests',
-];
+/**
+ * Which files a release contains is decided in one place: ReleaseBuilder, which is also
+ * what tools/build-release.php packs. Until this was shared the two disagreed — a
+ * manifest generated in a working tree listed `.work/`, `.wiki/`, `.zwork/` and 1 GB of
+ * `.ragraf/` (5 139 entries) while the same tree built in a clean clone produced 986,
+ * because those directories exist locally and nowhere else. The manifest is the smaller
+ * set: content/ and tests/ are shipped but never described (see inManifest()).
+ */
+require_once __DIR__ . '/lib/ReleaseBuilder.php';
+
 $excludeFiles = [
-    $root . '/.md.ini',
     $root . '/config/manifest.json',
 ];
 
@@ -79,15 +80,13 @@ foreach ($iterator as $item) {
         continue;
     }
     $path = $item->getPathname();
-    foreach ($excludeDirs as $dir) {
-        if (str_starts_with($slashed($path), $slashed($dir) . '/')) {
-            continue 2;
-        }
-    }
+    $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($root) + 1));
     if (in_array($slashed($path), array_map($slashed, $excludeFiles), true) || $isDevVendorPath($path)) {
         continue;
     }
-    $relative = str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($root) + 1));
+    if (!\MdViewer\Tools\ReleaseBuilder::inManifest($relative)) {
+        continue;
+    }
     // Skip runtime/local dotfiles but keep shipped ones (.htaccess, .github).
     if (preg_match('#^(\.md\.ini|\.git/|\.phpunit\.cache|\.DS_Store)|/\.DS_Store$#', $relative) === 1) {
         continue;

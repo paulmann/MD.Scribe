@@ -132,6 +132,34 @@ final class ReleaseBuilderTest extends TestCase
         self::assertNull(ReleaseBuilder::exclusionReason('src/App.php'));
     }
 
+    /**
+     * Two questions, two predicates. A manifest generated in a working tree listed
+     * `.work/`, `.wiki/`, `.zwork/` and 1 GB of `.ragraf/` (5 139 entries), and would
+     * have listed content/ and tests/ as well — the first set exists only locally, the
+     * second must never be replaced by an update.
+     */
+    public function testTheManifestDescribesFewerFilesThanTheArchive(): void
+    {
+        // In the archive and in the manifest.
+        self::assertTrue(ReleaseBuilder::ships('src/Payload.php'));
+        self::assertTrue(ReleaseBuilder::inManifest('src/Payload.php'));
+        self::assertTrue(ReleaseBuilder::inManifest('deploy/nginx.conf'));
+
+        // In the archive, deliberately absent from the manifest.
+        self::assertTrue(ReleaseBuilder::ships('content/index.md'));
+        self::assertFalse(ReleaseBuilder::inManifest('content/index.md'));
+        self::assertTrue(ReleaseBuilder::ships('tests/SmokeTest.php'));
+        self::assertFalse(ReleaseBuilder::inManifest('tests/SmokeTest.php'));
+
+        // In neither: scratch directories that exist only on a working machine.
+        foreach (['.ragraf/index/lex/lexvec.sqlite', '.work/probe.py', '.wiki/Home.md',
+                  '.zwork/attachments/a.txt', '.git/HEAD', 'node_modules/x/index.js',
+                  '.phpunit.cache/test-results'] as $rel) {
+            self::assertFalse(ReleaseBuilder::ships($rel), $rel . ' must not ship');
+            self::assertFalse(ReleaseBuilder::inManifest($rel), $rel . ' must not be in the manifest');
+        }
+    }
+
     public function testVersionsComeFromTheVersionFile(): void
     {
         $root = $this->tree();

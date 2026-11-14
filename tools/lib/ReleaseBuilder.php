@@ -26,7 +26,17 @@ namespace MdViewer\Tools;
 final class ReleaseBuilder
 {
     /** Directories that never travel in a release archive. */
-    public const array NEVER_SHIPPED = ['.git', '.work', '.wiki', 'node_modules'];
+    public const array NEVER_SHIPPED = [
+        '.git',      // history
+        '.work',     // scratch
+        '.wiki',     // wiki clone
+        '.zwork',    // agent artefacts
+        '.ragraf',   // code index — 1 GB on a working machine, gitignored
+        'node_modules',
+        '.phpunit.cache',
+        '.idea',
+        '.vscode',
+    ];
 
     /** Files the manifest excludes by design, so they are expected next to it. */
     public const array OUTSIDE_MANIFEST = ['config/manifest.json', '.md.ini', '.DS_Store'];
@@ -186,6 +196,19 @@ final class ReleaseBuilder
             'outside' => $outside,
             'unexplained' => $unexplained,
         ];
+    }
+
+    /**
+     * Whether the manifest describes this file.
+     *
+     * Not the same question as `ships()`: `content/` seeds and `tests/` travel in the
+     * archive (a fresh install gets a few pages to look at), but the manifest must not
+     * list them or an update would try to replace the owner's documents. Conflating the
+     * two questions is what put 1 GB of `.ragraf/` into a working-tree manifest.
+     */
+    public static function inManifest(string $rel): bool
+    {
+        return self::ships($rel) && self::exclusionReason($rel) === null;
     }
 
     /** Why a shipped file is absent from the manifest, or null when it is not excluded. */
