@@ -105,6 +105,35 @@ matching, an improvement over v2. Applied repairs are listed under each
 diagram (hover for per-line detail). Parse failures keep the source visible
 and copyable with the error message.
 
+The repaired variant is what reaches the renderer: `data-mermaid-source` keeps
+the author's text for *Copy source*, while the `<pre>` body carries the repaired
+text that Mermaid parses (`src/Markdown/Extensions/CodeBlockRenderer.php:66-77`,
+`tools/frontend/src/js/mermaid.js`).
+
+#### Mermaid 12
+
+The vendored build is **Mermaid 12.3.0** (`public/assets/vendor/mermaid/`,
+IIFE, 5.5 MB raw / 1.6 MB gzip, loaded only on pages with diagrams). What that
+brings to a document:
+
+- edge IDs and animation — `A e1@--> B` then `e1@{ animate: true }` or
+  `e1@{ animation: fast }`;
+- step-by-step flow animation (12.3+) — `e1@{ step: 1 }`, plus
+  `flowchart.stepDuration` and `flowchart.stepNumbers`;
+- new edge markers (`A ---o B`, `A ---x B`) and the `@{ shape: … }` family
+  (manual-file, cylinder, document, paper-tape and the rest);
+- the diagram types 12 ships on top of 11 (agent flow, event modeling, packet,
+  kanban, radar, treemap, venn, wardley, cynefin, tree view).
+
+One deliberate deviation from the 12 defaults is pinned in the loader:
+`look: 'classic'` and `layout: 'dagre'`. Flowcharts in 12 switched to the
+`redux-color` theme, the `neo` look and an ELK layout, which restyles every
+existing diagram without anyone asking. With the pin, a sequence diagram keeps
+its 11.x geometry exactly (measured: viewBox `-50 -10 514 451` on both), while
+a flowchart is laid out with 12's wider spacing (measured on this repository:
+`0 0 624.66 140` → `0 0 837.88 140`, same height, `useMaxWidth` still scales it
+to the column). Dropping those two keys adopts the new defaults.
+
 ### GitHub-style alerts
 
 ```markdown

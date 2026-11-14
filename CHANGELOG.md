@@ -37,13 +37,27 @@ All notable changes to this project are documented here. The format is
   requests showed that a bump only reaches a user when the owner regenerates
   `public/assets/vendor/` or the release archive, so the weekly stream asked for
   reviews without shipping anything.
-- Three major bumps are deferred in `dependabot.yml` by version, not by update
-  type: mermaid `12.x` (flow edge-ID syntax changed; the bundle is copied by
-  `node build.mjs --vendor`), lucide-static `1.x` (icon names can change and
-  `src/View/Icons.php` falls back to `circle-alert` without a word) and
-  phpunit `13.x` (`require-dev` pins `^11.5`). An `update-types: semver-major`
-  rule was rejected on purpose: `ignore` also silences security updates, so it
-  would hide a future advisory along with the noise.
+- Two major bumps are deferred in `dependabot.yml` by version, not by update
+  type: lucide-static `1.x` (icon names can change and `src/View/Icons.php`
+  falls back to `circle-alert` without a word) and phpunit `13.x`
+  (`require-dev` pins `^11.5`). An `update-types: semver-major` rule was
+  rejected on purpose: `ignore` also silences security updates, so it would hide
+  a future advisory along with the noise. The mermaid `12.x` deferral this
+  section used to carry is gone — that major is taken below.
+- **Mermaid 11.17.2 → 12.3.0.** The vendored IIFE bundle goes from 3.5 MB to
+  5.5 MB raw (0.98 MB → 1.58 MB gzip) and stays loaded only on pages with
+  diagrams. Authors gain edge IDs with animation (`A e1@--> B` +
+  `e1@{ animate: true }`), step-by-step flow animation (`e1@{ step: 1 }`, 12.3+),
+  the `A ---o B` / `A ---x B` markers and the `@{ shape: … }` family.
+- **Mermaid 12's new defaults are pinned to the previous appearance.** 12 draws
+  flowcharts with the `redux-color` theme, the `neo` look and an ELK layout,
+  which would restyle every existing diagram silently; the loader sets
+  `look: 'classic'` and `layout: 'dagre'` (`tools/frontend/src/js/mermaid.js`).
+  Measured against 11.17.2 on the same document: a sequence diagram keeps its
+  geometry exactly (`-50 -10 514 451` on both), a flowchart is laid out with
+  12's wider spacing (`0 0 624.66 140` → `0 0 837.88 140`, same height, still
+  scaled by `useMaxWidth`). `flowchart.htmlLabels` moved to the root key, where
+  12 reads it; the per-diagram one is deprecated.
 - `docs/development.md` gained a dependency policy section: which packages are
   installed at release time, which files travel inside the archive, what the
   frontend pipeline copies into the repository, and that the only outbound
@@ -63,6 +77,16 @@ All notable changes to this project are documented here. The format is
   and drew an empty `<svg>` for any name not in `icons.json`, which is what the
   admin editor badge and the updater notice use. Both generators now apply the
   same rule, and `tests/Unit/IconsTest.php` fails if the fallback goes missing.
+- **A repaired Mermaid diagram was parsed unrepaired.** The server writes the
+  repaired source into the `<pre>` body and the author's text into
+  `data-mermaid-source` for the copy control
+  (`src/Markdown/Extensions/CodeBlockRenderer.php:66-77`), but the loader read
+  the attribute, so every auto-repair was thrown away: the badge promised a
+  repair and the diagram failed to parse. Measured on both 11.17.2 and 12.3.0
+  before the fix. The client now renders the body (remembered on the wrapper,
+  because a successful render replaces it with the SVG) and keeps the author's
+  text for repair and copy; `tests/Feature/MarkdownEngineTest.php` pins the DOM
+  contract the client relies on.
 
 ## 3.4.4 - 2026-11-13
 

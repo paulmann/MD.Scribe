@@ -56,14 +56,11 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     ignore:
-      # Both majors change what a reader sees, and both need
-      # `node build.mjs --vendor` plus a page check rather than a merge:
-      # mermaid 12 changes flow edge-ID syntax, lucide 1.x can rename icons and
-      # `src/View/Icons.php` silently falls back to `circle-alert` for a name it
-      # no longer finds. Named version, not `semver-major`, so patches in the
-      # current lines keep flowing (see the composer block for the reason).
-      - dependency-name: "mermaid"
-        versions: ["12.x"]
+      # lucide 1.x can rename icons, and `src/View/Icons.php` silently falls
+      # back to `circle-alert` for a name it no longer finds: the major needs
+      # `node build.mjs --vendor` plus a page check rather than a merge. Named
+      # version, not `semver-major`, so patches in 0.x keep flowing and 2.x
+      # will be proposed again (see the composer block for the reason).
       - dependency-name: "lucide-static"
         versions: ["1.x"]
     groups:
