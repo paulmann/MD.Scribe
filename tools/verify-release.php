@@ -19,8 +19,8 @@
  *
  * Usage:
  *   php tools/verify-release.php                      latest version in Version.php
- *   php tools/verify-release.php --version=3.5.0
- *   php tools/verify-release.php --source=MD.Scribe-3.5.0.zip --sha256=<hex>
+ *   php tools/verify-release.php --version=<version>
+ *   php tools/verify-release.php --source=MD.Scribe-<version>.zip --sha256=<hex>
  *   php tools/verify-release.php --skip-browser --keep
  *
  * Exit code 0 only when every check passed. Each check prints one line.

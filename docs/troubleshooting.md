@@ -88,7 +88,7 @@ target of the symlink**. With a layout like
 
 ```
 public/mdscribe -> ../mdscribe/public      # unchanged across releases
-mdscribe        -> mdscribe.releases/3.5.0 # this is what moves
+mdscribe        -> mdscribe.releases/3.6.0 # this is what moves
 ```
 
 …the request still asks for `public/mdscribe/index.php`, so the cached entry keeps

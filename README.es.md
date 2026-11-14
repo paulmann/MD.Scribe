@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.5.0
+ * Version: 3.6.0
 -->
 
 # MD.Scribe 3
@@ -19,7 +19,7 @@ todos los recursos se distribuyen localmente, por lo que toda la aplicación fun
 [![Versión](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Licencia: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Pruebas](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
+[![Pruebas](https://img.shields.io/badge/tests-220%20passed-brightgreen)](tests)
 [![Peticiones CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#política-de-cero-cdn)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -29,7 +29,7 @@ todos los recursos se distribuyen localmente, por lo que toda la aplicación fun
 [**Inicio rápido**](#inicio-rápido) · [**Recorrido por las funciones**](#recorrido-por-las-funciones) · [**Configuración**](#configuración--mdini) · [**Documentación**](#documentación) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**Changelog**](CHANGELOG.md) · [**Seguridad**](SECURITY.md) · [**Contribuir**](CONTRIBUTING.md)
 
 > **Estado de la documentación.** La versión y todas las cifras de este README se midieron el
-> 2026-11-14 sobre el árbol `main` de la 3.5.0, con el comando indicado allí donde aparece la
+> 2026-11-14 sobre el árbol `main` de la 3.6.0, con el comando indicado allí donde aparece la
 > cifra. Las guías orientadas a tareas están en la
 > [wiki](https://github.com/paulmann/MD.Scribe/wiki/Home); la documentación de referencia está
 > en [`docs/`](docs/installation.md).
@@ -298,7 +298,7 @@ Para informar de una vulnerabilidad: **[SECURITY.md](SECURITY.md)**.
 
 ## En cifras
 
-Medido el 2026-11-14 sobre el árbol `main` de la 3.5.0:
+Medido el 2026-11-14 sobre el árbol `main` de la 3.6.0:
 
 | Superficie | Valor | Fuente de la medición |
 | --- | ---: | --- |

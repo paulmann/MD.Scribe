@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 3.6.0 - 2026-11-14
 
 ### Added
 
@@ -74,6 +74,11 @@ All notable changes to this project are documented here. The format is
   rror_log(). The test now declares that line with
   xpectOutputRegex() instead of the suite silencing the check: the warning is
   part of the contract, so it is asserted rather than hidden.
+
+- **The browser gate waits 45 s for the diagram settle.** The Mermaid bundle is
+  5.5 MB; one run against the live site timed out at 25 s while the same page
+  rendered a minute later and the next run passed 18/18. A real failure still ends
+  with the same explicit FAIL line.
 
 ### Fixed
 

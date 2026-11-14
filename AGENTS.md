@@ -1,13 +1,13 @@
 # MD.Scribe — agent instructions
 
 MD.Scribe is a self-hosted, framework-free, database-free PHP 8.5 Markdown documentation platform
-(MIT, 3.5.0 "Loom"). This file is the agent's map: the commands that must pass, the invariants
+(MIT, 3.6.0 "Signet"). This file is the agent's map: the commands that must pass, the invariants
 that must not break, the traps that have already bitten this project, and where the detail lives.
 The deep reference is [docs/AGENTS-context.md](docs/AGENTS-context.md); read the layer you are changing.
 
-Verified against the tree on 2026-11-14: `Version::VERSION = '3.5.0'`, `CODENAME = 'Loom'`,
+Verified against the tree on 2026-11-14: `Version::VERSION = '3.6.0'`, `CODENAME = 'Signet'`,
 `PHP_MIN = '8.5.0'`; `composer.json` requires `php >= 8.5`; CI runs PHP 8.5 only (`php: ['8.5']`).
-Release `v3.5.0`; tags `v3.1.0`, `v3.2.0`, `v3.2.1`, `v3.4.4`, `v3.5.0`.
+Release `v3.6.0`; tags `v3.1.0`, `v3.2.0`, `v3.2.1`, `v3.4.4`, `v3.5.0`, `v3.6.0`.
 
 [Commands](#commands) · [Rules](#non-negotiable-rules) · [Traps](#traps) · [Machine APIs](#machine-apis) ·
 [Verify](#verify-before-claiming-done) · [Detail](#where-the-detail-lives) · [Do not](#do-not)
@@ -19,7 +19,7 @@ Release `v3.5.0`; tags `v3.1.0`, `v3.2.0`, `v3.2.1`, `v3.4.4`, `v3.5.0`.
 $env:COMPOSER_HOME = Join-Path ([System.IO.Path]::GetTempPath()) 'composer-home'
 composer install
 # the gates CI runs
-composer test        # PHPUnit: 218 tests, 689 assertions
+composer test        # PHPUnit: 220 tests, 702 assertions
 composer stan        # PHPStan level 6
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 php -l md.php; php -l index.php; php -l updater.php
@@ -101,7 +101,7 @@ invisible to PHPUnit.
 ## Verify before claiming done
 
 ```powershell
-composer test                                # 218 tests, 689 assertions, exit 0
+composer test                                # 220 tests, 702 assertions, exit 0
 composer stan                                # no errors at level 6
 pwsh -File tools/Invoke-ProjectDoctrine.ps1  # checks: 12, errors: 0, warnings: 0, PASS
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
