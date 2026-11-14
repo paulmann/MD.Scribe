@@ -83,13 +83,20 @@ final class ConfigTest extends TestCase
             self::markTestSkipped('this user can read a 0000 file (root); CI covers the case');
         }
 
+        $inodeBefore = fileinode($path);
+        $sizeBefore = filesize($path);
+
         $config = Config::loadFrom($path);
 
         self::assertFalse($config->isWritable(), 'a config that cannot be read must not be written');
         self::assertSame('MD.Scribe', $config->str('SITE_NAME'), 'the app runs on defaults, not on a rewrite');
-        self::assertSame($original, (string) file_get_contents($path), 'the file must be left exactly as it was');
+        clearstatcache(true, $path);
+        // A rewrite goes through rename(), so both the inode and the size would move.
+        self::assertSame($inodeBefore, fileinode($path), 'the file must not be replaced');
+        self::assertSame($sizeBefore, filesize($path), 'the file must keep its bytes');
 
         @chmod($path, 0o640);
+        self::assertSame($original, (string) file_get_contents($path), 'and it must still hold them');
         Config::reset();
     }
 
@@ -106,7 +113,8 @@ final class ConfigTest extends TestCase
         Config::reset();
     }
 
-    /** A dangling link names a file that does not exist yet: write it there, keep the link. */    public function testWritingThroughADanglingSymlinkCreatesTheTarget(): void
+        /** A dangling link names a file that does not exist yet: write it there, keep the link. */
+    public function testWritingThroughADanglingSymlinkCreatesTheTarget(): void
     {
         $data = $this->tmpRoot . '/data2';
         $release = $this->tmpRoot . '/release2';
