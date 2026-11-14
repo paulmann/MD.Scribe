@@ -62,13 +62,46 @@ jobs:
         with:
           php-version: '8.5'
           coverage: none
-      - name: Install & build
+      - name: Install & build (including vendored bundles)
         working-directory: tools/frontend
         run: |
           npm ci || npm install
-          node build.mjs
+          node build.mjs --vendor
+      # Blocking on purpose. As a warning this let a dependency bump merge with
+      # package.json ahead of public/assets/vendor/ — the shipped Mermaid, KaTeX,
+      # fonts and icon map stayed at the old versions and nothing failed.
       - name: Verify committed assets are up to date
         run: |
-          git diff --stat -- public/assets/css public/assets/js
-          git diff --quiet -- public/assets/css public/assets/js \
-            || { echo "::warning::Built assets differ from committed ones — run 'node tools/frontend/build.mjs' and commit."; exit 0; }
+          git diff --stat -- public/assets src/View/Icons.php
+          if ! git diff --quiet -- public/assets src/View/Icons.php; then
+            echo "::error::Built assets differ from the committed ones. Run 'node tools/frontend/build.mjs --vendor' and commit public/assets and src/View/Icons.php."
+            exit 1
+          fi
+
+  render:
+    name: Rendering gate (browser)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+          tools: composer:v2
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Install the gate's dependency
+        working-directory: tools/frontend
+        run: npm ci || npm install
+      # The gate drives the system Chrome through puppeteer-core: the checks are
+      # structural (rendered diagrams, KaTeX errors, empty icons, CSP
+      # violations), so a downloaded pinned browser would add nothing.
+      - name: Run the rendering gate
+        run: |
+          php -S 127.0.0.1:8099 -t public public/router.php &
+          sleep 2
+          node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099

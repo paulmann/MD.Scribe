@@ -28,3 +28,6 @@ Thumbs.db
 # Agent scratch and runtime snapshots — never part of the project
 .work/
 .zwork/
+
+# Fixture written by tools/frontend/check-render.mjs during the browser gate
+content/zz-render-check.md

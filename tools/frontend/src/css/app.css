@@ -9,7 +9,13 @@
  * selected via [data-neutral] / [data-accent] attributes + the .dark class.
  * ═════════════════════════════════════════════════════════════════════════ */
 
-@import "tailwindcss";
+/* The three @source lines below are the whole input. `source(none)` turns off
+   Tailwind v4 automatic detection, which otherwise scans every text file in the
+   repository: the word "invisible" in a changelog entry or a build script was
+   enough to add `.invisible` to the committed stylesheet, so a prose edit
+   changed the CSS bundle. With explicit sources the output depends only on the
+   files that carry class names, which is what the drift gate compares. */
+@import "tailwindcss" source(none);
 
 @source "../../../../templates";
 @source "../../../../src";

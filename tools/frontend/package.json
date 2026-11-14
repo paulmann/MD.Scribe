@@ -12,6 +12,7 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.5",
     "esbuild": "^0.28.2",
+    "puppeteer-core": "^24.43.1",
     "tailwindcss": "^4.1.0"
   },
   "dependencies": {
