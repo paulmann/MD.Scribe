@@ -225,9 +225,16 @@ final class UpdateService
                 $toReplace[$rel] = $sourceRoot . '/' . $rel;
             }
 
-            // 4. Back up the files we are about to replace.
+            // 4. Back up the files we are about to replace. The manifest is
+            // backed up too, even though the replacement loop below can never
+            // touch it: restore has to put the pairing back.
             $backupDir = Paths::backups() . '/app-' . date('Ymd-His');
             @mkdir($backupDir, 0o755, true);
+            $installedManifest = Paths::config() . '/manifest.json';
+            if (is_file($installedManifest)) {
+                @mkdir($backupDir . '/config', 0o755, true);
+                @copy($installedManifest, $backupDir . '/config/manifest.json');
+            }
             foreach (array_keys($toReplace) as $rel) {
                 $local = Paths::root() . '/' . $rel;
                 if (is_file($local)) {
@@ -256,11 +263,40 @@ final class UpdateService
                 }
             }
 
+            // 6. Install the archive's own manifest.
+            //
+            // `config/manifest.json` is excluded from its own file list (see
+            // tools/build-manifest.php), so the loop above can never carry it:
+            // the tree would then hold the new release's files while still
+            // describing the old one, and every later status() would report the
+            // files just written as "modified". The pairing is part of the
+            // update, not a side effect of it.
+            $manifestWritten = false;
+            $manifestError = '';
+            $sourceManifest = $sourceRoot . '/config/manifest.json';
+            if (!is_file($sourceManifest)) {
+                $manifestError = 'the release archive carries no config/manifest.json';
+            } else {
+                $bytes = (string) file_get_contents($sourceManifest);
+                if (!json_validate($bytes)) {
+                    $manifestError = 'the manifest inside the archive is not valid JSON';
+                } elseif (@file_put_contents($installedManifest, $bytes) === false) {
+                    $manifestError = 'config/manifest.json is not writable';
+                } else {
+                    @chmod($installedManifest, 0o644);
+                    $manifestWritten = true;
+                }
+            }
+            if (!$manifestWritten) {
+                $this->logger->error('update left the manifest stale: ' . $manifestError);
+            }
+
             $this->audit?->record('update.apply', $actor, [
                 'from' => Version::VERSION, 'to' => $remoteVersion,
                 'replaced' => $replaced, 'backup' => basename($backupDir),
+                'manifest' => $manifestWritten,
             ]);
-            $this->logger->info('update applied', ['to' => $remoteVersion, 'replaced' => $replaced]);
+            $this->logger->info('update applied', ['to' => $remoteVersion, 'replaced' => $replaced, 'manifest' => $manifestWritten]);
 
             return [
                 'ok' => true,
@@ -269,6 +305,8 @@ final class UpdateService
                 'replaced' => $replaced,
                 'unchanged' => $unchanged,
                 'backup' => basename($backupDir),
+                'manifest_written' => $manifestWritten,
+                'warning' => $manifestWritten ? null : 'The update was applied but the manifest was not replaced: ' . $manifestError,
             ];
         } catch (\Throwable $e) {
             $this->logger->error('update failed: ' . $e->getMessage());
@@ -476,8 +514,11 @@ final class UpdateService
         );
         foreach ($items as $item) {
             /** @var \SplFileInfo $item */
-            $rel = substr($item->getPathname(), strlen($dir) + 1);
-            if ($rel === 'backup.json' || !str_starts_with($rel, 'app-') === false) {
+            // The iterator yields native separators: on Windows "config\\manifest.json"
+            // failed the allowlist below, so a restore silently skipped every file
+            // in a subdirectory — including config/manifest.json.
+            $rel = str_replace('\\', '/', substr($item->getPathname(), strlen($dir) + 1));
+            if ($rel === 'backup.json' || str_starts_with($rel, 'app-')) {
                 continue;
             }
             if ($item->isFile() && preg_match('#^[A-Za-z0-9._/\-]+$#', $rel) === 1) {

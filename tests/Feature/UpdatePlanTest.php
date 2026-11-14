@@ -63,7 +63,7 @@ final class UpdatePlanTest extends TestCase
         return ['zip' => $this->assetPath, 'manifestVersion' => '9.9.9', 'payloadSha' => $payloadSha];
     }
 
-    private function service(string $zipPath): UpdateService
+    private function service(string $zipPath, array $overrides = []): UpdateService
     {
         $bytes = (string) file_get_contents($zipPath);
         $http = new class ($bytes) extends HttpClient {
@@ -92,7 +92,7 @@ final class UpdatePlanTest extends TestCase
             }
         };
 
-        return new UpdateService($this->config(), new Logger($this->config(), $this->tmpRoot . '/storage'), null, $http);
+        return new UpdateService($this->config($overrides), new Logger($this->config($overrides), $this->tmpRoot . '/storage'), null, $http);
     }
 
     public function testPlanReportsWhatTheReleaseWouldReplace(): void
@@ -170,5 +170,64 @@ final class UpdatePlanTest extends TestCase
         }
 
         return $out;
+    }
+
+    /**
+     * The manifest is excluded from its own file list, so the replacement loop
+     * can never carry it. If apply() leaves the old manifest behind, the tree and
+     * its manifest describe different versions and every later status() reports
+     * the files it just wrote as locally modified.
+     */
+    public function testApplyInstallsTheManifestThatShipsInTheArchive(): void
+    {
+        $release = $this->buildRelease();
+        file_put_contents(
+            $this->tmpRoot . '/config/manifest.json',
+            (string) json_encode(['version' => '1.0.0', 'files' => []]),
+        );
+
+        $service = $this->service($release['zip'], ['ALLOW_UPDATE' => true]);
+        $result = $service->apply('test');
+
+        self::assertTrue($result['ok'] ?? false, (string) ($result['error'] ?? ''));
+        self::assertTrue($result['manifest_written'] ?? false, (string) ($result['warning'] ?? ''));
+        self::assertNull($result['warning'] ?? null);
+
+        $installed = json_decode((string) file_get_contents($this->tmpRoot . '/config/manifest.json'), true);
+        self::assertSame('9.9.9', $installed['version'] ?? null);
+
+        // The proof that matters: the installed tree now agrees with its manifest.
+        $statuses = [];
+        foreach ($service->status() as $file) {
+            $statuses[$file['path']] = $file['status'];
+        }
+        self::assertSame(['src/Payload.php' => 'present'], $statuses);
+    }
+
+    public function testApplyBacksUpTheOldManifestAndRestoreBringsItBack(): void
+    {
+        $release = $this->buildRelease();
+        file_put_contents(
+            $this->tmpRoot . '/config/manifest.json',
+            (string) json_encode(['version' => '1.0.0', 'files' => []]),
+        );
+
+        $service = $this->service($release['zip'], ['ALLOW_UPDATE' => true, 'ALLOW_RESTORE' => true]);
+        self::assertTrue($service->apply('test')['ok'] ?? false);
+
+        $backups = $service->appBackups();
+        self::assertCount(1, $backups);
+        $backupId = (string) $backups[0]['id'];
+        // The old pairing travelled with the backup, otherwise a restore would
+        // hand back old files described by the new manifest.
+        self::assertFileExists($this->tmpRoot . '/storage/backups/' . $backupId . '/config/manifest.json');
+
+        $result = $service->restoreApp($backupId, 'test');
+        self::assertTrue($result['ok'] ?? false, (string) ($result['error'] ?? ''));
+
+        $restored = json_decode((string) file_get_contents($this->tmpRoot . '/config/manifest.json'), true);
+        self::assertSame('1.0.0', $restored['version'] ?? null);
+        // Backup bookkeeping must not land in the project root.
+        self::assertFileDoesNotExist($this->tmpRoot . '/backup.json');
     }
 }
