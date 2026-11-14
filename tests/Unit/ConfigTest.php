@@ -93,6 +93,10 @@ final class ConfigTest extends TestCase
         file_put_contents($this->tmpRoot . '/content/share/.md.ini', "DISABLE_UPLOAD = false\n");
         file_put_contents($this->tmpRoot . '/content/share/sub/.md.ini', "DISABLE_UPLOAD = true\nDISABLE_CLIPBOARD = true\nALLOW_UPDATE = true\n");
 
+        // PHPUnit captures error_log() and treats unannounced output as risky.
+        // This warning is part of the contract, so it is declared here.
+        $this->expectOutputRegex('/ignored installation-level key ALLOW_UPDATE/');
+
         $config = Config::instance();
 
         // Base default: uploads disabled
