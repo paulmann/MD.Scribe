@@ -116,6 +116,16 @@ if (withVendor) {
       map[name] = svg.replace(/<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').trim();
     }
     if (missing.length) console.warn(`  icons missing: ${missing.join(', ')}`);
+
+    // Icons::svg() falls back to 'circle-alert' for a name the map does not
+    // carry, so that key must exist even when icons.json never names it.
+    // generate-icons.mjs applies the same rule; when only one of the two
+    // generators applies it, a rebuild silently drops the fallback and the
+    // class raises "Undefined array key" on the next unknown name.
+    if (!map['circle-alert']) {
+      map['circle-alert'] = map['info'] ?? '';
+    }
+
     const entries = Object.entries(map).map(([k, v]) => `        '${k}' => '${v.replace(/'/g, "\\'")}',`);
     writeFileSync(join(root, 'src/View/Icons.php'), `<?php
 
@@ -149,7 +159,7 @@ ${entries.join('\n')}
     /** Render an inline <svg> icon. */
     public static function svg(string $name, string $class = 'h-4 w-4', string $title = ''): string
     {
-        $inner = self::all()[$name] ?? self::all()['circle-alert'];
+        $inner = self::all()[$name] ?? self::all()['circle-alert'] ?? '';
         $titleTag = $title !== ''
             ? '<title>' . htmlspecialchars($title, ENT_QUOTES) . '</title>'
             : '';

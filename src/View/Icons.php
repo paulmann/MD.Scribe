@@ -306,6 +306,11 @@ final class Icons
 
   <path d="M18 6 6 18" />
   <path d="m6 6 12 12" />',
+        'circle-alert' => '<!-- @license lucide-static v0.577.0 - ISC -->
+
+  <circle cx="12" cy="12" r="10" />
+  <path d="M12 16v-4" />
+  <path d="M12 8h.01" />',
         ];
     }
 
@@ -317,7 +322,7 @@ final class Icons
     /** Render an inline <svg> icon. */
     public static function svg(string $name, string $class = 'h-4 w-4', string $title = ''): string
     {
-        $inner = self::all()[$name] ?? self::all()['circle-alert'];
+        $inner = self::all()[$name] ?? self::all()['circle-alert'] ?? '';
         $titleTag = $title !== ''
             ? '<title>' . htmlspecialchars($title, ENT_QUOTES) . '</title>'
             : '';

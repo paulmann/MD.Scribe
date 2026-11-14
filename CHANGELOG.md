@@ -56,6 +56,13 @@ All notable changes to this project are documented here. The format is
 - Sample content still claimed PHP 8.3 (`content/index.md`,
   `content/getting-started.md`, including an nginx snippet); both now state the
   8.5 floor.
+- **The vendor rebuild dropped the icon fallback.** `node build.mjs --vendor` and
+  `node generate-icons.mjs` both write `src/View/Icons.php`, but only the second
+  added the `circle-alert` entry that `Icons::svg()` falls back to. After the
+  lucide-static refresh the class raised `Undefined array key "circle-alert"`
+  and drew an empty `<svg>` for any name not in `icons.json`, which is what the
+  admin editor badge and the updater notice use. Both generators now apply the
+  same rule, and `tests/Unit/IconsTest.php` fails if the fallback goes missing.
 
 ## 3.4.4 - 2026-11-13
 
