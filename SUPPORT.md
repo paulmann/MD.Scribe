@@ -51,7 +51,7 @@ ships.
 
 ## What a good report contains
 
-1. **Version** — the release you installed (for example 3.6.1), not the branch name.
+1. **Version** — the release you installed (for example 3.6.2), not the branch name.
 2. **Environment** — operating system, PHP version from `php -v`, web server and SAPI
    (mod_php, PHP-FPM, `php -S`, Docker), and whether the docroot is `public/` or the
    project root.

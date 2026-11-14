@@ -137,7 +137,7 @@ chore(deps): bump league/commonmark to 2.7.1
 
 Open the [bug report form](.github/ISSUE_TEMPLATE/bug.yml) and include:
 
-- the MD.Scribe version you run (the release you installed, for example 3.6.1);
+- the MD.Scribe version you run (the release you installed, for example 3.6.2);
 - the environment: operating system, PHP version (`php -v`), web server and SAPI
   (mod_php, PHP-FPM, `php -S`, Docker), and whether the docroot is `public/` or the
   project root;

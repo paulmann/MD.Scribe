@@ -10,7 +10,7 @@ control-by-control reasoning and the hardening checklist live in
 
 | Version | Supported | Notes |
 | --- | --- | --- |
-| 3.6.x | Yes | current line (3.6.1 released 2026-11-14) |
+| 3.6.x | Yes | current line (3.6.2 released 2026-11-14) |
 | 3.5.x | No | previous line; upgrade to 3.6.x to receive fixes |
 | 3.4.x and earlier | No | upgrade to 3.6.x to receive fixes |
 
@@ -39,7 +39,7 @@ affected versions.
 
 ## What to include
 
-- The affected version (for example 3.6.1) and whether the defect also reproduces on the
+- The affected version (for example 3.6.2) and whether the defect also reproduces on the
   latest release.
 - The deployment shape: docroot at `public/` or at the project root, PHP version, web
   server and SAPI, and the relevant non-default `.md.ini` keys (`ALLOW_RAW_HTML`,

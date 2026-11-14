@@ -140,7 +140,7 @@ Consequences worth remembering:
 ## Backend tooling
 
 ```bash
-composer test             # PHPUnit (234 tests, 839 assertions)
+composer test             # PHPUnit (236 tests, 846 assertions)
 composer stan             # PHPStan level 6 (strict types everywhere)
 composer check            # both
 php tools/build-manifest.php   # regenerate config/manifest.json (release step)
@@ -198,6 +198,13 @@ flags) have dedicated regression tests, including the historic v2 bugs
    artifact end to end (digest, manifest, a booted copy, the six routes, the
    browser gate). Run it **after** step 6, because it downloads the release
    asset: this is the check that tells a release from a hypothesis.
+
+   Publishing the release also triggers `.github/workflows/release.yml`, which rebuilds
+   the tag on a different OS, PHP patch level and Composer build, asserts that two builds
+   of one commit are byte-identical, compares the digest with the published asset and runs
+   `verify-release` on the rebuilt copy. It must be green before the release is announced:
+   that is the evidence the archive is a function of the commit, not of the machine that
+   happened to build it. It never uploads, so it cannot make the comparison trivially true.
 8. **Deploy that archive and re-run the checks before announcing anything**:
    `mdscribe-deploy <version> --dry-run`, then `mdscribe-deploy <version>`.
    The script verifies its own result on the live URL and rolls back by itself.
@@ -216,9 +223,9 @@ Three tools exist so a deploy cannot quietly succeed at the wrong thing:
 | `tools/deploy/verify-tree.php` | the host (`/usr/local/lib/mdscribe/`) | one tree against its own manifest — used after the switch and on demand |
 
 ```bash
-php tools/verify-release.php --version=3.6.1    # artifact level, anywhere
-mdscribe-deploy 3.6.1 --dry-run                  # placement level, on the host
-mdscribe-deploy 3.6.1                            # install, verify, roll back on failure
+php tools/verify-release.php --version=3.6.2    # artifact level, anywhere
+mdscribe-deploy 3.6.2 --dry-run                  # placement level, on the host
+mdscribe-deploy 3.6.2                            # install, verify, roll back on failure
 mdscribe-deploy --status | --rollback | --install-tools
 ```
 

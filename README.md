@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.6.1
+ * Version: 3.6.2
 -->
 
 # MD.Scribe 3
@@ -18,7 +18,7 @@ locally, so the whole application works offline.
 [![Release](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-234%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-236%20passed-brightgreen)](tests)
 [![CDN requests](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-policy)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -28,7 +28,7 @@ locally, so the whole application works offline.
 [**Quick start**](#quick-start) · [**Feature tour**](#feature-tour) · [**Configuration**](#configuration--mdini) · [**Documentation**](#documentation) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**Changelog**](CHANGELOG.md) · [**Security**](SECURITY.md) · [**Contributing**](CONTRIBUTING.md)
 
 > **Documentation status.** The version and every number in this README were measured on
-> 2026-11-14 against the `main` tree of 3.6.1, with the command named where the number appears.
+> 2026-11-14 against the `main` tree of 3.6.2, with the command named where the number appears.
 > Task-oriented guides live in the [wiki](https://github.com/paulmann/MD.Scribe/wiki/Home);
 > reference documentation lives in [`docs/`](docs/installation.md).
 
@@ -292,7 +292,7 @@ Reporting a vulnerability: **[SECURITY.md](SECURITY.md)**.
 
 ## In numbers
 
-Measured on 2026-11-14 against the `main` tree of 3.6.1:
+Measured on 2026-11-14 against the `main` tree of 3.6.2:
 
 | Surface | Value | Measurement source |
 | --- | ---: | --- |

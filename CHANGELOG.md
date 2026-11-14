@@ -4,6 +4,54 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.6.2 - 2026-11-14
+
+A colophon is the note at the end of a book that says how it was made. This release is
+about the same question for an archive: it is now byte-identical wherever it is built,
+and a CI job rebuilds every published release to say so.
+
+### Fixed
+
+- **Settings written through a symlinked `.md.ini` no longer replace the link.** In the
+  release-directory layout the deploy points `.md.ini` at `mdscribe-data/.md.ini`, the
+  only runtime state an upgrade does not replace. `rename()` replaces the link, not its
+  target, so the app's atomic write turned the layout inside out. Measured in production:
+  after one page request `mdscribe.releases/3.6.1/.md.ini` was a 1 125-byte regular file
+  while the data directory kept an 18-byte seed — and the next deploy seeds every release
+  from that seed, so every panel setting (admin password hash included) would have been
+  discarded silently. Writes now resolve a symlinked path once and land in the target,
+  atomically, leaving the link in place. Two tests, one of them for a dangling link.
+
+### Added
+
+- **`.github/workflows/release.yml` — the published archive is rebuilt and compared.**
+  On every `release: published` (and on demand) it builds the tag twice, asserts the two
+  archives are byte-identical, compares the digest with the published asset through the
+  API, and runs `verify-release` on the rebuilt copy. It never uploads: a job that could
+  replace the published asset would make the comparison pointless.
+
+### Changed
+
+- **The archive is a deterministic zip.** Two builds of one commit used to differ by
+  platform — same size, same 987 manifest hashes, digests `1259cc70…` on Windows and
+  `ab6c1f2d…` on Linux — because `ZipArchive` decides the container's metadata itself.
+  The archive is now written by hand with every choice fixed: Unix "version made by",
+  mode 0644 per entry, the commit time in DOS format computed in UTC, no extra fields, no
+  comment, sorted entries, deflate level 9. Measured after the change: the same commit
+  built on Windows and on Debian (different PHP patch level, different Composer build,
+  different timezone) gives **`6fe11549…`** on both, and `unzip -t` and python's
+  `zipfile.testzip()` both accept it.
+- **`COMPOSER_ROOT_VERSION` is pinned to the version being built.** Composer records the
+  root package version in `vendor/composer/installed.php`, resolved from git: `dev-main`
+  on a branch or an untagged commit, `v3.6.1` at the tag. That one file moved the digest
+  by its whole value between a build made before tagging and a rebuild made after.
+- **The cost of a shorter opcache window is measured.** One page request compiles 41 PHP
+  files; a `stat()` of such a file costs 4.2 µs on this filesystem (2.2 µs when PHP's
+  stat cache answers instead). `opcache.revalidate_freq=0` would therefore add about
+  0.17 ms per request against a measured mean of 39 ms (n=30, p95 46 ms) — the window can
+  be shortened without touching the response time. The direct A/B was not run: it needs a
+  second pool on a host that serves 25 sites, and is recorded as not measured.
+
 ## 3.6.1 - 2026-11-14
 
 ### Fixed

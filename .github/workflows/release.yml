@@ -1,0 +1,145 @@
+name: Release reproducibility
+
+# The artifact is built by `tools/build-release.php`, and the claim is that anyone can
+# rebuild the published archive from the tag and get the same bytes. This job is that
+# claim, checked with a different OS, a different PHP patch level and a different
+# Composer build than the publisher's.
+#
+# It runs when a release is published, because that is the moment the asset and its
+# digest exist to compare against. It never uploads anything: a job that could replace
+# the published asset would make the comparison pointless.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rebuild (X.Y.Z, without the leading v)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    name: Rebuild the published archive and compare digests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, dom, curl, zip, intl
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Resolve the version and the commit
+        id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "release" ]; then
+            VERSION="${RELEASE_TAG#v}"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          COMMIT="$(git rev-list -n 1 "v$VERSION")"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          echo "rebuilding v$VERSION at $COMMIT"
+
+      # The gate's own dependency: verify-release boots the extracted tree and runs the
+      # browser checks with the system Chrome, exactly as CI's render job does.
+      - name: Install the browser gate's dependency
+        working-directory: tools/frontend
+        run: npm ci || npm install
+
+      - name: Build the archive (first time)
+        run: |
+          php tools/build-release.php --version=${{ steps.v.outputs.version }} \
+            --commit=${{ steps.v.outputs.commit }} --out="$RUNNER_TEMP/first"
+
+      - name: Build the archive (second time)
+        run: |
+          php tools/build-release.php --version=${{ steps.v.outputs.version }} \
+            --commit=${{ steps.v.outputs.commit }} --out="$RUNNER_TEMP/second"
+
+      - name: Two builds of one commit are byte-identical
+        id: reproducibility
+        run: |
+          set -euo pipefail
+          FIRST="$(sha256sum "$RUNNER_TEMP/first/MD.Scribe-${{ steps.v.outputs.version }}.zip" | cut -d' ' -f1)"
+          SECOND="$(sha256sum "$RUNNER_TEMP/second/MD.Scribe-${{ steps.v.outputs.version }}.zip" | cut -d' ' -f1)"
+          echo "local=$FIRST" >> "$GITHUB_OUTPUT"
+          echo "first:  $FIRST"
+          echo "second: $SECOND"
+          if [ "$FIRST" != "$SECOND" ]; then
+            echo "::error::Two builds of the same commit produced different bytes"
+            exit 1
+          fi
+
+      - name: Compare with the published asset
+        id: published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          set -euo pipefail
+          DIGEST="$(gh api "repos/${{ github.repository }}/releases/tags/v$VERSION" \
+            --jq ".assets[] | select(.name == \"MD.Scribe-$VERSION.zip\") | .digest")"
+          PUBLISHED="${DIGEST#sha256:}"
+          LOCAL="${{ steps.reproducibility.outputs.local }}"
+          echo "published: ${PUBLISHED:-<none>}"
+          echo "rebuilt:   $LOCAL"
+          echo "published=$PUBLISHED" >> "$GITHUB_OUTPUT"
+          if [ -z "$PUBLISHED" ] || [ "$PUBLISHED" = "null" ]; then
+            echo "::error::The release has no MD.Scribe-$VERSION.zip asset"
+            exit 1
+          fi
+          if [ "$PUBLISHED" != "$LOCAL" ]; then
+            echo "::error::Rebuilding the tag gave a different archive than the one published"
+            exit 1
+          fi
+
+      # Independent proof that the rebuilt archive is not merely the same bytes as itself:
+      # every manifest entry, a booted copy, six routes, the PWA manifest and the browser gate.
+      - name: Verify the rebuilt artifact end to end
+        run: |
+          php tools/verify-release.php --version=${{ steps.v.outputs.version }} \
+            --source="$RUNNER_TEMP/first/MD.Scribe-${{ steps.v.outputs.version }}.zip" \
+            --sha256=${{ steps.reproducibility.outputs.local }}
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Release reproducibility — v${{ steps.v.outputs.version }}"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| commit | \`${{ steps.v.outputs.commit }}\` |"
+            echo "| rebuilt on | ubuntu-latest, PHP $(php -r 'echo PHP_VERSION;'), $(composer --version 2>/dev/null | head -1 | cut -d' ' -f1-3) |"
+            echo "| rebuilt digest | \`${{ steps.reproducibility.outputs.local }}\` |"
+            echo "| published digest | \`${{ steps.published.outputs.published }}\` |"
+            echo "| identical | ${{ steps.published.outputs.published == steps.reproducibility.outputs.local }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the rebuilt archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: MD.Scribe-${{ steps.v.outputs.version }}-rebuilt
+          path: ${{ runner.temp }}/first/MD.Scribe-${{ steps.v.outputs.version }}.zip
+          retention-days: 14
