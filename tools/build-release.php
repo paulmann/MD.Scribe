@@ -166,7 +166,7 @@ try {
 
     $composer = ReleaseBuilder::resolveComposer($options['composer'] !== '' ? $options['composer'] : null);
     say('composer:  ' . implode(' ', $composer));
-    $builder->installRuntimeDependencies($clone, $composer);
+    $builder->installRuntimeDependencies($clone, $composer, $version);
     say('deps:      runtime only, vendor/autoload.php ' . (is_file($clone . '/vendor/autoload.php') ? 'present' : 'MISSING'));
     if (!is_file($clone . '/vendor/autoload.php')) {
         fail('the clone has no vendor/autoload.php after composer install — the archive would be uninstallable');

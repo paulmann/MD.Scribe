@@ -297,17 +297,30 @@ final class ReleaseBuilder
      * Runtime dependencies only — the archive ships vendor/, so dev tools must not
      * travel: they add weight and they are not in the manifest.
      *
+     * `COMPOSER_ROOT_VERSION` is what makes the archive reproducible across checkouts.
+     * Composer writes the root package's version into `vendor/composer/installed.php`
+     * (and into `composer/installed.json`), resolving it from git: at a tagged commit
+     * it records `v3.6.1`, on a branch — or on a commit that is not tagged *yet* — it
+     * records `dev-main`. Measured on 2026-11-14: the Windows build of 3.6.1 ran before
+     * the tag existed and recorded `dev-main`; the same commit rebuilt on Linux after
+     * tagging recorded `v3.6.1`, and that one file's hash moved the archive digest
+     * (723a4429… → 1617fc98…) even though every other byte was identical.
+     *
      * @param list<string> $composerCommand e.g. ['php', 'C:/tools/composer/composer.phar']
      */
-    public function installRuntimeDependencies(string $tree, array $composerCommand): void
+    public function installRuntimeDependencies(string $tree, array $composerCommand, ?string $rootVersion = null): void
     {
+        $environment = $this->composerEnvironment();
+        if ($rootVersion !== null && $rootVersion !== '') {
+            $environment['COMPOSER_ROOT_VERSION'] = $rootVersion;
+        }
         self::run(array_merge($composerCommand, [
             'install',
             '--no-dev',
             '--optimize-autoloader',
             '--no-interaction',
             '--no-progress',
-        ]), $tree, $this->composerEnvironment());
+        ]), $tree, $environment);
     }
 
     public function buildManifest(string $tree, ?int $epoch = null): void
