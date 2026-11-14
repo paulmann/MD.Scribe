@@ -4,6 +4,36 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **A rendering gate in CI** (`tools/frontend/check-render.mjs`, job `render`).
+  21 structural checks in a real browser: diagrams rendered per page, no failed
+  diagram, no empty icon, KaTeX nodes present with zero errors, display math
+  inside the column, zero CSP violations, zero console errors, the table fits
+  and wraps, the Mermaid bundle matches the major `package.json` asks for, the
+  theme switch re-renders with other colours, and a generated fixture proving a
+  server-side repair reaches the renderer while a broken diagram keeps its
+  source. It drives the system Chrome through puppeteer-core: the checks are
+  structural, so a downloaded pinned browser would add weight and nothing else.
+  Proven by reverting the loader — the gate fails with `repair: the repaired
+  source reaches the renderer`, exit 1.
+
+### Changed
+
+- **Asset drift is blocking, and it covers the vendored bundles.** The CI job
+  rebuilt the frontend without `--vendor` and only warned, comparing `css/js`;
+  a dependency bump could merge with `package.json` ahead of
+  `public/assets/vendor/` and `src/View/Icons.php` and nothing failed. It now
+  rebuilds with `--vendor` and exits 1 on any difference.
+- **Tailwind scans only the files that carry class names.**
+  `@import "tailwindcss" source(none)` plus the three explicit `@source` lines.
+  Before this, v4 scanned the whole repository and the word "invisible" in a
+  changelog entry added `.invisible` to the shipped CSS (60 918 → 60 602 bytes),
+  so editing prose changed the bundle; now a prose edit leaves it alone, which
+  is what makes the blocking drift check stable.
+
 ## 3.5.0 - 2026-11-14
 
 ### Added

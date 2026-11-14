@@ -23,14 +23,20 @@ composer test        # PHPUnit: 218 tests, 688 assertions, 1 skipped
 composer stan        # PHPStan level 6
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
 php -l md.php; php -l index.php; php -l updater.php
-cd tools/frontend; npm ci; node build.mjs    # outputs are committed under public/assets/
+cd tools/frontend; npm ci; node build.mjs --vendor   # outputs incl. vendor bundles are committed
+# browser gate: diagrams, KaTeX, icons, CSP, table layout (needs the dev server above)
+node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099
 # local dev server and the read-only doctrine checker (12 checks)
 php -S 127.0.0.1:8099 -t public public/router.php
 pwsh -File tools/Invoke-ProjectDoctrine.ps1
 ```
 
 CI runs the same gates on Ubuntu, plus a smoke run (home, `?page=browser`, `?page=themes`, `?api=search`,
-and a 404). The `assets` job rebuilds the frontend and warns, non-blocking, on drift from committed files.
+and a 404). The `assets` job rebuilds the frontend **with `--vendor`** and fails on any drift from the
+committed `public/assets` or `src/View/Icons.php`; the `render` job drives a real browser
+(`tools/frontend/check-render.mjs`, puppeteer-core on the system Chrome) because the failures that
+reached main — a repair that never reached the renderer, an empty icon after a vendor rebuild — are
+invisible to PHPUnit.
 
 ## Non-negotiable rules
 
@@ -72,6 +78,8 @@ and a 404). The `assets` job rebuilds the frontend and warns, non-blocking, on d
 | A dry run that compares local files with the local manifest says "nothing to replace" | `src/Admin/UpdateService.php` (`plan()` vs `status()`) | It examined the wrong object; `plan()` must verify the manifest inside the downloaded archive |
 | The updater needs the release archive, not a branch tarball | `src/Admin/UpdateService.php`, `docs/development.md` step 8 | A branch tarball never contains `vendor/`, so it can never satisfy the manifest |
 | PHPStan does not see `bin/`, `tools/` or `templates/` | `phpstan.neon:3-9` | A syntax error there passes analysis; `bin/` is not linted by CI either |
+| The browser half of the pipeline is only checked by hand | `tools/frontend/check-render.mjs` (CI job `render`) | A repair, an icon or a CSP regression passes every PHP test and reaches main |
+| Tailwind v4 scans the whole repository unless told otherwise | `tools/frontend/src/css/app.css` (`source(none)`) | A word like "invisible" in a changelog entry added a utility to the committed CSS, so a prose edit changed the bundle |
 
 ## Machine APIs
 
@@ -90,6 +98,8 @@ composer test                                # 218 tests, 688 assertions, 1 skip
 composer stan                                # no errors at level 6
 pwsh -File tools/Invoke-ProjectDoctrine.ps1  # checks: 12, errors: 0, warnings: 0, PASS
 Get-ChildItem src,public,templates,tools,tests -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+# with the dev server running: diagrams, KaTeX, icons, CSP, table layout in a real browser
+node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099   # 21 checks, exit 0
 ```
 
 For a request-path change, also start the dev server and check `/`, `?page=browser`, `?page=themes`,

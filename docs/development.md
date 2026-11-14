@@ -59,9 +59,48 @@ php ../build-themes.php   # regenerate themes.css only
 ```
 
 Outputs are **committed** to `public/assets/` — production needs no Node.js.
+The stylesheet is built from three explicit sources (`templates`, `src`,
+`public/assets/js`) because `@import "tailwindcss" source(none)` disables v4's
+automatic repository scan: without it the word "invisible" in a changelog entry
+added `.invisible` to the shipped CSS, so editing prose changed the bundle. CI
+rebuilds with `--vendor` and **fails** on any drift from the committed
+`public/assets` or `src/View/Icons.php` — as a non-blocking warning it let a
+dependency bump merge with `package.json` ahead of the vendored files.
 
 Icon workflow: add the lucide name to `tools/frontend/icons.json`, run
-`generate-icons.mjs`, use `Icons::svg('name')` in PHP.
+`generate-icons.mjs`, use `Icons::svg('name')` in PHP. Both generators
+(`build.mjs --vendor` and `generate-icons.mjs`) must produce the same class —
+only the second used to add the `circle-alert` fallback, so a vendor rebuild
+left it out and every unknown icon name drew an empty `<svg>`.
+
+## Rendering gate (browser)
+
+The PHP suite cannot see the browser half of the pipeline: a server-side Mermaid
+repair that never reached the renderer and an icon that silently became an empty
+`<svg>` both shipped with 218 green tests. `tools/frontend/check-render.mjs`
+closes that hole, and the CI job `render` runs it on every push.
+
+```bash
+php -S 127.0.0.1:8099 -t public public/router.php &
+node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099
+```
+
+21 checks per run: diagrams rendered (2 on `content/index.md`, 1 on
+`content/docs/markdown-reference.md`), no failed diagram, no empty icon, KaTeX
+nodes present with zero `.katex-error`, display math inside the column, zero CSP
+violations, zero console/page errors, the table fits the column and wraps, the
+Mermaid bundle matches the major `tools/frontend/package.json` asks for, the
+theme switch re-renders with other colours, and — on a local server only — a
+generated fixture proves that a repaired diagram reaches the renderer while a
+broken one keeps its source visible.
+
+It drives the system Chrome through **puppeteer-core**, not Playwright: every
+check is structural (counts, error nodes, geometry), so pinning and downloading
+a browser buys nothing. Set `CHROME_PATH` if Chrome is not in a standard place.
+
+Negative test that proves the gate works: revert the loader to read
+`data-mermaid-source` instead of the repaired `<pre>` body, rebuild, run the gate
+— `FAIL repair: the repaired source reaches the renderer`, exit 1.
 
 Emoji map: `src/Markdown/EmojiMap.php` is generated from the GitHub gemoji
 database (`db/emoji.json`).
@@ -119,7 +158,9 @@ flags) have dedicated regression tests, including the historic v2 bugs
 2. `cd tools/frontend && node build.mjs --vendor` — refresh assets.
 3. `composer check` (with dev deps) — must be green, plus
    `pwsh -File tools/Invoke-ProjectDoctrine.ps1` (baseline: 12 checks, 0 errors,
-   0 warnings).
+   0 warnings) and the browser gate
+   `node tools/frontend/check-render.mjs --base=http://127.0.0.1:8099`
+   (21 checks) against a running `php -S`.
 4. Build the release tree in a clean copy of the tag: `composer install --no-dev
    --optimize-autoloader` — the archive ships `vendor/` so an install needs no
    Composer on the host.
