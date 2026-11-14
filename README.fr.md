@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.4
+ * Version: 3.5.0
 -->
 
 # MD.Scribe 3
@@ -20,7 +20,7 @@ ligne.
 [![Version](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Licence : MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
 [![Requêtes CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#politique-zéro-cdn)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -30,7 +30,7 @@ ligne.
 [**Démarrage rapide**](#démarrage-rapide) · [**Tour d'horizon**](#tour-dhorizon-des-fonctionnalités) · [**Configuration**](#configuration--mdini) · [**Documentation**](#documentation) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**Journal des modifications**](CHANGELOG.md) · [**Sécurité**](SECURITY.md) · [**Contribution**](CONTRIBUTING.md)
 
 > **État de la documentation.** La version et chaque nombre de ce README ont été mesurés le
-> 2026-11-14 sur l'arbre `main` de 3.4.4, avec la commande nommée là où le nombre apparaît.
+> 2026-11-14 sur l'arbre `main` de 3.5.0, avec la commande nommée là où le nombre apparaît.
 > Les guides orientés tâches se trouvent dans le
 > [wiki](https://github.com/paulmann/MD.Scribe/wiki/Home) ; la documentation de référence se
 > trouve dans [`docs/`](docs/installation.md).
@@ -300,7 +300,7 @@ Signalement d'une vulnérabilité : **[SECURITY.md](SECURITY.md)**.
 
 ## En chiffres
 
-Mesuré le 2026-11-14 sur l'arbre `main` de 3.4.4 :
+Mesuré le 2026-11-14 sur l'arbre `main` de 3.5.0 :
 
 | Surface | Valeur | Source de la mesure |
 | --- | ---: | --- |

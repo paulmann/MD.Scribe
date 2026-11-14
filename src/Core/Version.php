@@ -10,8 +10,8 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.4.4';
-    public const string CODENAME = 'Keystone';
+    public const string VERSION = '3.5.0';
+    public const string CODENAME = 'Loom';
     public const string PHP_MIN = '8.5.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';
     public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Scribe/main';

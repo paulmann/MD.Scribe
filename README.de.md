@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.4
+ * Version: 3.5.0
 -->
 
 # MD.Scribe 3
@@ -19,7 +19,7 @@ gesamte Anwendung offline arbeitet.
 [![Veröffentlichung](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Lizenz: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Tests](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
 [![CDN-Anfragen](https://img.shields.io/badge/CDN%20requests-0-success)](#zero-cdn-richtlinie)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -29,7 +29,7 @@ gesamte Anwendung offline arbeitet.
 [**Schnellstart**](#schnellstart) · [**Funktionsübersicht**](#funktionsübersicht) · [**Konfiguration**](#konfiguration--mdini) · [**Dokumentation**](#dokumentation) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**Changelog**](CHANGELOG.md) · [**Sicherheit**](SECURITY.md) · [**Mitwirken**](CONTRIBUTING.md)
 
 > **Dokumentationsstand.** Version und jede Zahl in dieser README wurden am 2026-11-14 gegen
-> den `main`-Baum von 3.4.4 gemessen, wobei der Befehl jeweils dort genannt wird, wo die Zahl
+> den `main`-Baum von 3.5.0 gemessen, wobei der Befehl jeweils dort genannt wird, wo die Zahl
 > erscheint. Aufgabenorientierte Anleitungen liegen im
 > [Wiki](https://github.com/paulmann/MD.Scribe/wiki/Home); die Referenzdokumentation liegt in
 > [`docs/`](docs/installation.md).
@@ -294,7 +294,7 @@ Sicherheitslücke melden: **[SECURITY.md](SECURITY.md)**.
 
 ## In Zahlen
 
-Gemessen am 2026-11-14 gegen den `main`-Baum von 3.4.4:
+Gemessen am 2026-11-14 gegen den `main`-Baum von 3.5.0:
 
 | Bereich | Wert | Messquelle |
 | --- | ---: | --- |

@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.4
+ * Version: 3.5.0
 -->
 
 # MD.Scribe 3
@@ -17,7 +17,7 @@ MD.Scribe 是一个用 PHP 8.5 构建的自托管 Markdown 文档平台：一个
 [![发布](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![测试](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
+[![测试](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
 [![CDN 请求](https://img.shields.io/badge/CDN%20requests-0-success)](#零-cdn-策略)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -26,7 +26,7 @@ MD.Scribe 是一个用 PHP 8.5 构建的自托管 Markdown 文档平台：一个
 
 [**快速开始**](#快速开始) · [**功能导览**](#功能导览) · [**配置**](#配置--mdini) · [**文档**](#文档) · [**Wiki**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**更新日志**](CHANGELOG.md) · [**安全性**](SECURITY.md) · [**参与贡献**](CONTRIBUTING.md)
 
-> **文档状态。** 本 README 中的版本号和每一个数字都于 2026-11-14 针对 3.4.4 的 `main` 树测得，
+> **文档状态。** 本 README 中的版本号和每一个数字都于 2026-11-14 针对 3.5.0 的 `main` 树测得，
 > 并在数字出现处注明所用的命令。面向任务的指南位于
 > [wiki](https://github.com/paulmann/MD.Scribe/wiki/Home)；参考文档位于
 > [`docs/`](docs/installation.md)。
@@ -273,7 +273,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 
 ## 数字一览
 
-于 2026-11-14 针对 3.4.4 的 `main` 树测得：
+于 2026-11-14 针对 3.5.0 的 `main` 树测得：
 
 | 方面 | 数值 | 测量来源 |
 | --- | ---: | --- |

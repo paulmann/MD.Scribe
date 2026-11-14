@@ -1,8 +1,8 @@
-# Project context: MD.Scribe 3.4.4 «Keystone»
+# Project context: MD.Scribe 3.5.0 «Loom»
 
 Deep reference for an agent working on this repository. Read `AGENTS.md` first;
 read the code before asserting anything. Everything here was verified against
-the tree at 3.4.4 — when a line number disagrees with the file, the file wins
+the tree at 3.5.0 — when a line number disagrees with the file, the file wins
 and the disagreement is a documentation defect worth reporting.
 
 Platform facts that changed in the 3.4 line: **PHP floor is 8.5** (anything below is
@@ -278,10 +278,10 @@ If the PHP user differs from the deploy user, the first symptom is
   examining the wrong object. `plan()` downloads the release archive, verifies it
   against the manifest inside it and reports what would change; it writes nothing.
   `apply()` and `plan()` share `openRelease()`, so they cannot drift apart.
-- **Releases:** one tag at a time in the 3.4 line — `v3.4.4` is the only 3.4
-  release (measured 2026-11-14 with `gh release list`); the archive asset
-  `MD.Scribe-3.4.4.zip` is attached and was deployed and verified before the
-  release was published. CI runs on branches and on the release commit.
+- **Releases:** `v3.5.0` (2026-11-14) is the current release, `v3.4.4`
+  (2026-11-13) the previous one; both carry an archive asset. The archive's
+  embedded `config/manifest.json` was verified against the archive contents
+  before publishing. CI runs on branches and on the release commit.
 
 ## 9. Build and test toolchain
 
@@ -301,8 +301,8 @@ and the three root scripts, but **not** `bin/md-scribe-render`. The doctrine che
 enforces `declare(strict_types=1)` in every `src/` file and a PHPStan ratchet that
 forbids new `ignoreErrors` entries (`phpstan.neon:33-34`).
 
-Baseline at 3.4.4 on Windows (PHP 8.5.0): `php vendor\bin\phpunit --no-coverage`
-reports `Tests: 214, Assertions: 678, Skipped: 1`, exit 0; PHPStan level 6 is clean;
+Baseline at 3.5.0 on Windows (PHP 8.5.0): `php vendor\bin\phpunit --no-coverage`
+reports `OK (218 tests, 688 assertions, 1 skipped)`, exit 0; PHPStan level 6 is clean;
 the doctrine checker reports `checks: 12, errors: 0, warnings: 0` (`PASS`). The three
 checks added in 3.4.4 — the manifest media type, the table-layout rules (including
 "both CSS copies are identical") and the ban on paste-ready `types { }` snippets in
@@ -338,7 +338,7 @@ test-portability defect that has since been fixed.
 
 | Question | How to settle it |
 |---|---|
-| Does the published `MD.Scribe-3.4.4.zip` still match the tree? | Compare its embedded `config/manifest.json` against one regenerated from the checkout |
+| Does the published `MD.Scribe-3.5.0.zip` still match the tree? | Compare its embedded `config/manifest.json` against one regenerated from the checkout |
 | Is `bin/md-scribe-render` intentionally outside lint and PHPStan? | Decide, then either add it to `phpstan.neon` paths and the CI `find`, or document the exclusion |
 | Does the `assets` CI job's drift warning ever fire in practice? | Run `node build.mjs` and compare `git diff --stat public/assets` |
 | Should the updater ship a release archive instead of `main`? | Product decision; both failure modes are recorded in §8 |
@@ -377,7 +377,7 @@ test-portability defect that has since been fixed.
 ## 14. Operator guide (kept from AGENTS.md)
 
 The sections below were written for the 3.2.x line and are kept because they answer installation and
-failure-mode questions the developer sections do not repeat. Version references were updated to 3.4.4.
+failure-mode questions the developer sections do not repeat. Version references were updated to 3.5.0.
 
 ### 14.1 What it is
 
@@ -411,7 +411,7 @@ If a check fails, stop and report; do not work around it silently.
 
 #### 14.3.1 From a release (preferred)
 
-Tag `v3.4.4`, asset `MD.Scribe-3.4.4.zip`; the archive bundles `vendor/`, so Composer is not needed.
+Tag `v3.5.0`, asset `MD.Scribe-3.5.0.zip`; the archive bundles `vendor/`, so Composer is not needed.
 Commands from the release notes:
 
 ```bash

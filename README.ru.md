@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.4
+ * Version: 3.5.0
 -->
 
 # MD.Scribe 3
@@ -19,7 +19,7 @@ MD.Scribe — это самостоятельно размещаемая пла�
 [![Релиз](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![Лицензия: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Тесты](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
+[![Тесты](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
 [![Запросы к CDN](https://img.shields.io/badge/CDN%20requests-0-success)](#политика-отказа-от-cdn)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -29,7 +29,7 @@ MD.Scribe — это самостоятельно размещаемая пла�
 [**Быстрый старт**](#быстрый-старт) · [**Обзор возможностей**](#обзор-возможностей) · [**Настройка**](#настройка--mdini) · [**Документация**](#документация) · [**Вики**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**История изменений**](CHANGELOG.md) · [**Безопасность**](SECURITY.md) · [**Участие в проекте**](CONTRIBUTING.md)
 
 > **Состояние документации.** Версия и все числа в этом README измерены 2026-11-14 на дереве
-> `main` версии 3.4.4; команда, которой получено число, названа рядом с ним.
+> `main` версии 3.5.0; команда, которой получено число, названа рядом с ним.
 > Руководства по задачам находятся в [вики](https://github.com/paulmann/MD.Scribe/wiki/Home);
 > справочная документация — в [`docs/`](docs/installation.md).
 
@@ -294,7 +294,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 
 ## В цифрах
 
-Измерено 2026-11-14 на дереве `main` версии 3.4.4:
+Измерено 2026-11-14 на дереве `main` версии 3.5.0:
 
 | Показатель | Значение | Источник измерения |
 | --- | ---: | --- |

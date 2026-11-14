@@ -4,10 +4,17 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 3.5.0 - 2026-11-14
 
 ### Added
 
+- **Mermaid 12.3.0 for authors.** Edge IDs with animation (`A e1@--> B` plus
+  `e1@{ animate: true }` / `e1@{ animation: fast }`), step-by-step flow
+  animation (`e1@{ step: 1 }`, `flowchart.stepDuration`, `flowchart.stepNumbers`),
+  the `A ---o B` and `A ---x B` edge markers, and the `@{ shape: … }` family
+  (manual-file, cylinder, document, paper-tape and the rest). Verified on a
+  18-diagram matrix in a live browser: 17 render, the 18th is the deliberate
+  broken fixture.
 - README translations for Russian, German, Chinese, Hindi, Spanish and French
   (`README.ru.md`, `README.de.md`, `README.zh.md`, `README.hi.md`,
   `README.es.md`, `README.fr.md`) with a language switcher in every language.

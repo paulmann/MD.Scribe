@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.4.4
+ * Version: 3.5.0
 -->
 
 # MD.Scribe 3
@@ -18,7 +18,7 @@ MD.Scribe, PHP 8.5 में लिखा गया एक स्व-होस�
 [![रिलीज़](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![लाइसेंस: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![परीक्षण](https://img.shields.io/badge/tests-214%20passed-brightgreen)](tests)
+[![परीक्षण](https://img.shields.io/badge/tests-218%20passed-brightgreen)](tests)
 [![CDN अनुरोध](https://img.shields.io/badge/CDN%20requests-0-success)](#शून्य-cdn-नीति)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
@@ -28,7 +28,7 @@ MD.Scribe, PHP 8.5 में लिखा गया एक स्व-होस�
 [**त्वरित शुरुआत**](#त्वरित-शुरुआत) · [**विशेषताओं का परिचय**](#विशेषताओं-का-परिचय) · [**कॉन्फ़िगरेशन**](#कॉन्फ़िगरेशन--mdini) · [**दस्तावेज़ीकरण**](#दस्तावेज़ीकरण) · [**विकी**](https://github.com/paulmann/MD.Scribe/wiki) · [**AGENTS.md**](AGENTS.md) · [**चेंजलॉग**](CHANGELOG.md) · [**सुरक्षा**](SECURITY.md) · [**योगदान**](CONTRIBUTING.md)
 
 > **दस्तावेज़ीकरण की स्थिति.** इस README का संस्करण और यहाँ दिया गया हर आंकड़ा 2026-11-14 को
-> 3.4.4 के `main` ट्री पर मापे गए थे, और जहाँ आंकड़ा आता है वहीं उसका कमांड भी नामित है।
+> 3.5.0 के `main` ट्री पर मापे गए थे, और जहाँ आंकड़ा आता है वहीं उसका कमांड भी नामित है।
 > कार्य-उन्मुख मार्गदर्शिकाएँ [विकी](https://github.com/paulmann/MD.Scribe/wiki/Home) में हैं;
 > संदर्भ दस्तावेज़ीकरण [`docs/`](docs/installation.md) में है।
 
@@ -283,7 +283,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 
 ## संख्याओं में
 
-2026-11-14 को 3.4.4 के `main` ट्री पर मापा गया:
+2026-11-14 को 3.5.0 के `main` ट्री पर मापा गया:
 
 | सतह | मान | माप स्रोत |
 | --- | ---: | --- |

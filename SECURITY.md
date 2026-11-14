@@ -10,12 +10,13 @@ control-by-control reasoning and the hardening checklist live in
 
 | Version | Supported | Notes |
 | --- | --- | --- |
-| 3.4.x | Yes | current line (3.4.4 released 2026-11-13) |
-| 3.3.x and earlier | No | upgrade to 3.4.x to receive fixes |
+| 3.5.x | Yes | current line (3.5.0 released 2026-11-14) |
+| 3.4.x | No | previous line; upgrade to 3.5.x to receive fixes |
+| 3.3.x and earlier | No | upgrade to 3.5.x to receive fixes |
 
 Security fixes are released as patch versions on the current line. Older lines are not
 maintained: a report against one is answered with "upgrade and retest" unless the defect
-also reproduces on 3.4.x.
+also reproduces on 3.5.x.
 
 ## Reporting a vulnerability
 
@@ -38,7 +39,7 @@ affected versions.
 
 ## What to include
 
-- The affected version (for example 3.4.4) and whether the defect also reproduces on the
+- The affected version (for example 3.5.0) and whether the defect also reproduces on the
   latest release.
 - The deployment shape: docroot at `public/` or at the project root, PHP version, web
   server and SAPI, and the relevant non-default `.md.ini` keys (`ALLOW_RAW_HTML`,
