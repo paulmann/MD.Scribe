@@ -4,6 +4,44 @@ All notable changes to this project are documented here. The format is
 [Keep a Changelog](https://keepachangelog.com/en/2.0.0/) 2.0.0, and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 3.6.3 - 2026-11-14
+
+An errata slip lists what a book got wrong. Both fixes here were found the same way: by
+opening a page that had been working and getting a 404.
+
+### Fixed
+
+- **The library listed file names with their first character missing.** `scan()` walks a
+  base directory that the path validator returns already resolved through `realpath()`, then
+  built each relative path with `substr($full, strlen($root))` — where `$root` was the
+  *unresolved* browse root. When the content directory is a symlink (the documented release
+  layout: `<release>/content -> mdscribe-data/content`) the two prefixes differ in length,
+  the cut lands inside the last segment, and every file in a sub-directory loses its first
+  letter. Measured in production: `index.md` was listed as `ndex.md`,
+  `autoyap-roles-security-2026-11-13.md` as `utoyap-roles-security-2026-11-13.md`, and every
+  link the browser offered answered 404 while the viewer itself was fine
+  (`?file=autoyap/autoyap-roles-security-2026-11-13.md` → 200). Paths are now relative to
+  the same resolved root the walk started from, and a path outside it is logged and skipped
+  instead of truncated. Three tests build that layout; with the old arithmetic all three
+  fail.
+- **A config that cannot be read is no longer replaced with defaults.** `Config::load()`
+  treated "file exists" as "file is readable", carried on with empty values and called
+  `appendMissingKeys()`, which rewrote the file — destroying whatever it held. Measured in
+  production: a config written by the CLI as `root:root 0640` was unreadable for the pool
+  user, and the next request replaced 1 166 bytes of settings with defaults, taking the site
+  name and the home document with it, without a word in the log. `readIniFile()` now
+  distinguishes parsed keys, an empty or absent file (a legitimate first run) and an
+  existing file that cannot be read; in the last case the app runs on defaults, marks the
+  config unwritable and logs the failure.
+
+### Verification
+
+- PHPUnit on Linux as a non-root user: `OK (241 tests, 865 assertions)`, 0 skipped — the two
+  cases Windows cannot stage (an unreadable config, a dangling symlink) run there.
+- PHPStan level 6 clean; doctrine checker 12 checks, 0 errors, 0 warnings.
+- Live check after the deploy: the browser lists `autoyap/autoyap-roles-security-2026-11-13.md`
+  and that link answers 200; `?file=autoyap/…` still answers 200 for the folder form.
+
 ## 3.6.2 - 2026-11-14
 
 A colophon is the note at the end of a book that says how it was made. This release is

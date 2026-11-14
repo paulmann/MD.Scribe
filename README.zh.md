@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.6.2
+ * Version: 3.6.3
 -->
 
 # MD.Scribe 3
@@ -17,7 +17,7 @@ MD.Scribe 是一个用 PHP 8.5 构建的自托管 Markdown 文档平台：一个
 [![发布](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![许可证：MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![测试](https://img.shields.io/badge/tests-236%20passed-brightgreen)](tests)
+[![测试](https://img.shields.io/badge/tests-241%20passed-brightgreen)](tests)
 [![CDN 请求](https://img.shields.io/badge/CDN%20requests-0-success)](#零-cdn-策略)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"

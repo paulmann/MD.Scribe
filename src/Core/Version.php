@@ -10,8 +10,8 @@ namespace MdViewer\Core;
 
 final class Version
 {
-    public const string VERSION = '3.6.2';
-    public const string CODENAME = 'Colophon';
+    public const string VERSION = '3.6.3';
+    public const string CODENAME = 'Errata';
     public const string PHP_MIN = '8.5.0';
     public const string REPO = 'https://github.com/paulmann/MD.Scribe';
     public const string RAW_BASE = 'https://raw.githubusercontent.com/paulmann/MD.Scribe/main';

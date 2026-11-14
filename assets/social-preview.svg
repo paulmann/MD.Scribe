@@ -29,7 +29,7 @@
   <line x1="48" y1="460" x2="1232" y2="460" stroke="#22303f" stroke-width="1"/>
   <text x="144" y="443" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="15" fill="#96a4b2" text-anchor="start">MD.Scribe · paulmann.github.io/MD.Scribe</text>
   <text x="76" y="486" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#e6edf3" text-anchor="start"><tspan fill="#4f9cf9">$ </tspan>php -S localhost:8080 -t public public/router.php</text>
-  <text x="76" y="513" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#96a4b2" text-anchor="start">MD.Scribe 3.6.2 - Colophon</text>
+  <text x="76" y="513" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#96a4b2" text-anchor="start">MD.Scribe 3.6.3 - Errata</text>
   <text x="76" y="540" font-family="Consolas, 'DejaVu Sans Mono', monospace" font-size="17" fill="#96a4b2" text-anchor="start">218 tests, 688 assertions - PHPStan level 6</text>
   <text x="48" y="606" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="19" font-weight="700" fill="#e6edf3" text-anchor="start">github.com/paulmann/MD.Scribe</text>
   <text x="1232" y="606" font-family="'Segoe UI', 'DejaVu Sans', sans-serif" font-size="19" font-weight="700" fill="#e6edf3" text-anchor="end">paulmann.github.io/MD.Scribe</text>

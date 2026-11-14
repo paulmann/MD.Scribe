@@ -140,7 +140,7 @@ Consequences worth remembering:
 ## Backend tooling
 
 ```bash
-composer test             # PHPUnit (236 tests, 846 assertions)
+composer test             # PHPUnit (241 tests, 865 assertions)
 composer stan             # PHPStan level 6 (strict types everywhere)
 composer check            # both
 php tools/build-manifest.php   # regenerate config/manifest.json (release step)
@@ -223,9 +223,9 @@ Three tools exist so a deploy cannot quietly succeed at the wrong thing:
 | `tools/deploy/verify-tree.php` | the host (`/usr/local/lib/mdscribe/`) | one tree against its own manifest — used after the switch and on demand |
 
 ```bash
-php tools/verify-release.php --version=3.6.2    # artifact level, anywhere
-mdscribe-deploy 3.6.2 --dry-run                  # placement level, on the host
-mdscribe-deploy 3.6.2                            # install, verify, roll back on failure
+php tools/verify-release.php --version=3.6.3    # artifact level, anywhere
+mdscribe-deploy 3.6.3 --dry-run                  # placement level, on the host
+mdscribe-deploy 3.6.3                            # install, verify, roll back on failure
 mdscribe-deploy --status | --rollback | --install-tools
 ```
 

@@ -1,6 +1,6 @@
 <!--
  * MD.Scribe — Documentation
- * Version: 3.6.2
+ * Version: 3.6.3
 -->
 
 # MD.Scribe 3
@@ -18,7 +18,7 @@ MD.Scribe, PHP 8.5 में लिखा गया एक स्व-होस�
 [![रिलीज़](https://img.shields.io/github/v/release/paulmann/MD.Scribe?label=release&sort=semver)](https://github.com/paulmann/MD.Scribe/releases)
 [![लाइसेंस: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PHP 8.5](https://img.shields.io/badge/PHP-8.5-777BB4?logo=php&logoColor=white)](https://php.net)
-[![परीक्षण](https://img.shields.io/badge/tests-236%20passed-brightgreen)](tests)
+[![परीक्षण](https://img.shields.io/badge/tests-241%20passed-brightgreen)](tests)
 [![CDN अनुरोध](https://img.shields.io/badge/CDN%20requests-0-success)](#शून्य-cdn-नीति)
 
 <img src="https://github.com/paulmann/MD.Scribe/raw/main/assets/social-preview.png"
