@@ -53,6 +53,12 @@ All notable changes to this project are documented here. The format is
   so editing prose changed the bundle; now a prose edit leaves it alone, which
   is what makes the blocking drift check stable.
 
+- **PHPUnit 12.5** (was 11.5). PHPUnit 12 reports any output a test produces as
+  risky, and one test exercises a path where the application logs through
+  rror_log(). The test now declares that line with
+  xpectOutputRegex() instead of the suite silencing the check: the warning is
+  part of the contract, so it is asserted rather than hidden.
+
 ### Fixed
 
 - **A deploy could remove `vendor/` and still look successful.** Running

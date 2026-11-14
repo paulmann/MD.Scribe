@@ -298,7 +298,7 @@ Measured on 2026-11-14 against the `main` tree of 3.5.0:
 | --- | ---: | --- |
 | PHP source files | 116 | `Get-ChildItem src,public,templates -Recurse -Filter *.php` |
 | Test files | 22 | `Get-ChildItem tests -Recurse -Filter *.php` |
-| PHPUnit tests | 214 tests, 678 assertions, 1 skipped | `composer test` |
+| PHPUnit tests | 218 tests, 689 assertions | `composer test` |
 | Documentation pages | 12 | `Get-ChildItem docs -Filter *.md` |
 | Runtime Composer packages | 2 (`league/commonmark`, `scrivo/highlight.php`) | `composer.json` → `require` |
 | Curated themes | 12 | `config/themes.php` |
@@ -312,7 +312,7 @@ Measured on 2026-11-14 against the `main` tree of 3.5.0:
 composer install                 # dev deps: phpunit, phpstan
 cd tools/frontend && npm install && node build.mjs && cd ../..
 
-composer test                    # 214 PHPUnit tests, 678 assertions
+composer test                    # 218 PHPUnit tests, 689 assertions
 composer stan                    # PHPStan level 6
 php -S localhost:8080 -t public public/router.php
 ```
@@ -416,7 +416,7 @@ works. Step-by-step: **[docs/upgrade-from-v2.md](docs/upgrade-from-v2.md)**.
 ## Contributing
 
 One logical change per pull request, a test for new behaviour, and no new runtime dependency
-without a discussion first. The gates are `composer test` (214 tests) and `composer stan`
+without a discussion first. The gates are `composer test` (218 tests) and `composer stan`
 (PHPStan level 6); both must exit `0`. Conventions, commit style, the documentation language
 policy and the bug-report checklist: **[CONTRIBUTING.md](CONTRIBUTING.md)**. This project follows
 the [Contributor Covenant 2.1](CODE_OF_CONDUCT.md); help with a question or a triage is

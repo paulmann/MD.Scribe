@@ -302,7 +302,7 @@ enforces `declare(strict_types=1)` in every `src/` file and a PHPStan ratchet th
 forbids new `ignoreErrors` entries (`phpstan.neon:33-34`).
 
 Baseline at 3.5.0 on Windows (PHP 8.5.0): `php vendor\bin\phpunit --no-coverage`
-reports `OK (218 tests, 688 assertions, 1 skipped)`, exit 0; PHPStan level 6 is clean;
+reports `OK (218 tests, 689 assertions)`, exit 0; PHPStan level 6 is clean;
 the doctrine checker reports `checks: 12, errors: 0, warnings: 0` (`PASS`). The three
 checks added in 3.4.4 — the manifest media type, the table-layout rules (including
 "both CSS copies are identical") and the ban on paste-ready `types { }` snippets in
@@ -596,7 +596,7 @@ API answers `{ok, data}` / `{ok: false, error: {code, message}}`. Admin JSON sta
 - `.github/workflows/ci.yml` — lint, PHPStan level 6, PHPUnit and the smoke commands in 14.3.3.
 
 Verification note: the operator sections were written for the 3.2.x line and re-checked against the
-3.4.4 tree on 2026-11-14. The PHPUnit baseline (214 tests, 678 assertions, 1 skipped) and the
+3.4.4 tree on 2026-11-14. The 3.4.4 PHPUnit baseline (214 tests, 678 assertions, 1 skipped, superseded by 218 tests, 689 assertions) and the
 doctrine checker (12 checks, 0 errors, 0 warnings) were measured in this clone with `vendor/`
 installed; the HTTP examples were not re-executed for every status code, so treat them as documented
 behaviour from the files named here.

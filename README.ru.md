@@ -300,7 +300,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 | --- | ---: | --- |
 | Исходные файлы PHP | 116 | `Get-ChildItem src,public,templates -Recurse -Filter *.php` |
 | Тестовые файлы | 22 | `Get-ChildItem tests -Recurse -Filter *.php` |
-| Тесты PHPUnit | 214 тестов, 678 утверждений, 1 пропущен | `composer test` |
+| Тесты PHPUnit | 218 тестовов, 678 утверждений, 1 пропущен | `composer test` |
 | Страницы документации | 12 | `Get-ChildItem docs -Filter *.md` |
 | Пакеты Composer во время выполнения | 2 (`league/commonmark`, `scrivo/highlight.php`) | `composer.json` → `require` |
 | Отобранные темы | 12 | `config/themes.php` |
@@ -314,7 +314,7 @@ curl -H "X-Api-Key: $API_KEY" -H 'Content-Type: application/json' \
 composer install                 # dev deps: phpunit, phpstan
 cd tools/frontend && npm install && node build.mjs && cd ../..
 
-composer test                    # 214 PHPUnit tests, 678 assertions
+composer test                    # 218 PHPUnit tests, 689 assertions
 composer stan                    # PHPStan level 6
 php -S localhost:8080 -t public public/router.php
 ```
@@ -419,7 +419,7 @@ MD.Scribe/
 
 Одно логическое изменение на pull request, тест на новое поведение и никаких новых зависимостей
 времени выполнения без предварительного обсуждения. Обязательные проверки — `composer test`
-(214 тестов) и `composer stan` (PHPStan уровня 6); обе должны завершиться с кодом `0`.
+(218 тестовов) и `composer stan` (PHPStan уровня 6); обе должны завершиться с кодом `0`.
 Соглашения, стиль коммитов, языковая политика документации и контрольный список для отчёта об
 ошибке: **[CONTRIBUTING.md](CONTRIBUTING.md)**. Проект следует
 [Contributor Covenant 2.1](CODE_OF_CONDUCT.md); помощь с вопросом или разбором описана в

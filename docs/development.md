@@ -140,7 +140,7 @@ Consequences worth remembering:
 ## Backend tooling
 
 ```bash
-composer test             # PHPUnit (218 tests, 1 skipped)
+composer test             # PHPUnit (218 tests, 689 assertions)
 composer stan             # PHPStan level 6 (strict types everywhere)
 composer check            # both
 php tools/build-manifest.php   # regenerate config/manifest.json (release step)
