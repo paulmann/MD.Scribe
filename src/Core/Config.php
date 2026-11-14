@@ -384,23 +384,62 @@ final class Config
         $this->persistKey($key);
     }
 
+    /**
+     * The file a write must land in.
+     *
+     * `.md.ini` is a symlink in a release-directory layout: the deploy points it at
+     * `mdscribe-data/.md.ini`, which is the only runtime state that survives an
+     * upgrade. `rename()` replaces the *link*, not its target, so writing to
+     * `$this->iniPath` directly turned the documented layout inside out — measured on
+     * 2026-11-14 in production: after one page request the release held a 1 125-byte
+     * regular `.md.ini` while `mdscribe-data/.md.ini` stayed an 18-byte seed, and the
+     * next deploy would have seeded the new release from that seed, silently discarding
+     * every panel setting (and the admin password hash).
+     *
+     * Symlinks are therefore resolved once, before the temp file is placed: the rename
+     * then replaces the target file and the link survives, atomically, with the same
+     * permissions.
+     */
+    private function writeTarget(): string
+    {
+        if (!is_link($this->iniPath)) {
+            return $this->iniPath;
+        }
+        $resolved = realpath($this->iniPath);
+        if (is_string($resolved)) {
+            return $resolved;
+        }
+        // Dangling link: the file it names does not exist yet. Write where it points,
+        // so the next read finds the settings instead of recreating the link's target
+        // from scratch.
+        $linkTarget = readlink($this->iniPath);
+        if (!is_string($linkTarget) || $linkTarget === '') {
+            return $this->iniPath;
+        }
+        $absolute = str_starts_with($linkTarget, '/')
+            || preg_match('#^[A-Za-z]:[/\\\\]#', $linkTarget) === 1;
+
+        return $absolute ? $linkTarget : dirname($this->iniPath) . DIRECTORY_SEPARATOR . $linkTarget;
+    }
+
     private function writeIni(string $content): void
     {
-        $dir = dirname($this->iniPath);
+        $target = $this->writeTarget();
+        $dir = dirname($target);
         if (!is_dir($dir)) {
             $this->writable = false;
 
             return;
         }
-        $tmp = $this->iniPath . '.' . bin2hex(random_bytes(4)) . '.tmp';
+        $tmp = $target . '.' . bin2hex(random_bytes(4)) . '.tmp';
         if (@file_put_contents($tmp, $content, LOCK_EX) === false) {
             $this->writable = false;
-            error_log("[MD.Scribe] cannot write {$this->iniPath} — running with in-memory defaults");
+            error_log("[MD.Scribe] cannot write {$target} — running with in-memory defaults");
 
             return;
         }
         @chmod($tmp, 0o640);
-        if (!@rename($tmp, $this->iniPath)) {
+        if (!@rename($tmp, $target)) {
             @unlink($tmp);
             $this->writable = false;
         }

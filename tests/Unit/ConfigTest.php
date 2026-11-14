@@ -29,6 +29,63 @@ final class ConfigTest extends TestCase
         self::assertStringContainsString($key, (string) file_get_contents($this->tmpRoot . '/.md.ini'));
     }
 
+    /**
+     * A release-directory layout points `.md.ini` at `mdscribe-data/.md.ini`, because
+     * that is the only runtime state an upgrade does not replace. `rename()` replaces
+     * the link, not its target — measured in production on 2026-11-14: after one page
+     * request the release held the config and the data directory kept an 18-byte seed,
+     * which the next deploy would have used to seed the new release.
+     */
+    public function testWritingThroughASymlinkKeepsTheLinkAndUpdatesTheTarget(): void
+    {
+        $data = $this->tmpRoot . '/data';
+        $release = $this->tmpRoot . '/release';
+        @mkdir($data, 0o777, true);
+        @mkdir($release, 0o777, true);
+        $target = $data . '/.md.ini';
+        file_put_contents($target, "SITE_NAME = Seed\n");
+        $link = $release . '/.md.ini';
+        if (!@symlink($target, $link)) {
+            self::markTestSkipped('symlinks are not permitted here (Windows needs a privilege); CI covers this');
+        }
+        self::assertTrue(is_link($link));
+
+        $config = Config::loadFrom($link);
+        $config->set('SITE_NAME', 'Probe Site');
+
+        self::assertTrue(is_link($link), 'the deploy symlink must survive a settings save');
+        // realpath() on Windows can return an 8.3 short path for the resolved link, so
+        // compare identity, not spelling.
+        self::assertSame(fileinode($target), fileinode($link), 'the link must still resolve to the data file');
+        $written = (string) file_get_contents($target);
+        self::assertStringContainsString('SITE_NAME = Probe Site', $written);
+        self::assertStringContainsString('ADMIN_PASSWORD_HASH', $written, 'the full schema goes to the target');
+        Config::reset();
+    }
+
+    /** A dangling link names a file that does not exist yet: write it there, keep the link. */
+    public function testWritingThroughADanglingSymlinkCreatesTheTarget(): void
+    {
+        $data = $this->tmpRoot . '/data2';
+        $release = $this->tmpRoot . '/release2';
+        @mkdir($data, 0o777, true);
+        @mkdir($release, 0o777, true);
+        $target = $data . '/.md.ini';
+        $link = $release . '/.md.ini';
+        if (!@symlink($target, $link)) {
+            self::markTestSkipped('symlinks are not permitted here (Windows needs a privilege); CI covers this');
+        }
+        self::assertFalse(is_file($link));
+
+        Config::loadFrom($link);
+        Config::instance()->set('SITE_NAME', 'Created Through');
+
+        self::assertTrue(is_link($link));
+        self::assertFileExists($target);
+        self::assertStringContainsString('SITE_NAME = Created Through', (string) file_get_contents($target));
+        Config::reset();
+    }
+
     public function testAppendsMissingKeysWithoutTouchingExistingOnes(): void
     {
         file_put_contents($this->tmpRoot . '/.md.ini', "; custom comment\nSITE_NAME = My Docs\nUNKNOWN_KEY = kept\n");
