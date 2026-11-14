@@ -42,6 +42,15 @@ invisible to PHPUnit.
 
 ## Non-negotiable rules
 
+0. **Mass deletion is dry-run first, and never a glob outside the task.** `rm` with a
+   wildcard, `find … -delete`, `git clean`, `DROP`/`TRUNCATE`, a bulk `UPDATE`/`DELETE` —
+   each first prints the list of targets and their count, or runs in a sandbox copy. No
+   list, no command. This is not theoretical: on 2026-11-14 a cleanup step ran
+   `rm -f /root/*.sh` on a production host and deleted 170 operator scripts; they came back
+   from `/mnt/archives/backup.RSYNC/<date>/root` (`rsync -a --ignore-existing`), but only
+   because a daily snapshot existed. A wildcard is allowed inside this repository's own
+   scratch directories (`.work/`); anywhere else, name the files.
+
 1. **PHP 8.5 is the floor, not a target.** `Version::PHP_MIN = '8.5.0'`, `composer.json` requires `>=8.5`,
    and `src/bootstrap.php` answers HTTP 500 below it; CI runs 8.5 only. Never lower the floor or patch the gate.
 2. **One path validator.** Every request value reaches the filesystem only through

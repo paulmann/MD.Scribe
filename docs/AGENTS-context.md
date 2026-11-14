@@ -11,6 +11,14 @@ manifest is served by the application rather than as a static file.
 
 ---
 
+## Deletion protocol (read before any bulk `rm`)
+
+A wildcard in an `rm`, `find -delete`, `git clean` or a bulk `DELETE`/`DROP` runs only
+after the target list and its count have been printed, or inside a sandbox copy. Wildcards
+are allowed in this repository's scratch directories and nowhere else. On 2026-11-14
+`rm -f /root/*.sh` on a production host removed 170 operator scripts; the daily rsync
+snapshots under `/mnt/archives/backup.RSYNC/<date>/root` restored all of them.
+
 ## 1. What the product is
 
 A self-hosted documentation platform: point it at a folder of `.md` files and it
