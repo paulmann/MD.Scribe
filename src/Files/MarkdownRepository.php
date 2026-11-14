@@ -79,8 +79,19 @@ final class MarkdownRepository
      */
     public function scan(?string $subDir = null): array
     {
+        // The scan walks a *resolved* base, so the prefix used to make paths relative
+        // has to be the resolved root as well. They differ whenever the content
+        // directory is a symlink — which is the documented release layout, where
+        // `<release>/content -> mdscribe-data/content`. Measured on 2026-11-14: with the
+        // unresolved root ("…/3.6.2/content", 23 characters after the common prefix) and
+        // a resolved path ("…/mdscribe-data/content/autoyap/…", 22), substr() cut one
+        // character too many and every file in the folder lost its first letter —
+        // `autoyap-roles-security.md` became `utoyap-roles-security.md` and `index.md`
+        // became `ndex.md`, so the browser listed names that do not exist and every link
+        // it offered answered 404.
         $root = $this->browseDir();
-        $base = $root;
+        $resolvedRoot = realpath($root);
+        $base = $resolvedRoot !== false ? $resolvedRoot : $root;
         if ($subDir !== null && $subDir !== '') {
             $resolved = $this->validator->validateDir($subDir, $root);
             if ($resolved === null) {
@@ -119,7 +130,15 @@ final class MarkdownRepository
                 if (!str_ends_with(strtolower($entry), '.md') || str_starts_with($entry, '.')) {
                     continue;
                 }
-                $relative = ltrim(str_replace('\\', '/', substr($full, strlen($root))), '/');
+                // Relative to the same resolved root the walk started from; a path that
+                // does not sit under it is a defect worth a log line rather than a
+                // truncated name.
+                $prefix = $resolvedRoot !== false ? $resolvedRoot : $root;
+                if (!str_starts_with($full, rtrim($prefix, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
+                    $this->logger->warning('scan: path outside the browse root', ['path' => $full, 'root' => $prefix]);
+                    continue;
+                }
+                $relative = ltrim(str_replace('\\', '/', substr($full, strlen(rtrim($prefix, DIRECTORY_SEPARATOR)))), '/');
                 $stat = @stat($full);
                 $size = is_array($stat) ? (int) $stat['size'] : 0;
                 $mtime = is_array($stat) ? (int) $stat['mtime'] : 0;
