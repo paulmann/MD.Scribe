@@ -102,10 +102,20 @@ foreach ($iterator as $item) {
 
 usort($files, static fn (array $a, array $b): int => strcmp($a['path'], $b['path']));
 
+// Reproducible builds: honour SOURCE_DATE_EPOCH (the standard pin) instead of the
+// wall clock, so one commit yields one manifest and one archive digest.
+$epoch = getenv('SOURCE_DATE_EPOCH');
+$generated = is_string($epoch) && preg_match('/^\d+$/', $epoch) === 1
+    ? gmdate('c', (int) $epoch)
+    : date('c');
+
 $manifest = [
     'app' => 'MD.Scribe',
     'version' => Version::VERSION,
-    'generated' => date('c'),
+    // SOURCE_DATE_EPOCH lets a build pin this field, which is otherwise the only
+    // non-reproducible byte in the manifest: two builds of one commit produced
+    // different archives (same size, different sha256) purely because of it.
+    'generated' => $generated,
     'php_min' => Version::PHP_MIN,
     'files' => $files,
 ];
