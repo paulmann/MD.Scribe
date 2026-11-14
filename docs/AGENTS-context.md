@@ -11,13 +11,25 @@ manifest is served by the application rather than as a static file.
 
 ---
 
-## Deletion protocol (read before any bulk `rm`)
+## Deletion and modification protocol (read before any bulk `rm` or `sed -i`)
 
-A wildcard in an `rm`, `find -delete`, `git clean` or a bulk `DELETE`/`DROP` runs only
-after the target list and its count have been printed, or inside a sandbox copy. Wildcards
-are allowed in this repository's scratch directories and nowhere else. On 2026-11-14
-`rm -f /root/*.sh` on a production host removed 170 operator scripts; the daily rsync
-snapshots under `/mnt/archives/backup.RSYNC/<date>/root` restored all of them.
+Two operations have the same protocol, because both are unrecoverable in the same way.
+
+**Deletion** — a wildcard in `rm`, `find -delete`, `git clean`, a bulk `DELETE`/`DROP`:
+print the target list and its count first, or work in a sandbox copy. Wildcards are allowed
+in this repository's scratch directories and nowhere else. On 2026-11-14 `rm -f /root/*.sh`
+on a production host removed 170 operator scripts; the daily rsync snapshots under
+`/mnt/archives/backup.RSYNC/<date>/root` restored all of them.
+
+**Modification** — `sed -i`, a bulk replacement, rewriting configs, `rsync`/deploy over a
+tree, a bulk `UPDATE`/`ALTER`, a recursive `chmod`/`chown`: run it on one test file (or a
+copy of the directory) and read the diff, then as a dry run that prints the file list and
+the number of changes, and only then on the real tree — with a dated backup and a
+before/after count. A replacement that matched more or fewer places than expected is a
+stop sign, not a rounding error.
+
+Both end with a reverse check: the number of changed files equals the number expected, and
+anything unexpected is listed and explained.
 
 ## 1. What the product is
 

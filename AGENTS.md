@@ -42,14 +42,18 @@ invisible to PHPUnit.
 
 ## Non-negotiable rules
 
-0. **Mass deletion is dry-run first, and never a glob outside the task.** `rm` with a
-   wildcard, `find … -delete`, `git clean`, `DROP`/`TRUNCATE`, a bulk `UPDATE`/`DELETE` —
-   each first prints the list of targets and their count, or runs in a sandbox copy. No
-   list, no command. This is not theoretical: on 2026-11-14 a cleanup step ran
-   `rm -f /root/*.sh` on a production host and deleted 170 operator scripts; they came back
-   from `/mnt/archives/backup.RSYNC/<date>/root` (`rsync -a --ignore-existing`), but only
-   because a daily snapshot existed. A wildcard is allowed inside this repository's own
-   scratch directories (`.work/`); anywhere else, name the files.
+0. **Mass deletion and mass modification are dry-run first, never a glob outside the
+   task.** Deletion — `rm` with a wildcard, `find … -delete`, `git clean`,
+   `DROP`/`TRUNCATE`, a bulk `DELETE`; modification — `sed -i`, a bulk replacement,
+   rewriting configs, `rsync`/deploy over a tree, a bulk `UPDATE`/`ALTER`, a recursive
+   `chmod`/`chown`. Each of them runs in this order, always: (1) on one test file or a copy
+   of the directory, and the diff is read; (2) as a dry run that prints the target list and
+   its count; (3) on the real tree, with a dated backup and a before/after count. No list,
+   no command. This is not theoretical: on 2026-11-14 a cleanup step ran `rm -f /root/*.sh`
+   on a production host and deleted 170 operator scripts — restored from
+   `/mnt/archives/backup.RSYNC/<date>/root`, but only because a daily snapshot existed. A
+   wildcard is allowed inside this repository's own scratch directories (`.work/`);
+   anywhere else, name the files.
 
 1. **PHP 8.5 is the floor, not a target.** `Version::PHP_MIN = '8.5.0'`, `composer.json` requires `>=8.5`,
    and `src/bootstrap.php` answers HTTP 500 below it; CI runs 8.5 only. Never lower the floor or patch the gate.
