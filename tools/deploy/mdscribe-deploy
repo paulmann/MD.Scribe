@@ -33,6 +33,7 @@ MARKER="$BASE/.mdscribe-layout"
 PREV_FILE="$BASE/.mdscribe-previous"
 OWNER=ozon:ozon
 VERIFY=/usr/local/lib/mdscribe/verify-tree.php
+PAGE_FP=/usr/local/lib/mdscribe/page-fingerprint.php
 CACHE=/var/cache/mdscribe
 LOG=/var/log/mdscribe-deploy.log
 PUBLIC_URL=https://autoyap.ru/mdscribe
@@ -197,6 +198,26 @@ normalize_perms() {
 # ── Post-deploy verification ─────────────────────────────────────────────────
 http_code() {
     curl -s -o /dev/null -m 25 -w '%{http_code}' "$PUBLIC_URL$1" || printf '000'
+}
+
+# ── Release evidence ────────────────────────────────────────────────────────
+# Three values that can be quoted next to a release tag and re-measured later:
+# the version, a fingerprint of the tree computed from the release manifest, and
+# a fingerprint of the served page with the per-request nonce and CSRF token
+# normalised away. "HTTP 200" says a request was answered; this says what was
+# answered.
+print_evidence() {
+    local tree page
+    if [ -f "$VERIFY" ]; then
+        tree="$(php "$VERIFY" "$APP" --fingerprint 2>/dev/null || true)"
+    fi
+    if [ -f "$PAGE_FP" ]; then
+        page="$(php "$PAGE_FP" "$PUBLIC_URL/" 2>/dev/null || true)"
+    fi
+    log "=== release evidence ==="
+    log "version:  ${VERSION:-unknown}"
+    log "tree:     ${tree:-unavailable}  (fingerprint entries version)"
+    log "page:     ${page:-unavailable}  (sha256 bytes url)"
 }
 
 verify_live() {
@@ -461,6 +482,7 @@ cmd_deploy() {
     reset_opcache || log "WARN  opcache was not reset; the new code may not be live yet"
 
     if verify_live; then
+        print_evidence
         log "=== deploy $VERSION OK (previous: $previous) ==="
         prune
         return 0
@@ -498,7 +520,7 @@ cmd_rollback() {
         log "would verify; nothing was written"
         return 0
     fi
-    verify_live lenient && log "=== rollback OK ===" || { log "=== rollback left the site broken ==="; exit 1; }
+    verify_live lenient && { print_evidence; log "=== rollback OK ==="; } || { log "=== rollback left the site broken ==="; exit 1; }
 }
 
 cmd_status() {
@@ -519,13 +541,17 @@ cmd_status() {
 
 cmd_install_tools() {
     need_root
-    local self source
+    local self source page
     self="$(readlink -f "$0")"
+    page="$(dirname "$self")/page-fingerprint.php"
     source="$(dirname "$self")/verify-tree.php"
     [ -f "$source" ] || die "verify-tree.php not found next to $0"
+    [ -f "$page" ] || die "page-fingerprint.php not found next to $0"
     run mkdir -p "$(dirname "$VERIFY")"
     run install -m 0644 "$source" "$VERIFY"
+    run install -m 0644 "$page" "$PAGE_FP"
     log "installed $VERIFY"
+    log "installed $PAGE_FP"
     if [ "$self" != "/usr/local/bin/mdscribe-deploy" ]; then
         run install -m 0755 "$self" /usr/local/bin/mdscribe-deploy
         log "installed /usr/local/bin/mdscribe-deploy"

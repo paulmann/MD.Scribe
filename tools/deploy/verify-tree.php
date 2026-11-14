@@ -32,9 +32,10 @@ function fail(string $message): never
 
 $root = rtrim($argv[1] ?? '', '/');
 if ($root === '' || !is_dir($root)) {
-    fail('usage: php verify-tree.php /path/to/mdscribe [--quiet-summary]');
+    fail('usage: php verify-tree.php /path/to/mdscribe [--quiet-summary] [--fingerprint]');
 }
 $quiet = in_array('--quiet-summary', $argv, true);
+$fingerprintOnly = in_array('--fingerprint', $argv, true);
 
 $manifestFile = $root . '/config/manifest.json';
 if (!is_file($manifestFile)) {
@@ -97,10 +98,31 @@ if ($unsafe === '') {
 
 $version = (string) ($manifest['version'] ?? '?');
 $total = count($known);
+
+// A single value that names this tree. It is computed from the manifest's own
+// (path, sha256) pairs, so two installations of the same release print the same
+// fingerprint and any difference in a shipped file changes it. Quote it next to a
+// release tag; re-measure it later to prove the tree is still that release.
+$digest = hash_init('sha256');
+hash_update($digest, 'mdscribe-tree-v1\n');
+foreach ($entries as $entry) {
+    if (!is_array($entry)) {
+        continue;
+    }
+    hash_update($digest, (string) ($entry['path'] ?? '') . "\0" . (string) ($entry['sha256'] ?? '') . "\n");
+}
+$treeFingerprint = hash_final($digest);
+
+if ($fingerprintOnly) {
+    printf("%s %d %s\n", $treeFingerprint, count($entries), $version);
+    exit(0);
+}
+
 if (!$quiet) {
     printf("tree:     %s\n", $root);
     printf("manifest: %d entries, version %s\n", count($entries), $version);
 }
+printf("fingerprint: %s\n", $treeFingerprint);
 printf("verified: %d, missing: %d, modified: %d, unexpected: %d\n", $total - count($missing) - count($modified), count($missing), count($modified), count($extra));
 if ($unsafe !== '') {
     printf("UNSAFE manifest entry: %s\n", $unsafe);
