@@ -132,7 +132,12 @@ for cron use (see development docs).
   asset that ships `vendor/`; a branch tarball is never used, it cannot satisfy
   its own manifest), refuses paths that escape the tree, verifies **every file**
   against the archive's sha256 manifest (mismatch → refuse the whole update),
-  backs up the files it will replace, swaps only the changed ones.
+  backs up the files it will replace, swaps only the changed ones, and installs
+  the archive's own `config/manifest.json`. The manifest is part of the update:
+  `config/manifest.json` is excluded from its own file list, so a swap that
+  skipped it would leave the new files described by the old manifest and every
+  later check would report them as modified locally. The previous manifest travels
+  in the backup, so a restore puts the pairing back.
   `content/`, `storage/`, `.md.ini` are never touched.
 - **Dry run** (`POST …&action=install&dry_run=1`, or `Updater::plan()`) — the same
   download and verification with no writes; it reports the files that would be
@@ -142,6 +147,16 @@ for cron use (see development docs).
 - Machine API for external tooling stays v2-compatible through `updater.php`
   (reached via the shipped `public/updater.php` bridge on a docroot-`public`
   install) — see [http-api.md](http-api.md#machine-api-v2-compatible).
+
+### Panel update or `mdscribe-deploy`?
+
+| You want | Use |
+| --- | --- |
+| Click once, keep the current directory layout | Admin → Updates (needs `ALLOW_UPDATE = true` and the PHP `zip` extension) |
+| Place a release as a unit, switch atomically, roll back with one command | `mdscribe-deploy <version>` on the host |
+| Files were changed locally and must not be silently overwritten | either — both refuse an archive that disagrees with itself, and both back up before writing |
+| A value to quote next to a release tag | `mdscribe-deploy` prints the tree and page fingerprints; the panel does not |
+| No `ALLOW_UPDATE` on a production box | `mdscribe-deploy` — it does not read `.md.ini` for permission and never touches runtime state |
 
 ## Settings
 

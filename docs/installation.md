@@ -132,11 +132,53 @@ chmod 640 .md.ini          # contains the API key & password hash
 
 ## Upgrading
 
-**Admin → Updates** (or `updater.php?update=true` with `ALLOW_UPDATE = true`)
-downloads the release archive, verifies every file against its sha256
-manifest, backs up replaced files to `storage/backups/app-*/` and swaps them.
-`content/`, `storage/` and `.md.ini` are never touched. Manual upgrades:
-replace the code directories, keep those three.
+Two supported paths, and they answer different questions.
+
+**Through the product** — Admin → Updates (or `updater.php?update=true` with
+`ALLOW_UPDATE = true`) downloads the release archive, verifies every file against
+the sha256 manifest **inside that archive**, backs the replaced files up to
+`storage/backups/app-*/`, swaps them, and installs the archive's own
+`config/manifest.json`. That last step is not decoration: the manifest is excluded
+from its own file list, so without it the tree holds the new release's files while
+describing the old one, and every later status check reports them as locally
+modified. `content/`, `storage/` and `.md.ini` are never touched.
+
+**Through `mdscribe-deploy`** — for a host where the release should be placed as a
+whole, with one-command rollback and a verifiable result:
+
+```bash
+mdscribe-deploy <version> --dry-run    # what it would do, writes nothing
+mdscribe-deploy <version>              # stage, verify, switch, verify, roll back on failure
+mdscribe-deploy --status               # what is installed, what it serves
+mdscribe-deploy --rollback             # back to the previous release, verified
+```
+
+It keeps releases side by side and switches one symlink instead of overwriting
+files:
+
+```
+<site>/mdscribe                 -> mdscribe.releases/<version>   (swapped with mv -T)
+<site>/mdscribe.releases/<v>/   the release tree, exactly as published
+<site>/mdscribe-data/           content/ storage/ .md.ini — the only runtime state
+```
+
+Runtime state lives outside the release, so a new version never copies it and a
+rollback never loses a page written after the switch. The first run migrates an
+existing plain directory: `cp -al` copy (hardlinks, instant), runtime state moved
+out of the copy, then the switch — with a `tar` backup first at
+`/root/backup-mdscribe-<timestamp>.tgz`.
+
+Either way, re-measure afterwards instead of trusting the status code:
+
+```bash
+php /usr/local/lib/mdscribe/verify-tree.php <site-path> --fingerprint
+php /usr/local/lib/mdscribe/page-fingerprint.php https://your.host/path/
+```
+
+The tree fingerprint is computed from the manifest's (path, sha256) pairs, so two
+installations of the same release print the same value; the page fingerprint
+normalises the CSP nonce and the CSRF token, so it is stable across requests and
+changes when the page changes. `mdscribe-deploy` prints both in its final summary.
 
 ## Verified installations
 

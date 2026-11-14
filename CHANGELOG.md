@@ -39,7 +39,23 @@ All notable changes to this project are documented here. The format is
   after the switch and available on demand; it reports missing, modified and
   unexpected files separately.
 
+- **Two fingerprints that can be quoted next to a release tag.**
+  `tools/deploy/verify-tree.php --fingerprint` prints one sha256 computed from the
+  manifest's (path, sha256) pairs, so two installations of one release agree;
+  `tools/deploy/page-fingerprint.php <url>` hashes the served HTML after
+  normalising the CSP nonce and the CSRF token, so it is stable across requests and
+  changes when the page changes. `mdscribe-deploy` prints both in a
+  `=== release evidence ===` block after a successful deploy and after a rollback:
+  a deployment report that only says HTTP 200 proves a request was answered, not
+  what was answered.
+
 ### Changed
+
+- **The self-updater now proves itself in tests.** `apply()` and `restoreApp()`
+  are exercised end to end against a real zip through the substituted client: the
+  manifest that travels with the archive must become the installed manifest, and a
+  restore must bring the previous pairing back without dropping `backup.json` into
+  the project root.
 
 - **Asset drift is blocking, and it covers the vendored bundles.** The CI job
   rebuilt the frontend without `--vendor` and only warned, comparing `css/js`;
@@ -60,6 +76,20 @@ All notable changes to this project are documented here. The format is
   part of the contract, so it is asserted rather than hidden.
 
 ### Fixed
+
+- **The updater replaced the files but not the manifest.** `config/manifest.json`
+  is excluded from its own file list (see `tools/build-manifest.php`), so the
+  replacement loop could never carry it: after an update the tree held the new
+  release's files while still describing the old one, and every later `status()`
+  reported the files it had just written as locally modified. `apply()` now
+  installs the archive's manifest as part of the update and the previous manifest
+  travels in the backup, so a restore puts the pairing back. Measured on a sandbox
+  copy of 3.5.0: before the fix, 3.5.0 -> 3.4.4 left the manifest at 3.5.0 and
+  `verify-tree` reported 81 modified files; after it, the manifest is 3.4.4 (949
+  entries), `status()` reports 949 present and `verify-tree` reports 0 modified.
+- **`restoreApp()` skipped every file in a subdirectory on Windows.** The iterator
+  yields native separators, `config/manifest.json` failed the path allowlist and
+  was silently dropped — including the manifest. Caught by the new restore test.
 
 - **A deploy could remove `vendor/` and still look successful.** Running
   `rsync -a --delete` from a `git archive` (which never contains `vendor/`)

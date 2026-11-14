@@ -83,6 +83,8 @@ invisible to PHPUnit.
 | The browser half of the pipeline is only checked by hand | `tools/frontend/check-render.mjs` (CI job `render`) | A repair, an icon or a CSP regression passes every PHP test and reaches main |
 | A deploy from `git archive` has no `vendor/` | `tools/deploy/mdscribe-deploy` (staged check) | `rsync --delete` removes 731 files and every page is a PHP fatal |
 | opcache caches by the path it was given, not the symlink target | measured on the host: `…/mdscribe/public/index.php` cached with `ts=0` | The symlink points at the new release and the old code keeps running; `systemctl reload` does not clear it |
+| `config/manifest.json` is excluded from its own file list | `tools/build-manifest.php` (`$excludeFiles`) | An updater that swaps only manifest entries leaves the manifest stale and every later status reports the new files as modified |
+| The backup/restore loop sees native path separators | `src/Admin/UpdateService.php` (`restoreApp`) | `config/manifest.json` failed the `/`-only allowlist and every nested file was silently skipped on Windows |
 | A `zipfile` archive carries no POSIX modes | measured: `0666` on every deployed file | Application code writable by any local account |
 | Tailwind v4 scans the whole repository unless told otherwise | `tools/frontend/src/css/app.css` (`source(none)`) | A word like "invisible" in a changelog entry added a utility to the committed CSS, so a prose edit changed the bundle |
 

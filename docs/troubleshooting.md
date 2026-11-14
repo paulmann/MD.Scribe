@@ -75,6 +75,42 @@ ignores `.htaccess` — switch to the docroot-at-`public/` layout immediately.
 | “Integrity check failed for X” | Release archive did not match its manifest — refused by design; retry later or update from a fresh archive manually |
 | Update button missing | `ALLOW_UPDATE = false` → enable in `.md.ini` |
 | After a bad update | `updater.php?restore=latest` (needs `ALLOW_RESTORE = true`) or restore an `app-*` backup from Admin → Backups |
+| Update applied, but the footer still shows the old version | opcache, not the files — see below |
+| After updating, every file shows as “modified” | The manifest did not travel with the update. Fixed in this release: `apply()` now installs the archive's `config/manifest.json`. On an older tree, run `php tools/build-manifest.php` **in the release tree**, or re-apply the update |
+
+### “The page still shows the old version after a deploy”
+
+This is the failure mode that cost real time on 14 Nov 2026: the release was in
+place, `HTTP 200` came back, and the page still named the previous version.
+
+The cause is that **opcache keys a script by the path it was asked for, not by the
+target of the symlink**. With a layout like
+
+```
+public/mdscribe -> ../mdscribe/public      # unchanged across releases
+mdscribe        -> mdscribe.releases/3.5.0 # this is what moves
+```
+
+…the request still asks for `public/mdscribe/index.php`, so the cached entry keeps
+its old key (with `ts=0`, which means opcache has no timestamp to compare) and the
+old bytecode keeps running. `systemctl reload php8.5-fpm` sends `SIGUSR2` and does
+**not** clear the shared segment.
+
+Measure it before changing anything:
+
+```bash
+php /usr/local/lib/mdscribe/verify-tree.php <site-path> --fingerprint   # what is on disk
+php /usr/local/lib/mdscribe/page-fingerprint.php https://host/path/     # what is served
+readlink -f <site-path>                                                 # where the symlink points
+curl -sI https://host/path/ | grep -i x-powered-by                      # what PHP reports
+```
+
+If the tree fingerprint matches the release and `x-powered-by` disagrees with it,
+the code on disk is right and the bytecode is stale. `mdscribe-deploy` clears
+opcache through a one-shot token-scoped endpoint after every switch, so a deploy
+or rollback never leaves this state. On a hand-made install, call
+`opcache_reset()` once (a temporary page that runs it, then is deleted) or restart
+the pool — a reload is not enough.
 
 ## Getting help
 
