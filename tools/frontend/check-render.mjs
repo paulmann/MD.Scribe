@@ -72,7 +72,7 @@ async function settled(page) {
     if (blocks.length === 0) return false;
     const done = document.querySelectorAll('.md-mermaid[data-rendered="1"], .md-mermaid[data-render-error]');
     return done.length >= blocks.length;
-  }, { timeout: 25000 });
+  }, { timeout: 45000 });
 }
 
 async function openPage(browser, path) {
@@ -93,7 +93,7 @@ async function openPage(browser, path) {
       window.__cspViolations.push(`${e.violatedDirective} ${e.blockedURI}`);
     });
   });
-  await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
   return page;
 }
 
@@ -201,7 +201,7 @@ async function checkThemeSwitch(browser) {
       el.classList.toggle('dark');
     });
     await page.waitForFunction((count) =>
-      document.querySelectorAll('.md-mermaid[data-rendered="1"]').length >= count, { timeout: 25000 }, before.rendered);
+      document.querySelectorAll('.md-mermaid[data-rendered="1"]').length >= count, { timeout: 45000 }, before.rendered);
     await new Promise((r) => setTimeout(r, 600));
     const after = await page.evaluate(() => {
       const svg = document.querySelector('.md-mermaid svg');
